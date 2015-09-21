@@ -1,2 +1,2 @@
-# IronBound-DB
-WordPress DB package.
+# IronBound DB
+A powerful database package for WordPress.
