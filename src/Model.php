@@ -183,7 +183,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 					if ( $val instanceof Model ) {
 						$val = $val->get_pk();
-					} else if ( $val instanceof \DateTimeInterface ) {
+					} else if ( $val instanceof \DateTime ) {
 						$val = $val->format( 'Y-m-d H:i:s' );
 					} else if ( isset( $val->ID ) ) {
 						$val = $val->ID;
