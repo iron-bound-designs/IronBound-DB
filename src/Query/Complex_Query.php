@@ -283,7 +283,7 @@ abstract class Complex_Query {
 				$in[ $key ] = $this->db_query->escape_value( $column, $value );
 			}
 
-			$in_where = new Where( "q.$column", true, $in );
+			$in_where = new Where( "q.`$column`", true, $in );
 		}
 
 		if ( ! empty( $not_in ) ) {
@@ -292,7 +292,7 @@ abstract class Complex_Query {
 				$not_in[ $key ] = $this->db_query->escape_value( $column, $value );
 			}
 
-			$not_where = new Where( "q.$column", false, $not_in );
+			$not_where = new Where( "q.`$column`", false, $not_in );
 
 			if ( isset( $in_where ) ) {
 				$in_where->qAnd( $not_where );
