@@ -11,7 +11,7 @@
     ],
     "require": {
         "php"            : ">=5.3.0",
-        "ironbound/cache": "1.*"
+        "ironbound/cache": "^1.0.0"
     },
     "autoload": {
         "psr-4": {
