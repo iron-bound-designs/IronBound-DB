@@ -1,0 +1,49 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "hash": "5603a8928191dc310a9da76743b413df",
+    "content-hash": "18b5ea7303e7c1b2e7db26a8568275bd",
+    "packages": [
+        {
+            "name": "ironbound/cache",
+            "version": "v1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/iron-bound-designs/IronBound-Cache.git",
+                "reference": "a3f26ffbae5dad0c207508b494a817680a264b3f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/iron-bound-designs/IronBound-Cache/zipball/a3f26ffbae5dad0c207508b494a817680a264b3f",
+                "reference": "a3f26ffbae5dad0c207508b494a817680a264b3f",
+                "shasum": ""
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Iron Bound Designs",
+                    "email": "info@ironbounddesigns.com"
+                }
+            ],
+            "description": "Provides wrappers for WordPress' object cache to make storing and retrieving models easier.",
+            "time": "2015-10-05 03:47:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=5.3.0"
+    },
+    "platform-dev": []
+}

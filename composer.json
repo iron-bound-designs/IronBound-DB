@@ -1,0 +1,21 @@
+{
+    "name": "ironbound/db",
+    "description": "Provides models and custom query objects for custom database tables in WordPress.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Iron Bound Designs",
+            "email": "info@ironbounddesigns.com"
+        }
+    ],
+    "require": {
+        "php"            : ">=5.3.0",
+        "ironbound/cache": "1.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "IronBound\\DB\\": "src/"
+        }
+    }
+}
