@@ -16,6 +16,7 @@ use IronBound\DB\Table\Table;
 
 /**
  * Class Query
+ *
  * @package IronBound\DB
  */
 class Simple_Query {
@@ -34,7 +35,7 @@ class Simple_Query {
 	 * Constructor.
 	 *
 	 * @param \wpdb $wpdb
-	 * @param Table  $table
+	 * @param Table $table
 	 */
 	public function __construct( \wpdb $wpdb, Table $table ) {
 		$this->wpdb  = $wpdb;
@@ -211,6 +212,20 @@ class Simple_Query {
 		$data_keys      = array_keys( $data );
 		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
 
+		$null_columns = array();
+
+		foreach ( $data as $col => $val ) {
+
+			if ( $val == null ) {
+				$null_columns[] = $col;
+			}
+		}
+
+		foreach ( $null_columns as $null_column ) {
+			unset( $data[ $null_column ] );
+			unset( $column_formats[ $null_column ] );
+		}
+
 		$prev = $this->wpdb->show_errors( false );
 		$this->wpdb->insert( $this->table->get_table_name( $this->wpdb ), $data, $column_formats );
 		$this->wpdb->show_errors( $prev );
@@ -336,6 +351,10 @@ class Simple_Query {
 
 		if ( ! isset( $columns[ $column ] ) ) {
 			throw new Exception( "Invalid database column." );
+		}
+
+		if ( empty( $value ) ) {
+			return '';
 		}
 
 		$column_format = $columns[ $column ];
