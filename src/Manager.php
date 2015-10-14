@@ -131,4 +131,25 @@ final class Manager {
 
 		return false;
 	}
+
+	/**
+	 * Check if a table is installed.
+	 *
+	 * @since 1.0
+	 *
+	 * @param Table $table
+	 *
+	 * @return bool
+	 */
+	public static function is_table_installed( Table $table ) {
+
+		/** @var $wpdb \wpdb */
+		global $wpdb;
+
+		$name = $table->get_table_name( $wpdb );
+
+		$results = $wpdb->get_results( "SHOW TABLES LIKE '$name'" );
+
+		return count( $results ) > 0;
+	}
 }
