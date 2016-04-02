@@ -1,0 +1,65 @@
+language: php
+
+sudo: false
+
+php:
+- 5.3
+- 5.4
+- 5.5
+- 5.6
+- 7
+
+env:
+- WP_VERSION=trunk WP_MULTISITE=0
+- WP_VERSION=tags/4.3 WP_MULTISITE=0
+
+matrix:
+  allow_failures:
+  - php: 7
+
+before_install:
+  - composer self-update
+  - composer install --no-interaction
+  # set up WP install
+  - export WP_DEVELOP_DIR=/tmp/wordpress/
+  - mkdir -p $WP_DEVELOP_DIR
+
+before_script:
+  # download WP
+  - cd $WP_DEVELOP_DIR/..
+  - rm -rf wordpress
+  - mkdir wordpress
+  - svn co https://develop.svn.wordpress.org/$WP_VERSION $WP_DEVELOP_DIR
+  # set up tests config
+  - cd $WP_DEVELOP_DIR
+  - echo $WP_DEVELOP_DIR
+  - cp wp-tests-config-sample.php wp-tests-config.php
+  - sed -i "s/youremptytestdbnamehere/wordpress_test/" wp-tests-config.php
+  - sed -i "s/yourusernamehere/root/" wp-tests-config.php
+  - sed -i "s/yourpasswordhere//" wp-tests-config.php
+  # set up database
+  - mysql -e 'CREATE DATABASE wordpress_test;' -uroot
+  - cd $TRAVIS_BUILD_DIR
+
+script:
+- |
+  if [[ "$TRAVIS_PHP_VERSION" == "5.5" && "$WP_VERSION" == "trunk"  ]] ; then
+    phpunit --coverage-clover=coverage.clover
+  else
+    phpunit
+  fi
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+git:
+  depth: 1
+
+notifications:
+  slack:
+    rooms:
+      - ironbounddesigns:fXMBlqSr9vvDBiwetLNm9ctD#general
+
+    on_success: change
+    on_failure: always
+    on_start: never
+  email: false
