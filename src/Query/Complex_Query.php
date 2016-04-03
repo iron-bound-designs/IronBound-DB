@@ -42,6 +42,11 @@ abstract class Complex_Query {
 	protected $table;
 
 	/**
+	 * @var \wpdb
+	 */
+	protected $wpdb;
+
+	/**
 	 * @var string
 	 */
 	protected $sql;
@@ -61,11 +66,13 @@ abstract class Complex_Query {
 	 *
 	 * @param Table $table
 	 * @param array $args
+	 * @param \wpdb $wpdb
 	 */
-	public function __construct( Table $table, array $args = array() ) {
+	public function __construct( Table $table, array $args = array(), \wpdb $wpdb = null ) {
 
 		$this->table    = $table;
-		$this->db_query = Manager::make_simple_query_object( $table->get_slug() );
+		$this->wpdb     = $wpdb ?: $GLOBALS['wpdb'];
+		$this->db_query = new Simple_Query( $wpdb, $table );
 
 		$this->args = wp_parse_args( $args, $this->get_default_args() );
 
@@ -157,15 +164,26 @@ abstract class Complex_Query {
 	 * @since 1.0
 	 */
 	protected function query() {
-		$results = $GLOBALS['wpdb']->get_results( $this->sql );
+		$results = $this->wpdb->get_results( $this->sql );
 
 		// we query for found rows first to prevent instantiation of record objects from interfering with the count
 		if ( $this->args['sql_calc_found_rows'] ) {
 
-			$count_results     = $GLOBALS['wpdb']->get_results( "SELECT FOUND_ROWS() AS COUNT" );
-			$this->total_items = $count_results[0]->COUNT;
+			$count_results     = $this->wpdb->get_results( "SELECT FOUND_ROWS() AS COUNT" );
+
+			if ( empty( $count_results ) || empty( $count_results[0] ) ) {
+				$this->total_items = 0;
+			} else {
+				$this->total_items = $count_results[0]->COUNT;
+			}
+
 		} elseif ( $this->args['return_value'] == 'count' ) {
-			$this->total_items = $results[0]->COUNT;
+
+			if ( empty( $results ) || empty( $results[0] ) ) {
+				$this->total_items = 0;
+			} else {
+				$this->total_items = $results[0]->COUNT;
+			}
 		}
 
 		$this->results = $this->parse_results( $results );
@@ -185,6 +203,11 @@ abstract class Complex_Query {
 		if ( is_array( $this->args['return_value'] ) ) {
 			return $results;
 		} elseif ( $this->args['return_value'] == 'count' ) {
+
+			if ( empty( $results ) || empty( $results[0] ) ) {
+				return 0;
+			}
+
 			return $results[0]->COUNT;
 		} elseif ( $this->args['return_value'] != 'object' ) {
 			$values = array();
