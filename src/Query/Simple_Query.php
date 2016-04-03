@@ -185,7 +185,7 @@ class Simple_Query {
 			$builder->append( $where );
 		}
 
-		return (int) $this->wpdb->get_var( $builder->build() );
+		return (int) $this->wpdb->get_var( trim( $builder->build() ) );
 	}
 
 	/**
