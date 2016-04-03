@@ -33,8 +33,15 @@ final class Manager {
 	 *
 	 * @param Table  $table Table object.
 	 * @param string $complex_query_class
+	 *
+	 * @throws \InvalidArgumentException If $complex_query_class is not a subclass of Complex_Query.
 	 */
 	public static function register( Table $table, $complex_query_class = '' ) {
+
+		if ( $complex_query_class && ! is_subclass_of( $complex_query_class, 'IronBound\DB\Query\Complex_Query' ) ) {
+			throw new \InvalidArgumentException( '$complex_query_class must subclass Complex_Query' );
+		}
+
 		self::$tables[ $table->get_slug() ] = array(
 			'table' => $table,
 			'query' => $complex_query_class
@@ -65,15 +72,17 @@ final class Manager {
 	 * @since 1.0
 	 *
 	 * @param string $slug Table name.
+	 * @param \wpdb  $wpdb
 	 *
 	 * @return Simple_Query|null
 	 */
-	public static function make_simple_query_object( $slug ) {
+	public static function make_simple_query_object( $slug, \wpdb $wpdb = null ) {
 
 		$table = self::get( $slug );
+		$wpdb  = $wpdb ?: $GLOBALS['wpdb'];
 
 		if ( $table ) {
-			return new Simple_Query( $GLOBALS['wpdb'], $table );
+			return new Simple_Query( $wpdb, $table );
 		} else {
 			return null;
 		}
@@ -112,19 +121,22 @@ final class Manager {
 	 * @since 1.0
 	 *
 	 * @param Table $table
+	 * @param \wpdb $wpdb
 	 *
 	 * @return bool True if installed or updated, false if skipped.
 	 */
-	public static function maybe_install_table( Table $table ) {
+	public static function maybe_install_table( Table $table, \wpdb $wpdb = null ) {
+
+		$wpdb = $wpdb ?: $GLOBALS['wpdb'];
 
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
-		$installed = (int) get_option( $table->get_table_name( $GLOBALS['wpdb'] ) . '_version', 0 );
+		$installed = (int) get_option( $table->get_table_name( $wpdb ) . '_version', 0 );
 
 		if ( $installed < $table->get_version() ) {
-			dbDelta( $table->get_creation_sql( $GLOBALS['wpdb'] ) );
+			dbDelta( $table->get_creation_sql( $wpdb ) );
 
-			update_option( $table->get_table_name( $GLOBALS['wpdb'] ) . '_version', $table->get_version() );
+			update_option( $table->get_table_name( $wpdb ) . '_version', $table->get_version() );
 
 			return true;
 		}
@@ -138,13 +150,13 @@ final class Manager {
 	 * @since 1.0
 	 *
 	 * @param Table $table
+	 * @param \wpdb $wpdb
 	 *
 	 * @return bool
 	 */
-	public static function is_table_installed( Table $table ) {
+	public static function is_table_installed( Table $table, \wpdb $wpdb = null ) {
 
-		/** @var $wpdb \wpdb */
-		global $wpdb;
+		$wpdb = $wpdb ?: $GLOBALS['wpdb'];
 
 		$name = $table->get_table_name( $wpdb );
 
