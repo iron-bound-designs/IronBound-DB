@@ -9,6 +9,7 @@
 namespace IronBound\DB\Query;
 
 use IronBound\DB\Exception;
+use IronBound\DB\Exception\InvalidColumnException;
 use IronBound\DB\Query\Tag\From;
 use IronBound\DB\Query\Tag\Select;
 use IronBound\DB\Query\Tag\Where;
@@ -84,7 +85,7 @@ class Simple_Query {
 			foreach ( $columns as $col ) {
 
 				if ( ! isset( $allowed_columns[ $col ] ) ) {
-					throw new Exception( "Invalid column." );
+					throw new InvalidColumnException( "Invalid column." );
 				}
 
 				$select->also( $col );
@@ -93,7 +94,7 @@ class Simple_Query {
 			$select = new Select( $columns );
 		} else {
 			if ( ! isset( $allowed_columns[ $columns ] ) ) {
-				throw new Exception( "Invalid column" );
+				throw new InvalidColumnException( "Invalid column" );
 			}
 
 			$select = new Select( $columns );
@@ -103,7 +104,7 @@ class Simple_Query {
 		$builder->append( new From( $this->table->get_table_name( $this->wpdb ) ) );
 		$builder->append( new Where( $column, true, $this->escape_value( $column, $value ) ) );
 
-		return $this->wpdb->get_row( $builder->build() );
+		return $this->wpdb->get_row( trim( $builder->build() ) );
 	}
 
 	/**
@@ -142,14 +143,14 @@ class Simple_Query {
 		$allowed_columns = $this->table->get_columns();
 
 		if ( ! isset( $allowed_columns[ $column ] ) ) {
-			throw new Exception( "Invalid column." );
+			throw new InvalidColumnException( "Invalid column." );
 		}
 
 		$builder->append( new Select( $column ) );
 		$builder->append( new From( $this->table->get_table_name( $this->wpdb ) ) );
 		$builder->append( new Where( $where, true, $this->escape_value( $where, $value ) ) );
 
-		return $this->wpdb->get_var( $builder->build() );
+		return $this->wpdb->get_var( trim( $builder->build() ) );
 	}
 
 	/**
@@ -350,7 +351,7 @@ class Simple_Query {
 		$columns = $this->table->get_columns();
 
 		if ( ! isset( $columns[ $column ] ) ) {
-			throw new Exception( "Invalid database column." );
+			throw new InvalidColumnException( "Invalid database column." );
 		}
 
 		if ( empty( $value ) ) {
