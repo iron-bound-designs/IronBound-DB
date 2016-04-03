@@ -51,7 +51,7 @@ class Where extends Generic {
 	 *
 	 * @param string $column
 	 * @param bool   $equality True for =, False for !=
-	 * @param mixed  $value
+	 * @param mixed  $value    Values should be pre-escaped.
 	 */
 	public function __construct( $column, $equality, $value ) {
 		parent::__construct( 'where' );

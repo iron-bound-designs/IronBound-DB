@@ -24,6 +24,19 @@ class Test_Builder extends \WP_UnitTestCase {
 		$builder = new Builder();
 		$builder->append( new Generic( 'TAG', 'value' ) )->append( new Generic( 'OTHER', 'value' ) );
 
-		$this->assertEquals( 'TAG value OTHER value ' , $builder->build() );
+		$this->assertEquals( 'TAG value OTHER value ', $builder->build() );
+	}
+
+	public function test_subquery() {
+
+		$a = new Builder();
+		$a->append( new Generic( 'TAG', 'a' ) );
+
+		$b = new Builder();
+		$b->append( new Generic( 'TAG', 'b' ) );
+
+		$a->subquery( $b );
+
+		$this->assertEquals( 'TAG a (TAG b )', $a->build() );
 	}
 }
