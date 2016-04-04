@@ -63,11 +63,7 @@ abstract class Model implements Cacheable, \Serializable {
 		$data = Cache::get( $pk, static::get_cache_group() );
 
 		if ( ! $data ) {
-
-			$table = static::get_table();
-			$db    = Manager::make_simple_query_object( $table->get_slug() );
-
-			$data = $db->get( $pk );
+			$data = static::make_query_object()->get( $pk );
 		}
 
 		return $data ? (object) $data : null;
@@ -122,14 +118,11 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	protected function update( $key, $value ) {
 
-		$table = static::get_table();
-		$db    = Manager::make_simple_query_object( $table->get_slug() );
-
 		$data = array(
 			$key => $value
 		);
 
-		$res = $db->update( $this->get_pk(), $data );
+		$res = static::make_query_object()->update( $this->get_pk(), $data );
 
 		if ( $res ) {
 			Cache::update( $this );
@@ -146,13 +139,21 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @throws Exception
 	 */
 	public function delete() {
-
-		$table = static::get_table();
-		$db    = Manager::make_simple_query_object( $table->get_slug() );
-
-		$db->delete( $this->get_pk() );
+		
+		static::make_query_object()->delete( $this->get_pk() );
 
 		Cache::delete( $this );
+	}
+
+	/**
+	 * Make a query object.
+	 *
+	 * @since 1.2
+	 *
+	 * @return Query\Simple_Query|null
+	 */
+	protected static function make_query_object() {
+		return Manager::make_simple_query_object( static::get_table()->get_slug() );
 	}
 
 	/**
@@ -178,28 +179,30 @@ abstract class Model implements Cacheable, \Serializable {
 				$method = "get_$col";
 
 				$val = $this->$method();
-
-				if ( is_object( $val ) ) {
-
-					if ( $val instanceof Model ) {
-						$val = $val->get_pk();
-					} else if ( $val instanceof \DateTime ) {
-						$val = $val->format( 'Y-m-d H:i:s' );
-					} else if ( isset( $val->ID ) ) {
-						$val = $val->ID;
-					} else if ( isset( $val->id ) ) {
-						$val = $val->id;
-					} else if ( isset( $val->term_id ) ) {
-						$val = $val->term_id;
-					} else if ( isset( $val->comment_ID ) ) {
-						$val = $val->comment_ID;
-					}
-				}
-
-				$data[ $col ] = $val;
+			} elseif ( property_exists( $this, $col ) ) {
+				$val = $this->{$col};
 			} else {
-				$data[ $col ] = $default;
+				$val = $default;
 			}
+
+			if ( is_object( $val ) ) {
+
+				if ( $val instanceof Model ) {
+					$val = $val->get_pk();
+				} else if ( $val instanceof \DateTime ) {
+					$val = $val->format( 'Y-m-d H:i:s' );
+				} else if ( isset( $val->ID ) ) {
+					$val = $val->ID;
+				} else if ( isset( $val->id ) ) {
+					$val = $val->id;
+				} else if ( isset( $val->term_id ) ) {
+					$val = $val->term_id;
+				} else if ( isset( $val->comment_ID ) ) {
+					$val = $val->comment_ID;
+				}
+			}
+
+			$data[ $col ] = $val;
 		}
 
 		return $data;
