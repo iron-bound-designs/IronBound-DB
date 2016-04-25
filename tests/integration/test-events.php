@@ -49,7 +49,8 @@ class Test_Events extends \WP_UnitTestCase {
 			$phpunit->assertTrue( $event->has_argument( 'from' ) );
 			$phpunit->assertEquals( array(
 				'price' => 99.99
-			), $event->get_argument( 'changed' ) );$phpunit->assertEquals( array(
+			), $event->get_argument( 'changed' ) );
+			$phpunit->assertEquals( array(
 				'price' => 22.95
 			), $event->get_argument( 'from' ) );
 		} );

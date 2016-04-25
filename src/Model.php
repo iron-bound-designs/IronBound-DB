@@ -826,4 +826,15 @@ abstract class Model implements Cacheable, \Serializable {
 	public static function set_event_dispatcher( EventDispatcher $dispatcher ) {
 		static::$_event_dispatcher = $dispatcher;
 	}
+
+	/**
+	 * Get the EventDispatcher.
+	 *
+	 * @since 2.0
+	 *
+	 * @return EventDispatcher
+	 */
+	public static function get_event_dispatcher() {
+		return self::$_event_dispatcher;
+	}
 }
