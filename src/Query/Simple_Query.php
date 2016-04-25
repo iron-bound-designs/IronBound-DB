@@ -200,18 +200,14 @@ class Simple_Query {
 	 * @throws Exception
 	 */
 	public function insert( $data ) {
+
 		// Set default values
 		$data = wp_parse_args( $data, $this->table->get_column_defaults() );
 
-		// Initialise column format array
-		$column_formats = $this->table->get_columns();
+		$columns = $this->table->get_columns();
 
 		// White list columns
-		$data = array_intersect_key( $data, $column_formats );
-
-		// Reorder $column_formats to match the order of columns given in $data
-		$data_keys      = array_keys( $data );
-		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
+		$data = array_intersect_key( $data, $columns );
 
 		$null_columns = array();
 
@@ -224,11 +220,14 @@ class Simple_Query {
 
 		foreach ( $null_columns as $null_column ) {
 			unset( $data[ $null_column ] );
-			unset( $column_formats[ $null_column ] );
+		}
+
+		foreach ( $data as $name => $value ) {
+			$data[ $name ] = $this->escape_value( $name, $value );
 		}
 
 		$prev = $this->wpdb->show_errors( false );
-		$this->wpdb->insert( $this->table->get_table_name( $this->wpdb ), $data, $column_formats );
+		$this->wpdb->insert( $this->table->get_table_name( $this->wpdb ), $data );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {
@@ -261,18 +260,17 @@ class Simple_Query {
 			$where = array( $this->table->get_primary_key() => $row_key );
 		}
 
-		// Initialise column format array
-		$column_formats = $this->table->get_columns();
+		$columns = $this->table->get_columns();
 
 		// White list columns
-		$data = array_intersect_key( $data, $column_formats );
+		$data = array_intersect_key( $data, $columns );
 
-		// Reorder $column_formats to match the order of columns given in $data
-		$data_keys      = array_keys( $data );
-		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
+		foreach ( $data as $name => $value ) {
+			$data[ $name ] = $this->escape_value( $name, $value );
+		}
 
 		$prev   = $this->wpdb->show_errors( false );
-		$result = $this->wpdb->update( $this->table->get_table_name( $this->wpdb ), $data, $where, $column_formats );
+		$result = $this->wpdb->update( $this->table->get_table_name( $this->wpdb ), $data, $where );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {
@@ -358,17 +356,7 @@ class Simple_Query {
 			return '';
 		}
 
-		$column_format = $columns[ $column ];
-
-		if ( $value[0] == '%' ) {
-			$value = '%' . $value;
-		}
-
-		if ( $value[ strlen( $value ) - 1 ] == '%' ) {
-			$value = $value . '%';
-		}
-
-		return esc_sql( sprintf( $column_format, $value ) );
+		return esc_sql( $columns[ $column ]->prepare_for_storage( $value ) );
 	}
 
 	/**

@@ -11,6 +11,8 @@
 namespace IronBound\DB\Query\Tests;
 
 use IronBound\DB\Query\Simple_Query;
+use IronBound\DB\Table\Column\IntegerBased;
+use IronBound\DB\Table\Column\StringBased;
 
 /**
  * Class Test_Simple_Query
@@ -27,7 +29,10 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 		) )->getMockForAbstractClass();
 		$table->method( 'get_primary_key' )->willReturn( 'ID' );
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'column' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'     => new IntegerBased( 'BIGINT', 'ID' ),
+			'column' => new StringBased( 'VARCHAR', 'column' )
+		) );
 
 		$sql = "SELECT * FROM wp_table WHERE ID = '1'";
 
@@ -45,7 +50,10 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'get_table_name'
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'column' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'     => new IntegerBased( 'BIGINT', 'ID' ),
+			'column' => new StringBased( 'VARCHAR', 'column' )
+		) );
 
 		$sql = "SELECT * FROM wp_table WHERE column = 'value'";
 
@@ -63,7 +71,10 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'get_table_name'
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'column' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'     => new IntegerBased( 'BIGINT', 'ID' ),
+			'column' => new StringBased( 'VARCHAR', 'column' )
+		) );
 
 		$sql = "SELECT ID FROM wp_table WHERE column = 'value'";
 
@@ -81,7 +92,11 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'get_table_name'
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'colA' => '%s', 'colB' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'   => new IntegerBased( 'BIGINT', 'ID' ),
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' )
+		) );
 
 		$sql = "SELECT ID, colA FROM wp_table WHERE colB = 'value'";
 
@@ -102,7 +117,10 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'get_table_name'
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'column' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'     => new IntegerBased( 'BIGINT', 'ID' ),
+			'column' => new StringBased( 'VARCHAR', 'column' )
+		) );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 
@@ -120,7 +138,10 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'get_table_name'
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'column' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'     => new IntegerBased( 'BIGINT', 'ID' ),
+			'column' => new StringBased( 'VARCHAR', 'column' )
+		) );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 
@@ -137,7 +158,10 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 		) )->getMockForAbstractClass();
 		$table->method( 'get_primary_key' )->willReturn( 'ID' );
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'column' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'     => new IntegerBased( 'BIGINT', 'ID' ),
+			'column' => new StringBased( 'VARCHAR', 'column' )
+		) );
 
 		$sql = "SELECT column FROM wp_table WHERE ID = '1'";
 
@@ -155,7 +179,11 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'get_table_name'
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'colA' => '%s', 'colB' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'   => new IntegerBased( 'BIGINT', 'ID' ),
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' )
+		) );
 
 		$sql = "SELECT colA FROM wp_table WHERE colB = 'value'";
 
@@ -176,7 +204,10 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'get_table_name'
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'column' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'     => new IntegerBased( 'BIGINT', 'ID' ),
+			'column' => new StringBased( 'VARCHAR', 'column' )
+		) );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 
@@ -191,7 +222,11 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'get_table_name'
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'colA' => '%s', 'colB' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'   => new IntegerBased( 'BIGINT', 'ID' ),
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' )
+		) );
 
 		$sql = "SELECT COUNT(*) FROM wp_table";
 
@@ -209,7 +244,11 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'get_table_name'
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'colA' => '%s', 'colB' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'   => new IntegerBased( 'BIGINT', 'ID' ),
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' )
+		) );
 
 		$sql = "SELECT COUNT(*) FROM wp_table WHERE colA = 'bob' AND (colB = 'sally')";
 
@@ -231,16 +270,17 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'get_column_defaults'
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'colA' => '%d', 'colB' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'   => new IntegerBased( 'BIGINT', 'ID' ),
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' )
+		) );
 		$table->method( 'get_column_defaults' )->willReturn( array( 'ID' => '', 'colA' => '', 'colB' => 'bob' ) );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'insert' )->with( 'wp_table', array(
 			'colA' => '5',
 			'colB' => 'bob'
-		), array(
-			'colA' => '%d',
-			'colB' => '%s'
 		) );
 
 		$simple_query = new Simple_Query( $wpdb, $table );
@@ -259,13 +299,15 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
 		$table->method( 'get_primary_key' )->willReturn( 'ID' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'colA' => '%d', 'colB' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'   => new IntegerBased( 'BIGINT', 'ID' ),
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' )
+		) );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'update' )->with( 'wp_table', array(
 			'colB' => 'sally',
-		), array(
-			'ID' => '1'
 		) );
 
 		$simple_query = new Simple_Query( $wpdb, $table );
@@ -284,7 +326,11 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
 		$table->method( 'get_primary_key' )->willReturn( 'ID' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'colA' => '%d', 'colB' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'   => new IntegerBased( 'BIGINT', 'ID' ),
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' )
+		) );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'update' )->with( 'wp_table', array(
@@ -309,7 +355,11 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
 		$table->method( 'get_primary_key' )->willReturn( 'ID' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'colA' => '%d', 'colB' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'   => new IntegerBased( 'BIGINT', 'ID' ),
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' )
+		) );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'delete' )->with( 'wp_table', array(
@@ -329,7 +379,11 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 		) )->getMockForAbstractClass();
 		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
 		$table->method( 'get_primary_key' )->willReturn( 'ID' );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'colA' => '%d', 'colB' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'   => new IntegerBased( 'BIGINT', 'ID' ),
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' )
+		) );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'delete' )->with( 'wp_table', array(

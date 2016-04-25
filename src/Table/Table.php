@@ -9,9 +9,10 @@
  */
 
 namespace IronBound\DB\Table;
+use IronBound\DB\Table\Column\Column;
 
 /**
- * Interface Base
+ * Interface Table
  * @package IronBound\DB\Table
  */
 interface Table {
@@ -39,11 +40,11 @@ interface Table {
 	/**
 	 * Columns in the table.
 	 *
-	 * key => sprintf field type
+	 * key => column
 	 *
 	 * @since 1.0
 	 *
-	 * @return array
+	 * @return Column[]
 	 */
 	public function get_columns();
 

@@ -10,6 +10,9 @@
 
 namespace IronBound\DB\Query\Tests;
 
+use IronBound\DB\Table\Column\IntegerBased;
+use IronBound\DB\Table\Column\StringBased;
+
 /**
  * Class Test_Complex_Query
  * @package IronBound\DB\Query\Tests
@@ -95,7 +98,7 @@ class Test_Complex_Query extends \WP_UnitTestCase {
 	public function test_in_or_not_in__in_only() {
 
 		$table = $this->getMockForAbstractClass( 'IronBound\DB\Table\Table', array( 'get_columns' ) );
-		$table->method( 'get_columns' )->willReturn( array( 'col' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array( 'col' => new StringBased( 'VARCHAR', 'col' ) ) );
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->method( 'get_results' )->willReturn( array() );
 
@@ -111,7 +114,7 @@ class Test_Complex_Query extends \WP_UnitTestCase {
 	public function test_in_or_not_in__not_in_only() {
 
 		$table = $this->getMockForAbstractClass( 'IronBound\DB\Table\Table', array( 'get_columns' ) );
-		$table->method( 'get_columns' )->willReturn( array( 'col' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array( 'col' => new StringBased( 'VARCHAR', 'col' ) ) );
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->method( 'get_results' )->willReturn( array() );
 
@@ -127,7 +130,7 @@ class Test_Complex_Query extends \WP_UnitTestCase {
 	public function test_in_or_not_in__both() {
 
 		$table = $this->getMockForAbstractClass( 'IronBound\DB\Table\Table', array( 'get_columns' ) );
-		$table->method( 'get_columns' )->willReturn( array( 'col' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array( 'col' => new StringBased( 'VARCHAR', 'col' ) ) );
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->method( 'get_results' )->willReturn( array() );
 
@@ -162,7 +165,10 @@ class Test_Complex_Query extends \WP_UnitTestCase {
 	public function test_parse_order() {
 
 		$table = $this->getMockForAbstractClass( 'IronBound\DB\Table\Table', array( 'get_columns' ) );
-		$table->method( 'get_columns' )->willReturn( array( 'colA' => '%s', 'colB' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' )
+		) );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->method( 'get_results' )->willReturn( array() );
@@ -191,7 +197,11 @@ class Test_Complex_Query extends \WP_UnitTestCase {
 			'get_columns',
 			'get_primary_key'
 		) );
-		$table->method( 'get_columns' )->willReturn( array( 'ID' => '%d', 'colA' => '%s', 'colB' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'   => new IntegerBased( 'BIGINT', 'ID' ),
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' )
+		) );
 		$table->method( 'get_primary_key' )->willReturn( 'ID' );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
@@ -233,7 +243,7 @@ class Test_Complex_Query extends \WP_UnitTestCase {
 	public function test_exception_thrown_if_invalid_direction() {
 
 		$table = $this->getMockForAbstractClass( 'IronBound\DB\Table\Table', array( 'get_columns' ) );
-		$table->method( 'get_columns' )->willReturn( array( 'col' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array( 'col' => new StringBased( 'VARCHAR', 'col' ) ) );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->method( 'get_results' )->willReturn( array() );
@@ -259,7 +269,7 @@ class Test_Complex_Query extends \WP_UnitTestCase {
 	public function test_exception_thrown_if_invalid_column() {
 
 		$table = $this->getMockForAbstractClass( 'IronBound\DB\Table\Table', array( 'get_columns' ) );
-		$table->method( 'get_columns' )->willReturn( array( 'col' => '%s' ) );
+		$table->method( 'get_columns' )->willReturn( array( 'col' => new StringBased( 'VARCHAR', 'col' ) ) );
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->method( 'get_results' )->willReturn( array() );

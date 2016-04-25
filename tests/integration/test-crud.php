@@ -1,16 +1,18 @@
 <?php
 /**
- * Integration tests for crud.
+ * Test the with foreign post model.
  *
- * @author      Iron Bound Designs
- * @since       1.2
- * @copyright   2016 (c) Iron Bound Designs.
- * @license     MIT
+ * @author    Iron Bound Designs
+ * @since     2.0
+ * @license   MIT
+ * @copyright Iron Bound Designs, 2016.
  */
 
 namespace IronBound\DB\Tests;
 
 use IronBound\DB\Manager;
+use IronBound\DB\Tests\Stub\Models\ModelWithForeignPost;
+use IronBound\DB\Tests\Stub\Tables\TableWithForeignPost;
 
 /**
  * Class Test_Crud
@@ -21,68 +23,94 @@ class Test_Crud extends \WP_UnitTestCase {
 	public function setUp() {
 		parent::setUp();
 
-		Manager::register( new Stub_Table() );
-		Manager::maybe_install_table( new Stub_Table() );
+		Manager::register( new TableWithForeignPost() );
+		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );
 	}
 
 	public function test_create() {
 
-		$builder = new Stub_Builder();
-		$builder->set_price( '5.45' );
-		$builder->set_title( "My new title" );
+		$post = self::factory()->post->create_and_get();
 
-		$model = $builder->build();
+		$model = new ModelWithForeignPost( array(
+			'post'  => $post,
+			'price' => 24.75
+		) );
+		$model->save();
 
-		$this->assertInstanceOf( 'IronBound\DB\Tests\Stub_Model', $model );
-		$this->assertEquals( 5.45, $model->get_price() );
-		$this->assertEquals( "My new title", $model->get_title() );
-		$this->assertEquals( current_time( 'timestamp', true ), $model->get_published()->getTimestamp(), '', 5 );
-	}
+		$this->assertTrue( $model->exists() );
 
-	public function test_get() {
+		$this->assertNotEmpty( $model->get_pk() );
+		$this->assertEquals( time(), $model->published->getTimestamp(), '', 5 );
 
-		$builder = new Stub_Builder();
-		$model   = $builder->build();
+		$published = $model->published;
 
-		$this->assertEquals( $model, Stub_Model::get( $model->get_pk() ) );
+		$model = ModelWithForeignPost::get( $model->get_pk() );
+		$this->assertEquals( 24.75, $model->price );
+		$this->assertEquals( $post, $model->post );
+		$this->assertEquals( $published, $model->published );
 	}
 
 	public function test_update() {
 
-		$builder = new Stub_Builder();
-		$model   = $builder->build();
+		$model = new ModelWithForeignPost( array(
+			'post' => self::factory()->post->create_and_get()
+		) );
+		$model->save();
 
-		$published = new \DateTime( 'tomorrow' );
-		$model->set_published( $published );
+		$post = self::factory()->post->create_and_get();
 
-		$model = Stub_Model::get( $model->get_pk() );
-		$this->assertEquals( $published, $model->get_published() );
+		$model->post = $post;
+		$this->assertEquals( $post, $model->post );
+		$model->save();
+
+		$model = ModelWithForeignPost::get( $model->get_pk() );
+		$this->assertEquals( $post, $model->post );
+	}
+
+	public function test_unset_attribute() {
+
+		$model = new ModelWithForeignPost( array(
+			'post' => self::factory()->post->create_and_get()
+		) );
+		$model->save();
+
+		unset( $model->post );
+		$this->assertNull( $model->post );
+		$model->save();
+
+		$model = ModelWithForeignPost::get( $model->get_pk() );
+		$this->assertNull( $model->post );
 	}
 
 	public function test_delete() {
 
-		$builder = new Stub_Builder();
-		$model   = $builder->build();
+		$model = new ModelWithForeignPost();
+		$model->save();
 
+		$this->assertNotEmpty( $model->get_pk() );
 		$model->delete();
-		$this->assertNull( Stub_Model::get( $model->get_pk() ) );
+		$this->assertNull( ModelWithForeignPost::get( $model->get_pk() ) );
 	}
 
 	public function test_caching() {
 
-		$builder = new Stub_Builder();
-		$model   = $builder->build();
+		$model = new ModelWithForeignPost( array(
+			'price' => 29.99
+		) );
+		$model->save();
 
 		$current = $GLOBALS['wpdb']->num_queries;
-		Stub_Model::get( $model->get_pk() );
+		ModelWithForeignPost::get( $model->get_pk() );
 		$this->assertEquals( $current, $GLOBALS['wpdb']->num_queries );
 	}
 
 	public function test_serialize() {
 
-		$builder = new Stub_Builder();
-		$model   = $builder->build();
+		$model = new ModelWithForeignPost( array(
+			'price' => 29.99
+		) );
+		$model->save();
 
-		$this->assertEquals( $model, unserialize( serialize( $model ) ) );
+		$this->assertEquals( $model->price, unserialize( serialize( $model ) )->price );
 	}
 }
