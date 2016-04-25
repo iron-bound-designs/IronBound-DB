@@ -36,8 +36,8 @@ $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-require_once __DIR__ . '/stub/model.php';
-require_once __DIR__ . '/stub/table.php';
-require_once __DIR__ . '/stub/builder.php';
+require_once __DIR__ . '/Stub/model.php';
+require_once __DIR__ . '/Stub/table.php';
+require_once __DIR__ . '/Stub/builder.php';
 
 require $test_root . '/includes/bootstrap.php';
