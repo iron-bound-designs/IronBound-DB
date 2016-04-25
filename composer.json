@@ -21,7 +21,11 @@
         }
     },
     "require-dev": {
-        "phpunit/phpunit": "^4.8"
+        "phpunit/phpunit": "^4.8",
+        "ironbound/wpevents": "^1.0"
+    },
+    "suggest": {
+      "ironbound/wpevents": "Allows for firing events when certain actions occur on a model."
     },
     "config": {
         "platform": {

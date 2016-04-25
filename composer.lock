@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "bc777875febe1e3216fedc86f836dde1",
-    "content-hash": "94b51f530d3e37283c6bb9f1322cc003",
+    "hash": "489c6d59e807f2fb8ddd347e53716db4",
+    "content-hash": "05beaf57443910cfd709c59790eceee1",
     "packages": [
         {
             "name": "doctrine/collections",
@@ -161,6 +161,47 @@
                 "instantiate"
             ],
             "time": "2015-06-14 21:17:01"
+        },
+        {
+            "name": "ironbound/wpevents",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/iron-bound-designs/IronBound-WPEvents.git",
+                "reference": "bb2f4d1b3a408a59992ce57d9bdcd65041d8704a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/iron-bound-designs/IronBound-WPEvents/zipball/bb2f4d1b3a408a59992ce57d9bdcd65041d8704a",
+                "reference": "bb2f4d1b3a408a59992ce57d9bdcd65041d8704a",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "require-dev": {
+                "10up/wp_mock": "dev-master",
+                "phpunit/phpunit": "^4.8"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "IronBound\\WPEvents\\": "src/",
+                    "IronBound\\WPEvents\\Tests\\": "tests/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Timothy Jacobs",
+                    "email": "timothy@ironbounddesigns.com"
+                }
+            ],
+            "description": "Object orineted events library for WordPRess",
+            "time": "2016-04-17 23:01:15"
         },
         {
             "name": "phpdocumentor/reflection-docblock",

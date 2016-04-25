@@ -12,13 +12,23 @@ namespace IronBound\DB;
 
 use IronBound\Cache\Cacheable;
 use IronBound\Cache\Cache;
-use IronBound\DB\Helpers\ColumnModelProxy;
 use IronBound\DB\Table\Table;
+use IronBound\WPEvents\EventDispatcher;
+use IronBound\WPEvents\GenericEvent;
 
 /**
  * Class Model
  *
- * @package IronBound\DB;
+ * @package IronBound\DB
+ *
+ * @method static creating( callable $listener, int $priority = 10, int $args = 3 ) Listen for the creating event.
+ * @method static created( callable $listener, int $priority = 10, int $args = 3 ) Listen for the created event.
+ * @method static updating( callable $listener, int $priority = 10, int $args = 3 ) Listen for the updating event.
+ * @method static updated( callable $listener, int $priority = 10, int $args = 3 ) Listen for the updated event.
+ * @method static saving( callable $listener, int $priority = 10, int $args = 3 ) Listen for the saving event.
+ * @method static saved( callable $listener, int $priority = 10, int $args = 3 ) Listen for the saved event.
+ * @method static deleting( callable $listener, int $priority = 10, int $args = 3 ) Listen for the deleting event.
+ * @method static deleted( callable $listener, int $priority = 10, int $args = 3 ) Listen for the deleted event.
  */
 abstract class Model implements Cacheable, \Serializable {
 
@@ -28,6 +38,11 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @var Manager
 	 */
 	protected static $_db_manager;
+
+	/**
+	 * @var EventDispatcher
+	 */
+	protected static $_event_dispatcher;
 
 	/// Model Configuration
 
@@ -455,6 +470,8 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function save() {
 
+		$this->fire_model_event( 'saving' );
+
 		if ( $this->exists() ) {
 			$saved = $this->do_save_as_update();
 		} else {
@@ -485,10 +502,29 @@ abstract class Model implements Cacheable, \Serializable {
 			return true;
 		}
 
+		$previous = array();
+
+		foreach ( $dirty as $column => $value ) {
+
+			if ( array_key_exists( $column, $this->_original ) ) {
+				$previous[ $column ] = $this->_original[ $column ];
+			}
+		}
+
+		$this->fire_model_event( 'updating', array(
+			'changed' => $dirty,
+			'from'    => $previous
+		) );
+
 		$result = static::make_query_object()->update( $this->get_pk(), $dirty );
 
 		if ( $result ) {
 			Cache::update( $this );
+
+			$this->fire_model_event( 'updated', array(
+				'changed' => $dirty,
+				'from'    => $previous
+			) );
 		}
 
 		return $result;
@@ -504,6 +540,8 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @throws Exception
 	 */
 	protected function do_save_as_insert() {
+
+		$this->fire_model_event( 'creating' );
 
 		$insert_id = static::make_query_object()->insert( $this->_attributes );
 
@@ -532,6 +570,8 @@ abstract class Model implements Cacheable, \Serializable {
 
 		Cache::update( $this );
 
+		$this->fire_model_event( 'created' );
+
 		return true;
 	}
 
@@ -541,6 +581,9 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @since 2.0
 	 */
 	protected function finish_save() {
+
+		$this->fire_model_event( 'saved' );
+
 		$this->sync_original();
 	}
 
@@ -553,9 +596,13 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function delete() {
 
+		$this->fire_model_event( 'deleting' );
+
 		static::make_query_object()->delete( $this->get_pk() );
 
 		Cache::delete( $this );
+
+		$this->fire_model_event( 'deleted' );
 	}
 
 	/**
@@ -567,6 +614,46 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	protected static function make_query_object() {
 		return static::$_db_manager->make_simple_query_object( static::get_table()->get_slug() );
+	}
+
+	/**
+	 * Fire a model event.
+	 *
+	 * Will bail early if no event dispatcher is available.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $event     Event name.
+	 * @param array  $arguments Additional arguments passed to the GenericEvent object.
+	 */
+	protected function fire_model_event( $event, $arguments = array() ) {
+
+		if ( ! static::$_event_dispatcher ) {
+			return;
+		}
+
+		$event = static::get_table()->get_slug() . ".$event";
+
+		static::$_event_dispatcher->dispatch( $event, new GenericEvent( $this, $arguments ) );
+	}
+
+	/**
+	 * Register a model event.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string   $event
+	 * @param callable $callback
+	 * @param int      $priority
+	 * @param int      $accepted_args
+	 */
+	public static function register_model_event( $event, $callback, $priority = 10, $accepted_args = 3 ) {
+
+		if ( isset( static::$_event_dispatcher ) ) {
+			$event = static::get_table()->get_slug() . ".$event";
+
+			static::$_event_dispatcher->add_listener( $event, $callback, $priority, $accepted_args );
+		}
 	}
 
 	/**
@@ -696,6 +783,29 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
+	 * @inheritDoc
+	 */
+	public static function __callStatic( $name, $arguments ) {
+
+		if ( in_array( $name, array(
+			'saved',
+			'saving',
+			'updated',
+			'updating',
+			'created',
+			'creating',
+			'deleted',
+			'deleting'
+		) ) ) {
+			$instance = new static;
+
+			array_unshift( $arguments, $name );
+
+			call_user_func_array( array( $instance, 'register_model_event' ), $arguments );
+		}
+	}
+
+	/**
 	 * Set the DB Manager to use for this model.
 	 *
 	 * @since 1.2
@@ -704,5 +814,16 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public static function set_db_manager( Manager $manager ) {
 		static::$_db_manager = $manager;
+	}
+
+	/**
+	 * Set the EventDispatcher globally.
+	 *
+	 * @since 2.0
+	 *
+	 * @param EventDispatcher $dispatcher
+	 */
+	public static function set_event_dispatcher( EventDispatcher $dispatcher ) {
+		static::$_event_dispatcher = $dispatcher;
 	}
 }
