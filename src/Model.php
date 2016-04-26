@@ -21,6 +21,7 @@ use IronBound\WPEvents\GenericEvent;
  *
  * @package IronBound\DB
  *
+ * @method static $this create( $attributes ) Create a new instance of this model.
  * @method static creating( callable $listener, int $priority = 10, int $args = 3 ) Listen for the creating event.
  * @method static created( callable $listener, int $priority = 10, int $args = 3 ) Listen for the created event.
  * @method static updating( callable $listener, int $priority = 10, int $args = 3 ) Listen for the updating event.
@@ -691,6 +692,23 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
+	 * Create a new instance of this model.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $attributes
+	 *
+	 * @return self
+	 */
+	protected static function _do_create( array $attributes = array() ) {
+
+		$instance = new static( $attributes );
+		$instance->save();
+
+		return $instance;
+	}
+
+	/**
 	 * Make a query object.
 	 *
 	 * @since 1.2
@@ -886,8 +904,17 @@ abstract class Model implements Cacheable, \Serializable {
 
 			array_unshift( $arguments, $name );
 
-			call_user_func_array( array( $instance, 'register_model_event' ), $arguments );
+			return call_user_func_array( array( $instance, 'register_model_event' ), $arguments );
 		}
+
+		if ( $name === 'create' ) {
+
+			$instance = new static;
+
+			return call_user_func_array( array( $instance, '_do_create' ), $arguments );
+		}
+
+		throw new \BadMethodCallException( "__callStatic() failed. No method found for name '$name'." );
 	}
 
 	/**

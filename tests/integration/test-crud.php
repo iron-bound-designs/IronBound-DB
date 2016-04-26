@@ -50,6 +50,15 @@ class Test_Crud extends \WP_UnitTestCase {
 		$this->assertEquals( $published, $model->published );
 	}
 
+	public function test_create_with_static_method() {
+
+		$model = ModelWithForeignPost::create( array(
+			'price' => 24.75
+		) );
+
+		$this->assertEquals( 24.75, $model->price );
+	}
+
 	public function test_update() {
 
 		$model = new ModelWithForeignPost( array(
