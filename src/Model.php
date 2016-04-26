@@ -404,11 +404,11 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @param int|string $pk Primary key of this record.
 	 *
-	 * @returns self|null
+	 * @returns static|null
 	 */
 	public static function get( $pk ) {
 
-		$data = self::get_data_from_pk( $pk );
+		$data = static::get_data_from_pk( $pk );
 
 		if ( $data ) {
 
@@ -698,7 +698,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @param array $attributes
 	 *
-	 * @return self
+	 * @return static
 	 */
 	protected static function _do_create( array $attributes = array() ) {
 
@@ -829,7 +829,7 @@ abstract class Model implements Cacheable, \Serializable {
 	public function unserialize( $serialized ) {
 		$data = unserialize( $serialized );
 
-		$this->init( self::get_data_from_pk( $data['pk'] ) );
+		$this->init( static::get_data_from_pk( $data['pk'] ) );
 		$this->_fillable = $data['fillable'];
 		$this->_original = $data['original'];
 	}
@@ -947,6 +947,6 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return EventDispatcher
 	 */
 	public static function get_event_dispatcher() {
-		return self::$_event_dispatcher;
+		return static::$_event_dispatcher;
 	}
 }
