@@ -10,8 +10,10 @@
 
 namespace IronBound\DB;
 
+use Doctrine\Common\Collections\Collection;
 use IronBound\Cache\Cacheable;
 use IronBound\Cache\Cache;
+use IronBound\DB\Relations\Relation;
 use IronBound\DB\Table\Table;
 use IronBound\WPEvents\EventDispatcher;
 use IronBound\WPEvents\GenericEvent;
@@ -85,6 +87,13 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @var array
 	 */
 	protected $_attribute_value_cache = array();
+
+	/**
+	 * Map of relation name to results.
+	 *
+	 * @var array
+	 */
+	protected $_relations = array();
 
 	/**
 	 * @var bool
@@ -163,6 +172,10 @@ abstract class Model implements Cacheable, \Serializable {
 
 		if ( array_key_exists( $attribute, $this->_attributes ) || $this->has_get_mutator( $attribute ) ) {
 			return $this->get_attribute_value( $attribute );
+		}
+
+		if ( $this->has_relation( $attribute ) ) {
+			return $this->get_relation_value( $attribute );
 		}
 
 		return null;
@@ -274,6 +287,63 @@ abstract class Model implements Cacheable, \Serializable {
 		$method = "_set_{$attribute}";
 
 		return $this->{$method}( $value );
+	}
+
+	/**
+	 * Check if a relation exists.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 *
+	 * @return bool
+	 */
+	protected function has_relation( $attribute ) {
+		return method_exists( $this, "_{$attribute}_relation" );
+	}
+
+
+	/**
+	 * Get a relation value.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 *
+	 * @return Collection|Model|mixed
+	 */
+	protected function get_relation_value( $attribute ) {
+
+		if ( array_key_exists( $attribute, $this->_relations ) ) {
+			return $this->_relations[ $attribute ];
+		}
+
+		$relation = $this->get_relation_from_function( $attribute );
+
+		$this->_relations[ $attribute ] = $relation->get_results();
+
+		return $this->get_relation_value( $attribute );
+	}
+
+	/**
+	 * Get a relation object by its function.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 *
+	 * @return Relation
+	 */
+	protected function get_relation_from_function( $attribute ) {
+
+		$method   = "_{$attribute}_relation";
+		$relation = $this->{$method}();
+
+		if ( ! $relation instanceof Relation ) {
+			throw new \UnexpectedValueException( 'Relation methods must return an IronBound\DB\Relations\Relation object.' );
+		}
+
+		return $relation;
 	}
 
 	/**

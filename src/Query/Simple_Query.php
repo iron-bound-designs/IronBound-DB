@@ -73,38 +73,7 @@ class Simple_Query {
 	 * @throws Exception
 	 */
 	public function get_by( $column, $value, $columns = '*' ) {
-
-		$builder = new Builder();
-
-		$allowed_columns = $this->table->get_columns();
-
-		if ( is_array( $columns ) ) {
-
-			$select = new Select( null );
-
-			foreach ( $columns as $col ) {
-
-				if ( ! isset( $allowed_columns[ $col ] ) ) {
-					throw new InvalidColumnException( "Invalid column." );
-				}
-
-				$select->also( $col );
-			}
-		} elseif ( $columns == Select::ALL ) {
-			$select = new Select( $columns );
-		} else {
-			if ( ! isset( $allowed_columns[ $columns ] ) ) {
-				throw new InvalidColumnException( "Invalid column" );
-			}
-
-			$select = new Select( $columns );
-		}
-
-		$builder->append( $select );
-		$builder->append( new From( $this->table->get_table_name( $this->wpdb ) ) );
-		$builder->append( new Where( $column, true, $this->escape_value( $column, $value ) ) );
-
-		return $this->wpdb->get_row( trim( $builder->build() ) );
+		return $this->get_by_or_many_by_helper( $column, $value, $columns, 'get_row' );
 	}
 
 	/**
@@ -151,6 +120,68 @@ class Simple_Query {
 		$builder->append( new Where( $where, true, $this->escape_value( $where, $value ) ) );
 
 		return $this->wpdb->get_var( trim( $builder->build() ) );
+	}
+
+	/**
+	 * Get many rows by a certain column.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $column
+	 * @param mixed  $value
+	 * @param string $columns
+	 *
+	 * @return array
+	 * @throws InvalidColumnException
+	 */
+	public function get_many_by( $column, $value, $columns = '*' ) {
+		return $this->get_by_or_many_by_helper( $column, $value, $columns, 'get_results' );
+	}
+
+	/**
+	 * Helper function for get_by and get_many_by methods.
+	 *
+	 * @param string $column
+	 * @param mixed  $value
+	 * @param string $columns
+	 * @param string $method
+	 *
+	 * @return mixed
+	 * @throws InvalidColumnException
+	 */
+	protected function get_by_or_many_by_helper( $column, $value, $columns = '*', $method ) {
+
+		$builder = new Builder();
+
+		$allowed_columns = $this->table->get_columns();
+
+		if ( is_array( $columns ) ) {
+
+			$select = new Select( null );
+
+			foreach ( $columns as $col ) {
+
+				if ( ! isset( $allowed_columns[ $col ] ) ) {
+					throw new InvalidColumnException( "Invalid column." );
+				}
+
+				$select->also( $col );
+			}
+		} elseif ( $columns == Select::ALL ) {
+			$select = new Select( $columns );
+		} else {
+			if ( ! isset( $allowed_columns[ $columns ] ) ) {
+				throw new InvalidColumnException( "Invalid column" );
+			}
+
+			$select = new Select( $columns );
+		}
+
+		$builder->append( $select );
+		$builder->append( new From( $this->table->get_table_name( $this->wpdb ) ) );
+		$builder->append( new Where( $column, true, $this->escape_value( $column, $value ) ) );
+
+		return $this->wpdb->{$method}( trim( $builder->build() ) );
 	}
 
 	/**
@@ -300,7 +331,9 @@ class Simple_Query {
 		$row_key = $this->escape_value( $this->table->get_primary_key(), $row_key );
 
 		$prev   = $this->wpdb->show_errors( false );
-		$result = $this->wpdb->delete( $this->table->get_table_name( $this->wpdb ), array( $this->table->get_primary_key() => $row_key ) );
+		$result = $this->wpdb->delete( $this->table->get_table_name( $this->wpdb ), array(
+			$this->table->get_primary_key() => $row_key
+		) );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {
@@ -349,7 +382,7 @@ class Simple_Query {
 		$columns = $this->table->get_columns();
 
 		if ( ! isset( $columns[ $column ] ) ) {
-			throw new InvalidColumnException( "Invalid database column." );
+			throw new InvalidColumnException( "Invalid database column '$column'." );
 		}
 
 		if ( empty( $value ) ) {

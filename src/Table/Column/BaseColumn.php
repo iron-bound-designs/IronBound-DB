@@ -63,9 +63,11 @@ abstract class BaseColumn implements Column {
 	 *
 	 * @since 2.0
 	 *
+	 * @param array $exclude_options
+	 *
 	 * @return string
 	 */
-	protected function get_definition_without_column_name() {
+	protected function get_definition_without_column_name( array $exclude_options = array() ) {
 
 		$definition = $this->get_mysql_type();
 
@@ -74,7 +76,12 @@ abstract class BaseColumn implements Column {
 		}
 
 		if ( $this->options ) {
-			$definition .= ' ' . implode( ' ', $this->options );
+
+			$options = array_udiff( $this->options, $exclude_options, function ( $a, $b ) {
+				return strcmp( strtolower( $a ), strtolower( $b ) );
+			} );
+
+			$definition .= ' ' . implode( ' ', $options );
 		}
 
 		return $definition;

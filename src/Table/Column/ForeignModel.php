@@ -62,7 +62,7 @@ class ForeignModel extends BaseColumn {
 	 * @inheritDoc
 	 */
 	public function get_definition() {
-		return "{$this->name} {$this->get_column()->get_definition_without_column_name()}";
+		return "{$this->name} {$this->get_column()->get_definition_without_column_name( array( 'auto_increment' ) )}";
 	}
 
 	/**
