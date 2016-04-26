@@ -140,10 +140,8 @@ abstract class Model implements Cacheable, \Serializable {
 
 		unset( $this->_attribute_value_cache[ $attribute ] );
 
-		$setter = "set_{$attribute}_attribute";
-
-		if ( method_exists( $this, $setter ) ) {
-			return $this->{$setter}( $value );
+		if ( $this->has_set_mutator( $attribute ) ) {
+			return $this->call_set_mutator( $attribute, $value );
 		}
 
 		$this->_attributes[ $attribute ] = $value;
@@ -162,32 +160,119 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function get_attribute( $attribute ) {
 
-		if ( array_key_exists( $attribute, $this->_attributes ) ) {
-
-			if ( isset( $this->_attribute_value_cache[ $attribute ] ) ) {
-				$value = $this->_attribute_value_cache[ $attribute ];
-			} else {
-				$value = $this->_attributes[ $attribute ];
-
-				// only update the attribute value cache if we have a raw value from the db
-				if ( is_scalar( $value ) ) {
-					$columns = static::get_table()->get_columns();
-					$value   = $columns[ $attribute ]->convert_raw_to_value( $value );
-
-					$this->_attribute_value_cache[ $attribute ] = $value;
-				}
-			}
-
-			$getter = "get_{$attribute}_attribute";
-
-			if ( method_exists( $this, $getter ) ) {
-				$value = $this->{$getter}( $value );
-			}
-
-			return $value;
+		if ( array_key_exists( $attribute, $this->_attributes ) || $this->has_get_mutator( $attribute ) ) {
+			return $this->get_attribute_value( $attribute );
 		}
 
 		return null;
+	}
+
+	/**
+	 * Get an attribute's value.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 *
+	 * @return mixed
+	 */
+	protected function get_attribute_value( $attribute ) {
+
+		$value = $this->get_attribute_from_array( $attribute );
+
+		if ( $this->has_get_mutator( $attribute ) ) {
+			$value = $this->call_get_mutator( $attribute, $value );
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Get an attribute's value from the internal attributes array.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 *
+	 * @return mixed|null
+	 */
+	protected function get_attribute_from_array( $attribute ) {
+
+		if ( array_key_exists( $attribute, $this->_attribute_value_cache ) ) {
+			return $this->_attribute_value_cache[ $attribute ];
+		} elseif ( array_key_exists( $attribute, $this->_attributes ) ) {
+			$value = $this->_attributes[ $attribute ];
+
+			// only update the attribute value cache if we have a raw value from the db
+			if ( is_scalar( $value ) ) {
+				$columns = static::get_table()->get_columns();
+				$value   = $columns[ $attribute ]->convert_raw_to_value( $value );
+
+				$this->_attribute_value_cache[ $attribute ] = $value;
+			}
+
+			return $value;
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * Check if a get mutator exists for a given attribute.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 *
+	 * @return bool
+	 */
+	protected function has_get_mutator( $attribute ) {
+		return method_exists( $this, "_get_{$attribute}" );
+	}
+
+	/**
+	 * Call the get mutator for a given attribute.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 * @param mixed  $value
+	 *
+	 * @return mixed
+	 */
+	protected function call_get_mutator( $attribute, $value ) {
+		$method = "_get_{$attribute}";
+
+		return $this->{$method}( $value );
+	}
+
+	/**
+	 * Check if a set mutator exists for a given attribute.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 *
+	 * @return bool
+	 */
+	protected function has_set_mutator( $attribute ) {
+		return method_exists( $this, "_set_{$attribute}" );
+	}
+
+	/**
+	 * Call the set mutator for a given attribute.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 * @param mixed  $value
+	 *
+	 * @return mixed
+	 */
+	protected function call_set_mutator( $attribute, $value ) {
+		$method = "_set_{$attribute}";
+
+		return $this->{$method}( $value );
 	}
 
 	/**
