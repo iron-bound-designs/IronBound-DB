@@ -51,20 +51,28 @@ abstract class Model implements Cacheable, \Serializable {
 	/// Model Configuration
 
 	/**
-	 * Whether all attributes can be automatically assigned.
+	 * Whether all attributes can be mass filled via the constructor
+	 * or the magic create() method.
 	 *
 	 * @var bool
 	 */
-	protected static $_unguarded = true;
+	protected static $_unguarded = false;
 
 	/// Instance Configuration
 
 	/**
-	 * List of attributes that are automatically filled.
+	 * Whitelist of attributes that are automatically filled.
 	 *
 	 * @var array
 	 */
 	protected $_fillable = array();
+
+	/**
+	 * Blacklist of attributes that are not automatically filled.
+	 *
+	 * @var array
+	 */
+	protected $_guarded = array();
 
 	/**
 	 * Raw attribute data.
@@ -132,6 +140,27 @@ abstract class Model implements Cacheable, \Serializable {
 			if ( $this->is_fillable( $column ) ) {
 				$this->set_attribute( $column, $value );
 			}
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Set the attribute data for this model, ignoring guarding.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $attributes
+	 * @param bool  $sync
+	 *
+	 * @return $this
+	 */
+	public function set_raw_attributes( array $attributes = array(), $sync = false ) {
+
+		$this->_attributes = $attributes;
+
+		if ( $sync ) {
+			$this->sync_original();
 		}
 
 		return $this;
@@ -362,11 +391,11 @@ abstract class Model implements Cacheable, \Serializable {
 			return true;
 		}
 
-		if ( in_array( $this->_fillable, $column ) ) {
-			return true;
+		if ( empty( $this->_fillable ) ) {
+			return ! in_array( $column, $this->_guarded );
+		} else {
+			return in_array( $column, $this->_fillable );
 		}
-
-		return false;
 	}
 
 	/**
@@ -483,7 +512,9 @@ abstract class Model implements Cacheable, \Serializable {
 
 		if ( $data ) {
 
-			$object = new static( (object) $data );
+			$object = new static( new \stdClass() );
+			$object->set_raw_attributes( (array) $data, true );
+			$object->_exists = true;
 
 			if ( ! static::is_data_cached( $pk ) ) {
 				Cache::update( $object );
@@ -493,6 +524,28 @@ abstract class Model implements Cacheable, \Serializable {
 		} else {
 			return null;
 		}
+	}
+
+	/**
+	 * Create a new object from a list of attributes.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $attributes
+	 *
+	 * @return static
+	 */
+	public static function from_query( array $attributes = array() ) {
+
+		$instance = new static( new \stdClass() );
+		$instance->set_raw_attributes( $attributes, true );
+		$instance->_exists = true;
+
+		if ( ! static::is_data_cached( $instance->get_pk() ) ) {
+			Cache::update( $instance );
+		}
+
+		return $instance;
 	}
 
 	/**

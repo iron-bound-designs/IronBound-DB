@@ -52,7 +52,7 @@ class HasMany extends Relation {
 
 		foreach ( $results as $result ) {
 
-			$model = new $model_class( $result );
+			$model = $model_class::from_query( (array) $result );
 
 			$models[ $model->get_pk() ] = $model;
 		}
