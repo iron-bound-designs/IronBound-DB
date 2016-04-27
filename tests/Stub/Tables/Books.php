@@ -17,6 +17,7 @@ use IronBound\DB\Table\Column\DecimalBased;
 use IronBound\DB\Table\Column\ForeignModel;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\StringBased;
+use IronBound\DB\Tests\Stub\Models\Author;
 
 /**
  * Class Books
@@ -47,7 +48,7 @@ class Books extends BaseTable {
 			'title'     => new StringBased( 'TEXT', 'title' ),
 			'price'     => new DecimalBased( 'DECIMAL', 'price', array( 'unsigned' ), array( 10, 2 ) ),
 			'published' => new DateTime( 'published' ),
-			'author'    => new ForeignModel( 'author', Manager::get( 'authors' ), 'IronBound\DB\Tests\Models\Author' )
+			'author'    => new ForeignModel( 'author', Manager::get( 'authors' ), get_class( new Author() ) )
 		);
 	}
 

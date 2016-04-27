@@ -11,13 +11,14 @@
 namespace IronBound\DB\Table\Column;
 
 use IronBound\DB\Model;
+use IronBound\DB\Table\Column\Contracts\Savable;
 use IronBound\DB\Table\Table;
 
 /**
  * Class ForeignModel
  * @package IronBound\DB\Table\Column
  */
-class ForeignModel extends BaseColumn {
+class ForeignModel extends BaseColumn implements Savable {
 
 	/**
 	 * @var Table
@@ -89,5 +90,19 @@ class ForeignModel extends BaseColumn {
 		}
 
 		return $this->get_column()->prepare_for_storage( $value );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function save( $value ) {
+
+		if ( ! $value instanceof Model ) {
+			throw new \InvalidArgumentException( 'ForeignModel column can only save IronBound\DB\Model objects.' );
+		}
+
+		$value->save();
+
+		return $value;
 	}
 }

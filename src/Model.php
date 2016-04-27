@@ -14,6 +14,7 @@ use Doctrine\Common\Collections\Collection;
 use IronBound\Cache\Cacheable;
 use IronBound\Cache\Cache;
 use IronBound\DB\Relations\Relation;
+use IronBound\DB\Table\Column\Contracts\Savable;
 use IronBound\DB\Table\Table;
 use IronBound\WPEvents\EventDispatcher;
 use IronBound\WPEvents\GenericEvent;
@@ -628,6 +629,9 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$this->fire_model_event( 'saving' );
 
+		$this->save_savable_attributes();
+		$this->save_loaded_relations();
+
 		if ( $this->exists() ) {
 			$saved = $this->do_save_as_update();
 		} else {
@@ -639,6 +643,49 @@ abstract class Model implements Cacheable, \Serializable {
 		}
 
 		return $saved;
+	}
+
+	/**
+	 * Save all savable attributes.
+	 *
+	 * @since 2.0
+	 */
+	protected function save_savable_attributes() {
+
+		$columns = static::get_table()->get_columns();
+
+		foreach ( $this->_attributes as $attribute => $value ) {
+
+			$column = $columns[ $attribute ];
+
+			$value = $this->get_attribute_from_array( $attribute );
+
+			if ( $column instanceof Savable && is_object( $value ) ) {
+				$this->_attributes[ $attribute ] = $column->save( $value );
+			}
+		}
+	}
+
+	/**
+	 * Save loaded relations.
+	 *
+	 * @since 2.0
+	 */
+	protected function save_loaded_relations() {
+		foreach ( $this->_relations as $relation ) {
+
+			if ( $relation instanceof Model ) {
+				$relation->save();
+			} elseif ( $relation instanceof Collection ) {
+				foreach ( $relation as $model ) {
+
+					// safety, the Collection should always return Models
+					if ( $model instanceof Model ) {
+						$model->save();
+					}
+				}
+			}
+		}
 	}
 
 	/**

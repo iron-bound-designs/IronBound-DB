@@ -11,7 +11,12 @@
 namespace IronBound\DB\Tests;
 
 use IronBound\DB\Manager;
+use IronBound\DB\Tests\Stub\Models\Book;
+use IronBound\DB\Tests\Stub\Models\ModelWithAllForeign;
 use IronBound\DB\Tests\Stub\Models\ModelWithForeignPost;
+use IronBound\DB\Tests\Stub\Tables\Authors;
+use IronBound\DB\Tests\Stub\Tables\Books;
+use IronBound\DB\Tests\Stub\Tables\TableWithAllForeign;
 use IronBound\DB\Tests\Stub\Tables\TableWithForeignPost;
 
 /**
@@ -24,7 +29,14 @@ class Test_Crud extends \WP_UnitTestCase {
 		parent::setUp();
 
 		Manager::register( new TableWithForeignPost() );
+		Manager::register( new Authors() );
+		Manager::register( new Books() );
+		Manager::register( new TableWithAllForeign() );
+
 		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );
+		Manager::maybe_install_table( Manager::get( 'books' ) );
+		Manager::maybe_install_table( Manager::get( 'authors' ) );
+		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
 	}
 
 	public function test_create() {
@@ -121,5 +133,175 @@ class Test_Crud extends \WP_UnitTestCase {
 		$model->save();
 
 		$this->assertEquals( $model->price, unserialize( serialize( $model ) )->price );
+	}
+
+	public function test_foreign_post_automatically_saved() {
+
+		$model = new ModelWithAllForeign();
+
+		$model->post = new \WP_Post( (object) array(
+			'post_title'   => 'My Post',
+			'post_content' => 'My Post Content'
+		) );
+		$model->save();
+
+		$this->assertNotEmpty( $model->post->ID );
+		$this->assertEquals( 'My Post', $model->post->post_title );
+		$this->assertEquals( 'My Post Content', $model->post->post_content );
+	}
+
+	public function test_foreign_post_automatically_updated() {
+
+		$model = ModelWithAllForeign::create( array(
+			'post' => self::factory()->post->create_and_get( array(
+				'post_title'   => 'My Post',
+				'post_content' => 'My Post Content'
+			) )
+		) );
+
+		$model->post->post_title   = 'My Updated Post';
+		$model->post->post_content = 'My Updated Post Content';
+
+		$model->save();
+
+		$this->assertEquals( 'My Updated Post', $model->post->post_title );
+		$this->assertEquals( 'My Updated Post Content', $model->post->post_content );
+	}
+
+	public function test_foreign_user_automatically_saved() {
+
+		$model = new ModelWithAllForeign();
+
+		$model->user = new \WP_User( (object) array(
+			'user_login' => 'Test',
+			'user_email' => 'example.test@example.org',
+			'first_name' => 'John',
+			'last_name'  => 'Doe',
+			'ID'         => '',
+			'user_pass'  => wp_generate_password()
+		) );
+		$model->save();
+
+		$this->assertNotEmpty( $model->user->ID );
+		$this->assertEquals( 'Test', $model->user->user_login );
+		$this->assertEquals( 'example.test@example.org', $model->user->user_email );
+		$this->assertEquals( 'John', $model->user->first_name );
+		$this->assertEquals( 'Doe', $model->user->last_name );
+	}
+
+	public function test_foreign_user_automatically_updated() {
+
+		$model = ModelWithAllForeign::create( array(
+			'user' => self::factory()->user->create_and_get( array(
+				'user_login' => 'Test',
+				'user_email' => 'example.test@example.org',
+				'first_name' => 'John',
+				'last_name'  => 'Doe',
+			) )
+		) );
+
+		$model->user->user_email = 'example.test-user@example.org';
+		$model->user->first_name = 'James';
+		$model->user->last_name  = 'Smith';
+
+		$model->save();
+
+		$this->assertEquals( 'example.test-user@example.org', $model->user->user_email );
+		$this->assertEquals( 'James', $model->user->first_name );
+		$this->assertEquals( 'Smith', $model->user->last_name );
+	}
+
+	public function test_foreign_comment_automatically_saved() {
+
+		$model = new ModelWithAllForeign();
+
+		/** @noinspection PhpParamsInspection */
+		$model->comment = new \WP_Comment( (object) array(
+			'comment_post_ID' => self::factory()->post->create(),
+			'user_id'         => self::factory()->user->create(),
+			'comment_content' => 'This is my comment!'
+		) );
+		$model->save();
+
+		$this->assertNotEmpty( $model->comment->comment_ID );
+		$this->assertEquals( 'This is my comment!', $model->comment->comment_content );
+	}
+
+	public function test_foreign_comment_automatically_updated() {
+
+		/** @noinspection PhpParamsInspection */
+		$model = ModelWithAllForeign::create( array(
+			'comment' => new \WP_Comment( (object) array(
+				'comment_post_ID' => self::factory()->post->create(),
+				'user_id'         => self::factory()->user->create(),
+				'comment_content' => 'This is my comment!'
+			) )
+		) );
+
+		$model->comment->comment_content = 'My New Comment';
+
+		$model->save();
+
+		$this->assertEquals( 'My New Comment', $model->comment->comment_content );
+	}
+
+	public function test_foreign_term_automatically_saved() {
+
+		$model = new ModelWithAllForeign();
+
+		$model->term = new \WP_Term( (object) array(
+			'name'     => 'My Term',
+			'taxonomy' => 'category'
+		) );
+		$model->save();
+
+		$this->assertNotEmpty( $model->term->term_id );
+		$this->assertEquals( 'My Term', $model->term->name );
+		$this->assertEquals( 'category', $model->term->taxonomy );
+	}
+
+	public function test_foreign_term_automatically_updated() {
+
+		$model = ModelWithAllForeign::create( array(
+			'term' => self::factory()->term->create_and_get( array(
+				'taxonomy' => 'category',
+				'name'     => 'My Term'
+			) )
+		) );
+
+		$model->term->name        = 'My New Term';
+		$model->term->description = 'The Description';
+
+		$model->save();
+
+		$this->assertEquals( 'My New Term', $model->term->name );
+		$this->assertEquals( 'The Description', $model->term->description );
+	}
+
+	public function test_foreign_model_automatically_saved() {
+
+		$model = new ModelWithAllForeign();
+
+		$model->model = new Book( array(
+			'title' => 'My Book'
+		) );
+		$model->save();
+
+		$this->assertNotEmpty( $model->model->get_pk() );
+		$this->assertEquals( 'My Book', $model->model->title );
+	}
+
+	public function test_foreign_model_automatically_updated() {
+
+		$model = ModelWithAllForeign::create( array(
+			'model' => Book::create( array(
+				'title' => 'My Book'
+			) )
+		) );
+
+		$model->model->title = 'My New Book';
+		$model->save();
+
+		$this->assertEquals( 'My New Book', $model->model->title );
 	}
 }

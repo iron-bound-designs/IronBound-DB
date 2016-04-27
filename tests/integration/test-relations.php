@@ -56,4 +56,29 @@ class Test_Relations extends \WP_UnitTestCase {
 		) );
 		$this->assertTrue( $books->containsKey( $b2->get_pk() ) );
 	}
+
+	public function test_loaded_relations_are_saved() {
+
+		$author = Author::create( array( 'name' => 'John Smith' ) );
+
+		$b1 = Book::create( array(
+			'title'  => 'The Tales of John Smith',
+			'author' => $author,
+			'price'  => 19.95
+		) );
+		$b2 = Book::create( array(
+			'title'  => 'The Songs of John Smith',
+			'author' => $author,
+			'price'  => 14.95
+		) );
+
+		foreach ( $author->books as $book ) {
+			$book->price += 5.0;
+		}
+
+		$author->save();
+
+		$this->assertEquals( 24.95, Book::get( $b1->get_pk() )->price );
+		$this->assertEquals( 19.95, Book::get( $b2->get_pk() )->price );
+	}
 }

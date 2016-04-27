@@ -88,6 +88,41 @@ abstract class BaseColumn implements Column {
 	}
 
 	/**
+	 * Check if two things are numerically equivalent.
+	 *
+	 * @since 2.0
+	 *
+	 * @param mixed $a
+	 * @param mixed $b
+	 *
+	 * @return bool
+	 */
+	protected function numerically_equivalent( $a, $b ) {
+		return is_numeric( $a ) && is_numeric( $b ) && strcmp( (string) $a, (string) $b ) === 0;
+	}
+
+	/**
+	 * Check if there are changes.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $old
+	 * @param array $new
+	 *
+	 * @return bool
+	 */
+	protected function has_changes( $old, $new ) {
+
+		foreach ( $new as $key => $value ) {
+			if ( $value !== $old[ $key ] && ! $this->numerically_equivalent( $value, $old[ $key ] ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	abstract public function get_mysql_type();
