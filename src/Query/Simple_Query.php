@@ -254,7 +254,7 @@ class Simple_Query {
 		}
 
 		foreach ( $data as $name => $value ) {
-			$data[ $name ] = $this->escape_value( $name, $value );
+			$data[ $name ] = $this->prepare_for_storage( $name, $value );
 		}
 
 		$prev = $this->wpdb->show_errors( false );
@@ -297,7 +297,7 @@ class Simple_Query {
 		$data = array_intersect_key( $data, $columns );
 
 		foreach ( $data as $name => $value ) {
-			$data[ $name ] = $this->escape_value( $name, $value );
+			$data[ $name ] = $this->prepare_for_storage( $name, $value );
 		}
 
 		$prev   = $this->wpdb->show_errors( false );
@@ -378,6 +378,21 @@ class Simple_Query {
 	 * @throws Exception
 	 */
 	public function escape_value( $column, $value ) {
+		return esc_sql( $this->prepare_for_storage( $column, $value ) );
+	}
+
+	/**
+	 * Prepare a value for storage.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $column
+	 * @param mixed  $value
+	 *
+	 * @return mixed|string
+	 * @throws InvalidColumnException
+	 */
+	public function prepare_for_storage( $column, $value ) {
 
 		$columns = $this->table->get_columns();
 
@@ -389,7 +404,7 @@ class Simple_Query {
 			return '';
 		}
 
-		return esc_sql( $columns[ $column ]->prepare_for_storage( $value ) );
+		return $columns[ $column ]->prepare_for_storage( $value );
 	}
 
 	/**
