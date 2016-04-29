@@ -13,6 +13,7 @@ namespace IronBound\DB;
 use Doctrine\Common\Collections\Collection;
 use IronBound\Cache\Cacheable;
 use IronBound\Cache\Cache;
+use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Relations\Relation;
 use IronBound\DB\Table\Column\Contracts\Savable;
 use IronBound\DB\Table\Table;
@@ -103,6 +104,13 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @var array
 	 */
 	protected $_relations = array();
+
+	/**
+	 * List of relations to be eager loaded.
+	 *
+	 * @var array
+	 */
+	protected $_eager_load = array();
 
 	/**
 	 * @var bool
@@ -332,6 +340,47 @@ abstract class Model implements Cacheable, \Serializable {
 		return method_exists( $this, "_{$attribute}_relation" );
 	}
 
+	/**
+	 * Get a relation object.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 *
+	 * @return Relation
+	 */
+	public function get_relation( $attribute ) {
+
+		$method   = "_{$attribute}_relation";
+		$relation = $this->{$method}();
+
+		if ( ! $relation instanceof Relation ) {
+			throw new \UnexpectedValueException( 'Relation methods must return an IronBound\DB\Relations\Relation object.' );
+		}
+
+		return $relation;
+	}
+
+	/**
+	 * Set the value for a relation.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 * @param mixed  $value
+	 *
+	 * @return $this
+	 */
+	public function set_relation_value( $attribute, $value ) {
+
+		if ( ! $this->has_relation( $attribute ) ) {
+			throw new \UnexpectedValueException( "No relation exists by the name '$attribute'." );
+		}
+
+		$this->_relations[ $attribute ] = $value;
+
+		return $this;
+	}
 
 	/**
 	 * Get a relation value.
@@ -348,32 +397,10 @@ abstract class Model implements Cacheable, \Serializable {
 			return $this->_relations[ $attribute ];
 		}
 
-		$relation = $this->get_relation_from_function( $attribute );
-
-		$this->_relations[ $attribute ] = $relation->get_results();
+		$relation = $this->get_relation( $attribute );
+		$this->set_relation_value( $attribute, $relation->get_results() );
 
 		return $this->get_relation_value( $attribute );
-	}
-
-	/**
-	 * Get a relation object by its function.
-	 *
-	 * @since 2.0
-	 *
-	 * @param string $attribute
-	 *
-	 * @return Relation
-	 */
-	protected function get_relation_from_function( $attribute ) {
-
-		$method   = "_{$attribute}_relation";
-		$relation = $this->{$method}();
-
-		if ( ! $relation instanceof Relation ) {
-			throw new \UnexpectedValueException( 'Relation methods must return an IronBound\DB\Relations\Relation object.' );
-		}
-
-		return $relation;
 	}
 
 	/**
@@ -1002,6 +1029,28 @@ abstract class Model implements Cacheable, \Serializable {
 		$this->init( static::get_data_from_pk( $data['pk'] ) );
 		$this->_fillable = $data['fillable'];
 		$this->_original = $data['original'];
+	}
+
+	/**
+	 * Get the table object.
+	 *
+	 * @since 2.0
+	 *
+	 * @return Table
+	 */
+	public static function table() {
+		return static::get_table();
+	}
+
+	/**
+	 * Initialize a new query.
+	 *
+	 * @since 2.0
+	 *
+	 * @return FluentQuery
+	 */
+	public static function query() {
+		return FluentQuery::from_model( get_called_class() );
 	}
 
 	/**

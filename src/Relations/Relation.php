@@ -12,7 +12,6 @@ namespace IronBound\DB\Relations;
 
 use Doctrine\Common\Collections\Collection;
 use IronBound\DB\Model;
-use IronBound\DB\Query\Simple_Query;
 use IronBound\WPEvents\GenericEvent;
 
 /**
@@ -32,11 +31,6 @@ abstract class Relation {
 	protected $parent;
 
 	/**
-	 * @var Simple_Query
-	 */
-	protected $query;
-
-	/**
 	 * @var bool
 	 */
 	protected $keep_synced = false;
@@ -51,18 +45,16 @@ abstract class Relation {
 	/**
 	 * Relation constructor.
 	 *
-	 * @param string       $related Class name of the related model.
-	 * @param Simple_Query $query
-	 * @param Model        $parent
+	 * @param string $related Class name of the related model.
+	 * @param Model  $parent
 	 */
-	public function __construct( $related, Simple_Query $query, Model $parent ) {
+	public function __construct( $related, Model $parent ) {
 
 		if ( ! is_subclass_of( $related, 'IronBound\DB\Model' ) ) {
 			throw new \InvalidArgumentException( '$related must be a subclass of IronBound\DB\Model' );
 		}
 
 		$this->related_model = $related;
-		$this->query         = $query;
 		$this->parent        = $parent;
 	}
 
@@ -98,6 +90,17 @@ abstract class Relation {
 		}
 
 		return $results;
+	}
+
+	/**
+	 * Get the related model class.
+	 *
+	 * @since 2.0
+	 *
+	 * @return string
+	 */
+	public function get_related_model() {
+		return $this->related_model;
 	}
 
 	/**
@@ -144,5 +147,18 @@ abstract class Relation {
 	 *
 	 * @return bool
 	 */
-	protected abstract function model_matches_relation( Model $model );
+	public abstract function model_matches_relation( Model $model );
+
+	/**
+	 * Eager-load a relation on a set of models.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Model[]  $models
+	 * @param string   $attribute
+	 * @param callable $callback Called with the FluentQuery object to customize the relations loaded.
+	 *
+	 * @return $this
+	 */
+	public abstract function eager_load( array $models, $attribute, $callback = null );
 }

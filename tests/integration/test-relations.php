@@ -81,4 +81,46 @@ class Test_Relations extends \WP_UnitTestCase {
 		$this->assertEquals( 24.95, Book::get( $b1->get_pk() )->price );
 		$this->assertEquals( 19.95, Book::get( $b2->get_pk() )->price );
 	}
+
+	public function test_eager_loading() {
+
+		$author = Author::create( array( 'name' => 'John Smith' ) );
+
+		$b1 = Book::create( array(
+			'title'  => 'The Tales of John Smith',
+			'author' => $author,
+			'price'  => 5.00
+		) );
+		$b2 = Book::create( array(
+			'title'  => 'The Songs of John Smith',
+			'author' => $author,
+			'price'  => 10.00
+		) );
+		$b3 = Book::create( array(
+			'title'  => 'The Stories of John Smith',
+			'author' => $author,
+			'price'  => 10.00
+		) );
+		$b4 = Book::create( array(
+			'title'  => 'The Epics of John Smith',
+			'author' => $author,
+			'price'  => 25.00
+		) );
+
+		$authors = Author::query()->with( 'books' )->results();
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$this->assertEquals( 1, $authors->count() );
+		$this->assertTrue( $authors->containsKey( $author->get_pk() ) );
+
+		$books = $authors->get( $author->get_pk() )->books;
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+
+		$this->assertEquals( 4, $books->count() );
+		$this->assertTrue( $books->containsKey( $b1->get_pk() ) );
+		$this->assertTrue( $books->containsKey( $b2->get_pk() ) );
+		$this->assertTrue( $books->containsKey( $b3->get_pk() ) );
+		$this->assertTrue( $books->containsKey( $b4->get_pk() ) );
+	}
 }

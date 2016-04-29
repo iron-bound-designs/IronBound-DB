@@ -131,6 +131,25 @@ class Select extends Generic {
 	}
 
 	/**
+	 * Convert this select statement to retrieve all columns.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $as
+	 * 
+	 * @return $this
+	 */
+	public function all( $as = null ) {
+		$this->all_columns = true;
+
+		if ( $as ) {
+			$this->all_as = $as;
+		}
+
+		return $this;
+	}
+
+	/**
 	 * Override the get value method.
 	 *
 	 * @since 1.0
