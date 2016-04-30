@@ -112,20 +112,21 @@ abstract class Relation {
 
 		$class = $this->related_model;
 
-		$self = $this;
+		$self    = $this;
+		$results = $this->results;
 
-		$class::saved( function ( GenericEvent $event ) use ( $self ) {
+		$class::saved( function ( GenericEvent $event ) use ( $self, $results ) {
 
 			if ( $self->model_matches_relation( $event->get_subject() ) ) {
-				$self->results->set( $event->get_subject()->get_pk(), $event->get_subject() );
+				$results->set( $event->get_subject()->get_pk(), $event->get_subject() );
 			} else {
-				$self->results->remove( $event->get_subject()->get_pk() );
+				$results->remove( $event->get_subject()->get_pk() );
 			}
 
 		} );
 
-		$class::deleted( function ( GenericEvent $event ) use ( $self ) {
-			$self->results->remove( $event->get_subject()->get_pk() );
+		$class::deleted( function ( GenericEvent $event ) use ( $self, $results ) {
+			$results->remove( $event->get_subject()->get_pk() );
 		} );
 	}
 
