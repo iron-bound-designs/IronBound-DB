@@ -94,7 +94,7 @@ class Test_Fluent_Query extends \WP_UnitTestCase {
 	}
 
 	public function test_take_1() {
-		
+
 		$a1 = Author::create( array(
 			'name'       => 'John Smith',
 			'birth_date' => new \DateTime( '1945-02-01' )
@@ -109,5 +109,42 @@ class Test_Fluent_Query extends \WP_UnitTestCase {
 
 		$this->assertEquals( 1, $results->count() );
 		$this->assertTrue( $results->containsKey( $a2->get_pk() ) );
+	}
+
+	public function test_chunk() {
+
+		$a1 = Author::create( array(
+			'name'       => 'John Smith',
+			'birth_date' => new \DateTime( '1945-02-01' )
+		) );
+		$a2 = Author::create( array(
+			'name'       => 'James Smith',
+			'birth_date' => new \DateTime( '1945-02-01' )
+		) );
+		$a5 = Author::create( array(
+			'name'       => 'Tom Riddle',
+			'birth_date' => new \DateTime( '1945-02-01' )
+		) );
+		$a6 = Author::create( array(
+			'name'       => 'Voldemort',
+			'birth_date' => new \DateTime( '1945-02-01' )
+		) );
+		$a3 = Author::create( array(
+			'name'       => 'Amy Smith',
+			'birth_date' => new \DateTime( '1945-02-01' )
+		) );
+		$a4 = Author::create( array(
+			'name'       => 'Jack Smith',
+			'birth_date' => new \DateTime( '1945-02-01' )
+		) );
+
+		$touched = array();
+
+		FluentQuery::from_model( get_class( new Author() ) )->where( 'name', 'LIKE', '%Smith' )->each( 2, function ( Author $author ) use ( &$touched ) {
+
+			$touched[] = $author->get_pk();
+		} );
+
+		$this->assertEqualSets( array( $a1->get_pk(), $a2->get_pk(), $a3->get_pk(), $a4->get_pk() ), $touched );
 	}
 }

@@ -59,6 +59,13 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	protected static $_unguarded = false;
 
+	/**
+	 * List of relations to be eager loaded.
+	 *
+	 * @var array
+	 */
+	protected static $_eager_load = array();
+
 	/// Instance Configuration
 
 	/**
@@ -106,13 +113,6 @@ abstract class Model implements Cacheable, \Serializable {
 	protected $_relations = array();
 
 	/**
-	 * List of relations to be eager loaded.
-	 *
-	 * @var array
-	 */
-	protected $_eager_load = array();
-
-	/**
 	 * @var bool
 	 */
 	protected $_exists = false;
@@ -141,7 +141,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @return $this
 	 */
-	protected function fill( array $data = array() ) {
+	public function fill( array $data = array() ) {
 
 		foreach ( $data as $column => $value ) {
 
@@ -545,6 +545,10 @@ abstract class Model implements Cacheable, \Serializable {
 
 			if ( ! static::is_data_cached( $pk ) ) {
 				Cache::update( $object );
+			}
+
+			foreach ( static::$_eager_load as $eager_load ) {
+				$object->get_relation( $eager_load )->eager_load( array( $object ), $eager_load );
 			}
 
 			return $object;
@@ -1050,7 +1054,36 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return FluentQuery
 	 */
 	public static function query() {
-		return FluentQuery::from_model( get_called_class() );
+		return FluentQuery::from_model( get_called_class() )->with( static::$_eager_load );
+	}
+
+	/**
+	 * Retrieve all instances of this model.
+	 *
+	 * @since 2.0
+	 *
+	 * @return Collection
+	 */
+	public static function all() {
+		return static::query()->results();
+	}
+
+	/**
+	 * Perform a query with a given set of relations.
+	 *
+	 * @since 2.0
+	 *
+	 * @param $relations,...
+	 *
+	 * @return FluentQuery
+	 */
+	public static function with( $relations ) {
+
+		$query = FluentQuery::from_model( get_called_class() );
+
+		call_user_func_array( array( $query, 'with' ), func_get_args() );
+
+		return $query;
 	}
 
 	/**

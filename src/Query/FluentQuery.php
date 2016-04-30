@@ -14,6 +14,7 @@ use Closure;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use IronBound\DB\Exception\InvalidColumnException;
+use IronBound\DB\Exception\ModelNotFoundException;
 use IronBound\DB\Model;
 use IronBound\DB\Query\Tag\From;
 use IronBound\DB\Query\Tag\Group;
@@ -114,6 +115,16 @@ class FluentQuery {
 	protected $relations = array();
 
 	/**
+	 * @var Collection
+	 */
+	protected $results;
+
+	/**
+	 * @var int|null
+	 */
+	protected $total;
+
+	/**
 	 * FluentQuery constructor.
 	 *
 	 * @param \wpdb $wpdb
@@ -193,17 +204,24 @@ class FluentQuery {
 	 *
 	 * @since 2.0
 	 *
-	 * @param string|Where $column
-	 * @param string|bool  $equality
-	 * @param mixed        $value
-	 * @param Closure|null $callback Called with $this as the first parameter. Setup for nesting on the new where tag.
-	 * @param string       $boolean
+	 * @param string|array|Where $column
+	 * @param string|bool        $equality
+	 * @param mixed              $value
+	 * @param Closure|null       $callback Called with $this as the first parameter. Setup for nesting on the new where tag.
+	 * @param string             $boolean
 	 *
 	 * @return $this
 	 */
 	public function where( $column, $equality = '', $value = '', Closure $callback = null, $boolean = null ) {
 
-		if ( $column instanceof Where ) {
+		if ( is_array( $column ) ) {
+
+			foreach ( $column as $col => $val ) {
+				$this->and_where( $col, true, $val );
+			}
+
+			return $this;
+		} elseif ( $column instanceof Where ) {
 			$where = $column;
 		} else {
 
@@ -215,7 +233,7 @@ class FluentQuery {
 			} else {
 				$value = $this->escape_value( $column, $value );
 			}
-			
+
 			$column = $this->prepare_column( $column );
 
 			$where = new Where( $column, $equality, $value );
@@ -290,6 +308,18 @@ class FluentQuery {
 		return $this->where( $column, $equality, $value, $callback, 'xor' );
 	}
 
+	/**
+	 * Perform a date based where query.
+	 *
+	 * @since 2.0
+	 *
+	 * @param \WP_Date_Query $date
+	 * @param Closure|null   $callback
+	 * @param string         $boolean
+	 *
+	 * @return FluentQuery
+	 * @throws InvalidColumnException
+	 */
 	public function where_date( \WP_Date_Query $date, Closure $callback = null, $boolean = 'and' ) {
 
 		$date->column = $this->prepare_column( $date->column );
@@ -297,6 +327,18 @@ class FluentQuery {
 		return $this->where( new Where_Date( $date ), '', '', $callback, $boolean );
 	}
 
+	/**
+	 * Order the results by a given column.
+	 *
+	 * Can be called multiple times to add additional order by clauses.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $column
+	 * @param string $direction
+	 *
+	 * @return $this
+	 */
 	public function order_by( $column, $direction = null ) {
 
 		$column = "{$this->alias}.{$column}";
@@ -310,6 +352,17 @@ class FluentQuery {
 		return $this;
 	}
 
+	/**
+	 * Group the results by a given column.
+	 *
+	 * Can be called multiple times to add additional group by columns.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $column
+	 *
+	 * @return $this
+	 */
 	public function group_by( $column ) {
 
 		$column = "{$this->alias}.{$column}";
@@ -323,18 +376,46 @@ class FluentQuery {
 		return $this;
 	}
 
+	/**
+	 * Only retrieve a certain number of results.
+	 *
+	 * @since 2.0
+	 *
+	 * @param int $number
+	 *
+	 * @return $this
+	 */
 	public function take( $number ) {
 		$this->count = $number;
 
 		return $this;
 	}
 
+	/**
+	 * Offset the results retrieved by a certain amount.
+	 *
+	 * @since 2.0
+	 *
+	 * @param int $amount
+	 *
+	 * @return $this
+	 */
 	public function offset( $amount ) {
 		$this->offset = $amount;
 
 		return $this;
 	}
 
+	/**
+	 * Paginate results.
+	 *
+	 * @since 2.0
+	 *
+	 * @param int $page
+	 * @param int $per_page
+	 *
+	 * @return $this
+	 */
 	public function paginate( $page, $per_page ) {
 		$this->count           = $per_page;
 		$this->offset          = $per_page * ( $page - 1 );
@@ -343,12 +424,40 @@ class FluentQuery {
 		return $this;
 	}
 
-	public function chunk( $number, $callback ) {
+	/**
+	 * Execute a callback over every row, chunking by a certain number.
+	 *
+	 * @since 2.0
+	 *
+	 * @param int      $number
+	 * @param callable $callback
+	 *
+	 * @return bool
+	 */
+	public function each( $number, $callback ) {
 
-		$this->count = $number;
+		$this->offset = 0;
+		$this->count  = $number;
 
+		$query = clone $this;
 
-		return $this;
+		do {
+
+			$_query  = clone $query;
+			$results = $query->results();
+
+			foreach ( $results as $result ) {
+				if ( $callback( $result ) === false ) {
+					return false;
+				}
+			}
+
+			$_query->offset += $number;
+			$query = $_query;
+
+		} while ( $results->count() === $number );
+
+		return true;
 	}
 
 	/**
@@ -391,6 +500,13 @@ class FluentQuery {
 		return $this;
 	}
 
+	/**
+	 * Make the limit tag for this query.
+	 *
+	 * @since 2.0
+	 *
+	 * @return $this
+	 */
 	protected function make_limit_tag() {
 
 		if ( ! $this->count ) {
@@ -402,6 +518,13 @@ class FluentQuery {
 		return $this;
 	}
 
+	/**
+	 * Build the SQL statement.
+	 *
+	 * @since 2.0
+	 *
+	 * @return string
+	 */
 	protected function build_sql() {
 
 		$builder = new Builder();
@@ -480,7 +603,183 @@ class FluentQuery {
 			$this->handle_eager_loading( $models );
 		}
 
-		return new ArrayCollection( $models );
+		$collection = new ArrayCollection( $models );
+
+		$this->results = $collection;
+
+		if ( $this->calc_found_rows ) {
+
+			$count_results = $this->wpdb->get_results( "SELECT FOUND_ROWS() AS COUNT" );
+
+			if ( empty( $count_results ) || empty( $count_results[0] ) ) {
+				$this->total = 0;
+			} else {
+				$this->total = $count_results[0]->COUNT;
+			}
+		}
+
+		return $collection;
+	}
+
+	/**
+	 * Get the first result from the query.
+	 *
+	 * @since 2.0
+	 *
+	 * @return Model
+	 */
+	public function first() {
+
+		if ( $this->results ) {
+			return $this->results->first();
+		} else {
+			return $this->results()->first();
+		}
+	}
+
+	/**
+	 * Find a model by its primary key.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string|int|array $primary_key
+	 *
+	 * @return Model|Collection
+	 */
+	public function find( $primary_key ) {
+
+		if ( is_array( $primary_key ) ) {
+			return $this->find_many( $primary_key );
+		}
+
+		return $this->where( $this->table->get_primary_key(), true, $primary_key )->first();
+	}
+
+	/**
+	 * Find many models by their primary keys.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $primary_keys
+	 *
+	 * @return Collection
+	 */
+	public function find_many( array $primary_keys ) {
+		return $this->where( $this->table->get_primary_key(), true, $primary_keys )->results();
+	}
+
+	/**
+	 * Find a model by its primary key or throw an exception.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string|int|array $primary_key
+	 *
+	 * @return Model|Collection
+	 *
+	 * @throws ModelNotFoundException
+	 */
+	public function find_or_fail( $primary_key ) {
+
+		$result = $this->find( $primary_key );
+
+		if ( is_array( $primary_key ) ) {
+			if ( count( $result ) == count( array_unique( $primary_key ) ) ) {
+				return $result;
+			}
+		} elseif ( $result ) {
+			return $result;
+		}
+
+		throw new ModelNotFoundException( "No model found for '$primary_key'." );
+	}
+
+	/**
+	 * Find a model by its primary key or create a new model.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string|int $primary_key
+	 *
+	 * @return Model
+	 */
+	public function find_or_new( $primary_key ) {
+
+		$model = $this->find( $primary_key );
+
+		if ( is_null( $model ) ) {
+			$model = new $this->model;
+		}
+
+		return $model;
+	}
+
+	/**
+	 * Find the first model matching a given a set of attributes, or construct a new one.
+	 *
+	 * The newly constructed model follows the fillable rules for the model.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $attributes
+	 *
+	 * @return Model
+	 */
+	public function first_or_new( array $attributes ) {
+
+		$model = $this->where( $attributes )->first();
+
+		if ( $model ) {
+			return $model;
+		}
+
+		return new $this->model( (object) $attributes );
+	}
+
+	/**
+	 * Find the first model matching a given set of attributes, or construct and save a new one.
+	 *
+	 * The newly constructed model follows the fillable rules for the model.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $attributes
+	 *
+	 * @return Model
+	 */
+	public function first_or_create( array $attributes ) {
+
+		$model = $this->where( $attributes )->first();
+
+		if ( $model ) {
+			return $model;
+		}
+
+		$model = new $this->model( (object) $attributes );
+		$model->save();
+
+		return $model;
+	}
+
+	/**
+	 * Find a model matching a given set of attributes. If it does not exist,
+	 * a new model is constructed with the given set of attributes.
+	 *
+	 * The model is then updated with the given set of values.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $attributes
+	 * @param array $values
+	 *
+	 * @return Model
+	 */
+	public function update_or_create( array $attributes, array $values ) {
+
+		$model = $this->first_or_new( $attributes );
+		$model->fill( $values )->save();
+
+		return $model;
 	}
 
 	/**
