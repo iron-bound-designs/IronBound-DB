@@ -570,7 +570,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$instance = new static( new \stdClass() );
 		$instance->set_raw_attributes( $attributes, true );
-		$instance->_exists = true;
+		$instance->_exists = (bool) $instance->get_pk();
 
 		if ( ! static::is_data_cached( $instance->get_pk() ) ) {
 			Cache::update( $instance );
@@ -714,13 +714,14 @@ abstract class Model implements Cacheable, \Serializable {
 		$this->fire_model_event( 'saving' );
 
 		$this->save_savable_attributes();
-		$this->save_loaded_relations();
 
 		if ( $this->exists() ) {
 			$saved = $this->do_save_as_update();
 		} else {
 			$saved = $this->do_save_as_insert();
 		}
+
+		$this->save_loaded_relations();
 
 		if ( $saved ) {
 			$this->finish_save();
@@ -756,19 +757,9 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @since 2.0
 	 */
 	protected function save_loaded_relations() {
-		foreach ( $this->_relations as $relation ) {
-
-			if ( $relation instanceof Model ) {
-				$relation->save();
-			} elseif ( $relation instanceof Collection ) {
-				foreach ( $relation as $model ) {
-
-					// safety, the Collection should always return Models
-					if ( $model instanceof Model ) {
-						$model->save();
-					}
-				}
-			}
+		foreach ( $this->_relations as $relation => $values ) {
+			$relation_controller = $this->get_relation( $relation );
+			$relation_controller->persist( $values );
 		}
 	}
 

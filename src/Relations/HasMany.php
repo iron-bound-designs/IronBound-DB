@@ -125,4 +125,15 @@ class HasMany extends Relation {
 
 		return $this;
 	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function persist( $values ) {
+
+		/** @var Model $value */
+		foreach ( $values as $value ) {
+			$value->set_attribute( $this->foreign_key, $this->parent->get_pk() )->save();
+		}
+	}
 }

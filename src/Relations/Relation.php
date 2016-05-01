@@ -155,11 +155,20 @@ abstract class Relation {
 	 *
 	 * @since 2.0
 	 *
-	 * @param Model[]  $models
+	 * @param Model[]  $models   Array of models to eager-load. Keyed by their primary key.
 	 * @param string   $attribute
 	 * @param callable $callback Called with the FluentQuery object to customize the relations loaded.
 	 *
 	 * @return $this
 	 */
 	public abstract function eager_load( array $models, $attribute, $callback = null );
+
+	/**
+	 * Persist the results of a relation.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Collection|Model $values
+	 */
+	public abstract function persist( $values );
 }

@@ -19,13 +19,20 @@ class Join extends Generic {
 	/**
 	 * Constructor.
 	 *
-	 * @param From  $on
-	 * @param Where $where
+	 * @param From   $on
+	 * @param Where  $where
+	 * @param string $type
 	 */
-	public function __construct( From $on, Where $where ) {
+	public function __construct( From $on, Where $where, $type = 'INNER' ) {
 
 		$sql = $on->get_value() . ' ON (' . $where->get_value() . ')';
 
-		parent::__construct( 'JOIN', $sql );
+		if ( $type !== 'INNER' ) {
+			$join = "$type JOIN";
+		} else {
+			$join = "JOIN";
+		}
+
+		parent::__construct( $join, $sql );
 	}
 }

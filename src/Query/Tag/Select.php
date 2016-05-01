@@ -136,7 +136,7 @@ class Select extends Generic {
 	 * @since 2.0
 	 *
 	 * @param string $as
-	 * 
+	 *
 	 * @return $this
 	 */
 	public function all( $as = null ) {
@@ -147,6 +147,28 @@ class Select extends Generic {
 		}
 
 		return $this;
+	}
+
+	/**
+	 * Determine if this is an 'All' query.
+	 *
+	 * @since 2.0
+	 *
+	 * @return bool
+	 */
+	public function is_all() {
+		return $this->all_columns;
+	}
+
+	/**
+	 * Get all columns being selected.
+	 *
+	 * @since 2.0
+	 *
+	 * @return array
+	 */
+	public function get_columns() {
+		return $this->columns;
 	}
 
 	/**

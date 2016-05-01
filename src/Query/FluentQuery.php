@@ -19,11 +19,13 @@ use IronBound\DB\Model;
 use IronBound\DB\Query\Tag\From;
 use IronBound\DB\Query\Tag\Group;
 use IronBound\DB\Query\Tag\Having;
+use IronBound\DB\Query\Tag\Join;
 use IronBound\DB\Query\Tag\Limit;
 use IronBound\DB\Query\Tag\Order;
 use IronBound\DB\Query\Tag\Select;
 use IronBound\DB\Query\Tag\Where;
 use IronBound\DB\Query\Tag\Where_Date;
+use IronBound\DB\Query\Tag\Where_Raw;
 use IronBound\DB\Table\Table;
 
 /**
@@ -58,6 +60,11 @@ class FluentQuery {
 	protected $from;
 
 	/**
+	 * @var Join
+	 */
+	protected $join;
+
+	/**
 	 * @var Where
 	 */
 	protected $where;
@@ -86,6 +93,11 @@ class FluentQuery {
 	 * @var string
 	 */
 	protected $alias = 't1';
+
+	/**
+	 * @var int
+	 */
+	protected $alias_count = 1;
 
 	/**
 	 * @var int
@@ -168,9 +180,7 @@ class FluentQuery {
 
 		if ( $columns === Select::ALL ) {
 
-			$as = "{$this->alias}.*";
-
-			$this->select->all( $as );
+			$this->select->all( $this->alias );
 
 			return $this;
 		}
@@ -182,6 +192,22 @@ class FluentQuery {
 		foreach ( $columns as $column ) {
 			$this->select->also( $this->prepare_column( $column ) );
 		}
+
+		return $this;
+	}
+
+	/**
+	 * Select all results.
+	 *
+	 * @since 2.0
+	 *
+	 * @param bool $local_only Only retrieve results local to this table.
+	 *
+	 * @return $this
+	 */
+	public function select_all( $local_only = true ) {
+
+		$this->select->all( $local_only ? $this->alias : null );
 
 		return $this;
 	}
@@ -377,6 +403,49 @@ class FluentQuery {
 	}
 
 	/**
+	 * Simple join statement.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Table       $table
+	 * @param string      $this_column
+	 * @param string      $other_column
+	 * @param bool|string $operator
+	 * @param callable    $callback Called with a FluentQuery object. Can be used to build additional where queries
+	 *                              for the Join clause.
+	 * @param string      $type     Join type. Defaults to 'INNER'.
+	 *
+	 * @return $this
+	 * @throws InvalidColumnException
+	 */
+	public function join( Table $table, $this_column, $other_column, $operator = '=', $callback = null, $type = 'INNER' ) {
+
+		$other_alias = 't' . ( $this->alias_count + 1 );
+
+		$other_query              = new FluentQuery( $this->wpdb, $table );
+		$other_query->alias       = $other_alias;
+		$other_query->alias_count = $this->alias_count + 1;
+
+		$from = new From( $table->get_table_name( $this->wpdb ), $other_alias );
+
+		$where = new Where_Raw(
+			"{$this->prepare_column( $this_column )} $operator {$other_query->prepare_column( $other_column )}"
+		);
+
+		if ( $callback ) {
+			$callback( $other_query );
+
+			if ( $other_query->where ) {
+				$where->qAnd( $other_query->where );
+			}
+		}
+
+		$this->join = new Join( $from, $where, $type );
+
+		return $this;
+	}
+
+	/**
 	 * Only retrieve a certain number of results.
 	 *
 	 * @since 2.0
@@ -529,12 +598,16 @@ class FluentQuery {
 
 		$builder = new Builder();
 
-		if ( (string) $this->select === (string) new Select( null ) ) {
-			$this->select = new Select( Select::ALL );
+		if ( ! $this->select->is_all() && ! $this->select->get_columns() ) {
+			$this->select->all( $this->alias );
 		}
 
 		$builder->append( $this->select );
 		$builder->append( $this->from );
+
+		if ( $this->join ) {
+			$builder->append( $this->join );
+		}
 
 		if ( $this->where ) {
 			$builder->append( $this->where );
@@ -574,15 +647,7 @@ class FluentQuery {
 		$results = $this->wpdb->get_results( $sql, ARRAY_A );
 
 		if ( ! $this->model ) {
-
-			$primary_key = $this->table->get_primary_key();
-			$collection  = array();
-
-			foreach ( $results as $result ) {
-				$collection[ $result->{$primary_key} ] = $result;
-			}
-
-			return new ArrayCollection( $collection );
+			return new ArrayCollection( $results );
 		}
 
 		$model_class  = $this->model;
