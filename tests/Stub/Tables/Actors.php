@@ -15,6 +15,7 @@ use IronBound\DB\Table\Column\DateTime;
 use IronBound\DB\Table\Column\ForeignPost;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\StringBased;
+use IronBound\DB\Saver\PostSaver;
 
 /**
  * Class Actors
@@ -45,7 +46,7 @@ class Actors extends BaseTable {
 			'name'       => new StringBased( 'VARCHAR', 'name', array(), array( 60 ) ),
 			'birth_date' => new DateTime( 'birth_date' ),
 			'bio'        => new StringBased( 'LONGTEXT', 'bio' ),
-			'picture'    => new ForeignPost( 'picture' )
+			'picture'    => new ForeignPost( 'picture', new PostSaver() )
 		);
 	}
 

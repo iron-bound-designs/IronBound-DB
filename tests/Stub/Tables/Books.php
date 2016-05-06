@@ -11,6 +11,7 @@
 namespace IronBound\DB\Tests\Stub\Tables;
 
 use IronBound\DB\Manager;
+use IronBound\DB\Saver\ModelSaver;
 use IronBound\DB\Table\BaseTable;
 use IronBound\DB\Table\Column\DateTime;
 use IronBound\DB\Table\Column\DecimalBased;
@@ -48,7 +49,7 @@ class Books extends BaseTable {
 			'title'     => new StringBased( 'TEXT', 'title' ),
 			'price'     => new DecimalBased( 'DECIMAL', 'price', array( 'unsigned' ), array( 10, 2 ) ),
 			'published' => new DateTime( 'published' ),
-			'author'    => new ForeignModel( 'author', Manager::get( 'authors' ), get_class( new Author() ) )
+			'author'    => new ForeignModel( 'author', get_class( new Author() ), Manager::get( 'authors' ), new ModelSaver() )
 		);
 	}
 

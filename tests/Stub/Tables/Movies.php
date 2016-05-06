@@ -15,6 +15,7 @@ use IronBound\DB\Table\Column\DateTime;
 use IronBound\DB\Table\Column\ForeignPost;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\StringBased;
+use IronBound\DB\Saver\PostSaver;
 
 /**
  * Class Movies
@@ -44,7 +45,7 @@ class Movies extends BaseTable {
 			'id'           => new IntegerBased( 'BIGINT', 'id', array( 'unsigned', 'auto_increment' ), array( 20 ) ),
 			'title'        => new StringBased( 'VARCHAR', 'title', array(), array( 191 ) ),
 			'release_date' => new DateTime( 'release_date' ),
-			'poster'       => new ForeignPost( 'poster' ),
+			'poster'       => new ForeignPost( 'poster', new PostSaver() ),
 			'description'  => new StringBased( 'LONGTEXT', 'description' ),
 			'earnings'     => new IntegerBased( 'DECIMAL', 'earnings', array(), array( 10, 2 ) )
 		);

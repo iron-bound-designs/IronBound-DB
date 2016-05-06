@@ -10,6 +10,7 @@
 
 namespace IronBound\DB\Table\Column;
 
+use IronBound\DB\Saver\UserSaver;
 use IronBound\DB\Table\Column\Contracts\Savable;
 
 /**
@@ -19,6 +20,11 @@ use IronBound\DB\Table\Column\Contracts\Savable;
 class ForeignUser extends BaseColumn implements Savable {
 
 	/**
+	 * @var UserSaver
+	 */
+	protected $saver;
+
+	/**
 	 * @var string
 	 */
 	protected $key;
@@ -26,17 +32,19 @@ class ForeignUser extends BaseColumn implements Savable {
 	/**
 	 * ForeignUser constructor.
 	 *
-	 * @param string $name Column name.
-	 * @param string $key  User table key. id | login | slug
+	 * @param string    $name Column name.
+	 * @param UserSaver $saver
+	 * @param string    $key  User table key. id | login | slug
 	 */
-	public function __construct( $name, $key = 'id' ) {
+	public function __construct( $name, UserSaver $saver, $key = 'id' ) {
 		parent::__construct( $name );
 
 		if ( ! in_array( $key, array( 'id', 'login', 'slug' ) ) ) {
 			throw new \InvalidArgumentException( "Invalid key '$key'." );
 		}
 
-		$this->key = $key;
+		$this->saver = $saver;
+		$this->key   = $key;
 	}
 
 	/**
@@ -111,52 +119,6 @@ class ForeignUser extends BaseColumn implements Savable {
 	 * @inheritDoc
 	 */
 	public function save( $value ) {
-
-		if ( ! $value instanceof \WP_User ) {
-			throw new \InvalidArgumentException( 'ForeignUser can only save WP_User objects.' );
-		}
-
-		if ( ! $value->exists() ) {
-			return $this->do_save( $value );
-		}
-
-		$current = get_user_by( 'id', $value->ID );
-
-		if ( ! $current ) {
-			return $this->do_save( $value );
-		}
-
-		$old = $current->to_array();
-		$new = $value->to_array();
-
-		if ( $this->has_changes( $old, $new ) ) {
-			return $this->do_save( $value );
-		}
-
-		return $value;
-	}
-
-	/**
-	 * Do the saving for a user.
-	 *
-	 * @since 2.0
-	 *
-	 * @param \WP_User $user
-	 *
-	 * @return \WP_User
-	 */
-	protected function do_save( \WP_User $user ) {
-
-		if ( ! $user->exists() ) {
-			$id = wp_insert_user( wp_slash( $user->to_array() ) );
-		} else {
-			$id = wp_update_user( wp_slash( $user->to_array() ) );
-		}
-
-		if ( is_wp_error( $id ) ) {
-			throw new \InvalidArgumentException( 'Error encountered while saving WP_User: ' . $id->get_error_message() );
-		}
-
-		return get_user_by( 'id', $id );
+		return $this->saver->save( $value );
 	}
 }

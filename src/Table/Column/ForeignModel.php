@@ -11,6 +11,7 @@
 namespace IronBound\DB\Table\Column;
 
 use IronBound\DB\Model;
+use IronBound\DB\Saver\ModelSaver;
 use IronBound\DB\Table\Column\Contracts\Savable;
 use IronBound\DB\Table\Table;
 
@@ -31,17 +32,26 @@ class ForeignModel extends BaseColumn implements Savable {
 	protected $model_class;
 
 	/**
+	 * @var ModelSaver
+	 */
+	private $saver;
+
+	/**
 	 * ForeignModel constructor.
 	 *
-	 * @param string $name          Column name.
-	 * @param Table  $foreign_table Table the foreign key resides in.
-	 * @param string $model_class   FQCN for the model.
+	 * @param string     $name          Column name.
+	 * @param string     $model_class   FQCN for the model.
+	 * @param Table      $foreign_table Table the foreign key resides in.
+	 * @param ModelSaver $saver
 	 */
-	public function __construct( $name, Table $foreign_table, $model_class ) {
+	public function __construct( $name, $model_class, Table $foreign_table, ModelSaver $saver ) {
 		parent::__construct( $name );
 
 		$this->foreign_table = $foreign_table;
 		$this->model_class   = $model_class;
+		$this->saver         = $saver;
+
+		$this->saver->set_model_class( $model_class );
 	}
 
 	/**
@@ -85,7 +95,7 @@ class ForeignModel extends BaseColumn implements Savable {
 	 */
 	public function prepare_for_storage( $value ) {
 
-		if ( $value instanceof Model ) {
+		if ( $value instanceof $this->model_class ) {
 			return $value->get_pk();
 		}
 
@@ -96,13 +106,6 @@ class ForeignModel extends BaseColumn implements Savable {
 	 * @inheritDoc
 	 */
 	public function save( $value ) {
-
-		if ( ! $value instanceof Model ) {
-			throw new \InvalidArgumentException( 'ForeignModel column can only save IronBound\DB\Model objects.' );
-		}
-
-		$value->save();
-
-		return $value;
+		return $this->saver->save( $value );
 	}
 }

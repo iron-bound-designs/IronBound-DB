@@ -10,6 +10,7 @@
 
 namespace IronBound\DB\Table\Column;
 
+use IronBound\DB\Saver\TermSaver;
 use IronBound\DB\Table\Column\Contracts\Savable;
 
 /**
@@ -19,12 +20,20 @@ use IronBound\DB\Table\Column\Contracts\Savable;
 class ForeignTerm extends BaseColumn implements Savable {
 
 	/**
+	 * @var TermSaver
+	 */
+	protected $saver;
+
+	/**
 	 * ForeignTerm constructor.
 	 *
-	 * @param string $name Column name.
+	 * @param string    $name Column name.
+	 * @param TermSaver $saver
 	 */
-	public function __construct( $name ) {
+	public function __construct( $name, TermSaver $saver ) {
 		parent::__construct( $name );
+
+		$this->saver = $saver;
 	}
 
 	/**
@@ -70,61 +79,6 @@ class ForeignTerm extends BaseColumn implements Savable {
 	 * @inheritDoc
 	 */
 	public function save( $value ) {
-
-		if ( ! $value instanceof \WP_Term && ! property_exists( $value, 'term_id' ) ) {
-			throw new \InvalidArgumentException( 'ForeignTerm can only save WP_Term objects.' );
-		}
-
-		if ( ! $value->term_id ) {
-			return $this->do_save( $value );
-		}
-
-		$current = get_term( $value->term_id, $value->taxonomy );
-
-		if ( ! $current ) {
-			return $this->do_save( $value );
-		}
-
-		$old = $current->to_array();
-		$new = $value->to_array();
-
-		if ( $this->has_changes( $old, $new ) ) {
-			return $this->do_save( $value );
-		}
-
-		return $value;
-	}
-
-	/**
-	 * Do the saving for a term.
-	 *
-	 * @since 2.0
-	 *
-	 * @param \WP_Term $term
-	 *
-	 * @return \WP_Term
-	 */
-	protected function do_save( $term ) {
-
-		if ( ! $term->term_id ) {
-			$ids = wp_insert_term( wp_slash( $term->name ), $term->taxonomy, array(
-				'description' => wp_slash( $term->description ),
-				'parent'      => $term->parent,
-				'slug'        => $term->slug
-			) );
-		} else {
-			$ids = wp_update_term( $term->term_id, $term->taxonomy, array(
-				'name'        => wp_slash( $term->name ),
-				'description' => wp_slash( $term->description ),
-				'parent'      => $term->parent,
-				'slug'        => $term->slug
-			) );
-		}
-
-		if ( is_wp_error( $ids ) ) {
-			throw new \InvalidArgumentException( 'Error encountered while saving WP_Term: ' . $ids->get_error_message() );
-		}
-
-		return get_term( $ids['term_id'], $term->taxonomy );
+		return $this->saver->save( $value );
 	}
 }

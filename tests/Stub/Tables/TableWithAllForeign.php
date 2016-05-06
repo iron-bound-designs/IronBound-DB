@@ -10,6 +10,10 @@
 
 namespace IronBound\DB\Tests\Stub\Tables;
 
+use IronBound\DB\Saver\CommentSaver;
+use IronBound\DB\Saver\ModelSaver;
+use IronBound\DB\Saver\TermSaver;
+use IronBound\DB\Saver\UserSaver;
 use IronBound\DB\Table\BaseTable;
 use IronBound\DB\Table\Column\ForeignComment;
 use IronBound\DB\Table\Column\ForeignModel;
@@ -18,6 +22,7 @@ use IronBound\DB\Table\Column\ForeignTerm;
 use IronBound\DB\Table\Column\ForeignUser;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Tests\Stub\Models\Book;
+use IronBound\DB\Saver\PostSaver;
 
 /**
  * Class TableWithAllForeign
@@ -45,11 +50,11 @@ class TableWithAllForeign extends BaseTable {
 	public function get_columns() {
 		return array(
 			'id'      => new IntegerBased( 'BIGINT', 'id', array( 'unsigned', 'auto_increment' ), array( 20 ) ),
-			'post'    => new ForeignPost( 'post' ),
-			'user'    => new ForeignUser( 'user' ),
-			'term'    => new ForeignTerm( 'term' ),
-			'comment' => new ForeignComment( 'comment' ),
-			'model'   => new ForeignModel( 'model', new Books(), get_class( new Book() ) )
+			'post'    => new ForeignPost( 'post', new PostSaver() ),
+			'user'    => new ForeignUser( 'user', new UserSaver() ),
+			'term'    => new ForeignTerm( 'term', new TermSaver() ),
+			'comment' => new ForeignComment( 'comment', new CommentSaver() ),
+			'model'   => new ForeignModel( 'model', get_class( new Book() ), new Books(), new ModelSaver() )
 		);
 	}
 

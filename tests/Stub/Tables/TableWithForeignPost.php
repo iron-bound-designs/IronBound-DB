@@ -15,6 +15,7 @@ use IronBound\DB\Table\Column\DateTime;
 use IronBound\DB\Table\Column\DecimalBased;
 use IronBound\DB\Table\Column\ForeignPost;
 use IronBound\DB\Table\Column\IntegerBased;
+use IronBound\DB\Saver\PostSaver;
 
 /**
  * Class TableWithForeignPost
@@ -42,7 +43,7 @@ class TableWithForeignPost extends BaseTable {
 	public function get_columns() {
 		return array(
 			'id'        => new IntegerBased( 'BIGINT', 'id', array( 'unsigned', 'auto_increment' ), array( 20 ) ),
-			'post'      => new ForeignPost( 'post' ),
+			'post'      => new ForeignPost( 'post', new PostSaver() ),
 			'price'     => new DecimalBased( 'DECIMAL', 'price', array( 'unsigned' ), array( 10, 2 ) ),
 			'published' => new DateTime( 'published' )
 		);
