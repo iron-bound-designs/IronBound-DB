@@ -13,6 +13,7 @@ namespace IronBound\DB;
 use Doctrine\Common\Collections\Collection;
 use IronBound\Cache\Cacheable;
 use IronBound\Cache\Cache;
+use IronBound\DB\Collections\ModelCollection;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Relations\Relation;
 use IronBound\DB\Table\Column\Contracts\Savable;
@@ -404,6 +405,19 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
+	 * Check if a relation is loaded.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 *
+	 * @return bool
+	 */
+	public function is_relation_loaded( $attribute ) {
+		return array_key_exists( $attribute, $this->_relations );
+	}
+
+	/**
 	 * Determine if a given attribute is fillable.
 	 *
 	 * @since 2.0
@@ -705,11 +719,13 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @since 2.0
 	 *
+	 * @param array $options
+	 *
 	 * @return bool
 	 *
 	 * @throws Exception
 	 */
-	public function save() {
+	public function save( array $options = array() ) {
 
 		$this->fire_model_event( 'saving' );
 
@@ -721,7 +737,11 @@ abstract class Model implements Cacheable, \Serializable {
 			$saved = $this->do_save_as_insert();
 		}
 
-		$this->save_loaded_relations();
+		if ( isset( $options['exclude_relations'] ) ) {
+			$this->save_loaded_relations( (array) $options['exclude_relations'] );
+		} else {
+			$this->save_loaded_relations();
+		}
 
 		if ( $saved ) {
 			$this->finish_save();
@@ -755,9 +775,16 @@ abstract class Model implements Cacheable, \Serializable {
 	 * Save loaded relations.
 	 *
 	 * @since 2.0
+	 *
+	 * @param array $exclude
 	 */
-	protected function save_loaded_relations() {
+	protected function save_loaded_relations( array $exclude = array() ) {
 		foreach ( $this->_relations as $relation => $values ) {
+
+			if ( in_array( $relation, $exclude ) ) {
+				continue;
+			}
+
 			$relation_controller = $this->get_relation( $relation );
 			$relation_controller->persist( $values );
 		}
@@ -862,6 +889,12 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$this->fire_model_event( 'saved' );
 
+		foreach ( $this->_relations as $relation ) {
+			if ( $relation instanceof ModelCollection ) {
+				$relation->clear_memory();
+			}
+		}
+
 		$this->sync_original();
 	}
 
@@ -875,6 +908,10 @@ abstract class Model implements Cacheable, \Serializable {
 	public function delete() {
 
 		$this->fire_model_event( 'deleting' );
+
+		foreach ( $this->_relations as $relation => $values ) {
+			$this->get_relation( $relation )->on_delete( $this );
+		}
 
 		static::make_query_object()->delete( $this->get_pk() );
 

@@ -205,15 +205,26 @@ class Test_Relations extends \WP_UnitTestCase {
 			'release_date' => new \DateTime( '2011-10-31' )
 		) );
 
+		$this->assertEquals( 0, $m1->actors->count() );
+		$this->assertEquals( 0, $m2->actors->count() );
+
 		$actor->movies->add( $m1 );
 		$actor->save();
 
+		$this->assertEquals( 1, $m1->actors->count() );
 		$this->assertEquals( 0, $m2->actors->count() );
 
 		$actor->movies->add( $m2 );
 		$actor->save();
 
+		$this->assertEquals( 1, $m1->actors->count() );
 		$this->assertEquals( 1, $m2->actors->count() );
+
+		$actor->movies->remove( $m2->get_pk() );
+		$actor->save();
+
+		$this->assertEquals( 1, $m1->actors->count() );
+		$this->assertEquals( 0, $m2->actors->count() );
 	}
 
 	public function test_many_to_many_eager_load() {
@@ -307,5 +318,31 @@ class Test_Relations extends \WP_UnitTestCase {
 		$m4 = $movies->get( $m4->get_pk() );
 		$this->assertEquals( 0, $m4->actors->count() );
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+	}
+
+	public function test_many_to_many_relation_deleted_when_model_deleted() {
+
+		$movie = Movie::create( array(
+			'title' => 'The Great Movie'
+		) );
+
+		$a1 = Actor::create( array(
+			'name' => 'John Doe'
+		) );
+		$a2 = Actor::create( array(
+			'name' => 'Amy Smith'
+		) );
+
+		$movie->actors->add( $a1 );
+		$movie->actors->add( $a2 );
+		$movie->save();
+
+		$a1->delete();
+
+		$movie  = Movie::get( $movie->get_pk() );
+		$actors = $movie->actors;
+
+		$this->assertEquals( 1, $actors->count() );
+		$this->assertEquals( $a2->get_pk(), $actors->containsKey( $a2->get_pk() ) );
 	}
 }

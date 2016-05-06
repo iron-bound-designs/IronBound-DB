@@ -41,3 +41,5 @@ require_once __DIR__ . '/Stub/table.php';
 require_once __DIR__ . '/Stub/builder.php';
 
 require $test_root . '/includes/bootstrap.php';
+
+ini_set( 'xdebug.max_nesting_level', 250 );

@@ -11,8 +11,10 @@
 namespace IronBound\DB\Relations;
 
 use Doctrine\Common\Collections\Collection;
+use IronBound\DB\Collections\ModelCollection;
 use IronBound\DB\Model;
 use IronBound\WPEvents\GenericEvent;
+use PhpParser\Node\Expr\AssignOp\Mod;
 
 /**
  * Class Relation
@@ -31,14 +33,14 @@ abstract class Relation {
 	protected $parent;
 
 	/**
-	 * @var bool
+	 * @var bool|string
 	 */
 	protected $keep_synced = false;
 
 	/**
 	 * Results will only be cached here if they are a Collection.
 	 *
-	 * @var Collection
+	 * @var ModelCollection
 	 */
 	protected $results;
 
@@ -84,7 +86,7 @@ abstract class Relation {
 
 		$results = $this->fetch_results();
 
-		if ( $this->keep_synced && $results instanceof Collection ) {
+		if ( $this->keep_synced && $results instanceof ModelCollection ) {
 			$this->results = $results;
 			$this->register_events();
 		}
@@ -168,7 +170,21 @@ abstract class Relation {
 	 *
 	 * @since 2.0
 	 *
-	 * @param Collection|Model $values
+	 * @param ModelCollection|Model $values
 	 */
 	public abstract function persist( $values );
+
+	/**
+	 * Called when the parent model is deleted.
+	 *
+	 * Can be used to perform additional cleanup when a model is deleted,
+	 * since the EventDispatcher is not guaranteed to be configured.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Model $model
+	 */
+	public function on_delete( Model $model ) {
+
+	}
 }

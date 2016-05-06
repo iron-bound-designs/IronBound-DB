@@ -47,7 +47,10 @@ class HasMany extends Relation {
 
 		$related = $this->related_model;
 
-		return $related::query()->where( $this->foreign_key, true, $this->parent->get_pk() )->results();
+		$results = $related::query()->where( $this->foreign_key, true, $this->parent->get_pk() )->results();
+		$results->keep_memory();
+		
+		return $results;
 	}
 
 	/**
