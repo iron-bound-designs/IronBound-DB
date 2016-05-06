@@ -12,7 +12,7 @@ namespace IronBound\DB\Tests;
 
 use IronBound\DB\Manager;
 use IronBound\DB\Model;
-use IronBound\DB\Table\AssociationTable;
+use IronBound\DB\Table\Association\ModelAssociationTable;
 use IronBound\DB\Tests\Stub\Models\Actor;
 use IronBound\DB\Tests\Stub\Models\Author;
 use IronBound\DB\Tests\Stub\Models\Book;
@@ -39,7 +39,7 @@ class Test_Relations extends \WP_UnitTestCase {
 
 		Manager::register( new Actors() );
 		Manager::register( new Movies() );
-		Manager::register( new AssociationTable( new Actors(), new Movies() ) );
+		Manager::register( new ModelAssociationTable( new Actors(), new Movies() ) );
 		Manager::maybe_install_table( Manager::get( 'actors' ) );
 		Manager::maybe_install_table( Manager::get( 'movies' ) );
 		Manager::maybe_install_table( Manager::get( 'actors-movies' ) );

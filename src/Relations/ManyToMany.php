@@ -15,7 +15,7 @@ use IronBound\DB\Collections\ModelCollection;
 use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Query\Tag\Where;
-use IronBound\DB\Table\AssociationTable;
+use IronBound\DB\Table\Association\AssociationTable;
 use IronBound\DB\Table\Table;
 use IronBound\WPEvents\GenericEvent;
 
@@ -62,13 +62,8 @@ class ManyToMany extends Relation {
 		/** @var Table $related_table */
 		$related_table = $related::table();
 
-		if ( $related_table->get_slug() === $association->get_table_a()->get_slug() ) {
-			$this->other_column   = $association->get_col_b();
-			$this->primary_column = $association->get_col_a();
-		} else {
-			$this->other_column   = $association->get_col_a();
-			$this->primary_column = $association->get_col_b();
-		}
+		$this->other_column   = $association->get_other_column_for_table( $related_table );
+		$this->primary_column = $association->get_primary_column_for_table( $related_table );
 
 		$this->other_attribute = $other_attribute;
 	}
@@ -109,47 +104,7 @@ class ManyToMany extends Relation {
 		$results         = $this->results;
 		$attribute       = $this->attribute;
 		$other_attribute = $this->other_attribute;
-
-		// the parent is a movie relation
-
-		// Whenever an actor is saved, I want to check for the movies that have been added to this actor
-		// check if the parent actor is contained within any of the movies related actors
-		// and if so add those movies to this actor
-
-		// whenever a movie is saved
-		$parent::saved( function ( GenericEvent $event ) use ( $results, $attribute, $other_attribute ) {
-
-			return;
-
-			/** @var Model $model */
-			$model = $event->get_subject();
-
-			if ( ! $model->is_relation_loaded( $attribute ) ) {
-				return;
-			}
-
-			// these are actor objects
-
-			/** @var ModelCollection $relation */
-			$relation = $model->get_attribute( $attribute );
-
-			/** @var Model $added */
-			foreach ( $relation->get_added() as $added ) {
-
-			}
-
-			/** @var Model $related */
-			foreach ( $relation as $related ) {
-
-				if ( ! $related->is_relation_loaded( $other_attribute ) ) {
-					continue;
-				}
-
-			}
-
-		} );
-
-		// whenever a actor is saved
+		
 		$related::saved( function ( GenericEvent $event ) use ( $parent, $results, $attribute, $other_attribute ) {
 
 			/** @var Model $model */
@@ -158,8 +113,6 @@ class ManyToMany extends Relation {
 			if ( ! $model->is_relation_loaded( $other_attribute ) ) {
 				return;
 			}
-
-			// these are movie objects
 
 			/** @var ModelCollection $relation */
 			$relation = $model->get_attribute( $other_attribute );
@@ -234,7 +187,7 @@ class ManyToMany extends Relation {
 	 * @inheritDoc
 	 */
 	public function eager_load( array $models, $callback = null ) {
-		
+
 		$results   = $this->fetch_results_for_eager_load( $models, $callback );
 		$memory    = (bool) $this->keep_synced;
 		$attribute = $this->attribute;

@@ -8,16 +8,18 @@
  * @copyright Iron Bound Designs, 2016.
  */
 
-namespace IronBound\DB\Table;
+namespace IronBound\DB\Table\Association;
 
 use Doctrine\Common\Inflector\Inflector;
+use IronBound\DB\Table\BaseTable;
 use IronBound\DB\Table\Column\Foreign;
+use IronBound\DB\Table\Table;
 
 /**
  * Class AssociationTable
  * @package IronBound\DB\Table
  */
-class AssociationTable extends BaseTable {
+class ModelAssociationTable extends BaseTable implements AssociationTable {
 
 	/**
 	 * @var Table
@@ -93,6 +95,34 @@ class AssociationTable extends BaseTable {
 	}
 
 	/**
+	 * @inheritdoc
+	 */
+	public function get_primary_column_for_table( Table $table ) {
+		return $this->get_table_a()->get_slug() === $table->get_slug() ? $this->get_col_a() : $this->get_col_b();
+	}
+	
+	/**
+	 * @inheritdoc
+	 */
+	public function get_other_column_for_table( Table $table ) {
+		return $this->get_table_a()->get_slug() === $table->get_slug() ? $this->get_col_b() : $this->get_col_a();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function get_col_a() {
+		return $this->col_a;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function get_col_b() {
+		return $this->col_b;
+	}
+
+	/**
 	 * Get the a connecting table.
 	 *
 	 * @since 2.0
@@ -113,29 +143,7 @@ class AssociationTable extends BaseTable {
 	public function get_table_b() {
 		return $this->table_b;
 	}
-
-	/**
-	 * Get the column name for the a connecting table.
-	 *
-	 * @since 2.0
-	 *
-	 * @return string
-	 */
-	public function get_col_a() {
-		return $this->col_a;
-	}
-
-	/**
-	 * Get the column name for the b connecting table.
-	 *
-	 * @since 2.0
-	 *
-	 * @return string
-	 */
-	public function get_col_b() {
-		return $this->col_b;
-	}
-
+	
 	/**
 	 * Build the column name for a table.
 	 *
