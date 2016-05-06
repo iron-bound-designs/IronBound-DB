@@ -38,7 +38,7 @@ class Author extends Model {
 
 		$book = new Book();
 
-		$relation = new HasMany( 'author', get_class( $book ), $this );
+		$relation = new HasMany( 'author', get_class( $book ), $this, 'books' );
 		$relation->keep_synced();
 
 		return $relation;

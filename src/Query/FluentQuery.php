@@ -861,7 +861,7 @@ class FluentQuery {
 		$model = new $this->model;
 
 		foreach ( $this->relations as $relation => $customize_callback ) {
-			$model->get_relation( $relation )->eager_load( $models, $relation, $customize_callback );
+			$model->get_relation( $relation )->eager_load( $models, $customize_callback );
 		}
 	}
 

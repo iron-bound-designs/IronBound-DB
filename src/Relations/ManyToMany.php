@@ -43,11 +43,6 @@ class ManyToMany extends Relation {
 	/**
 	 * @var string
 	 */
-	protected $attribute;
-
-	/**
-	 * @var string
-	 */
 	protected $other_attribute;
 
 	/**
@@ -60,7 +55,7 @@ class ManyToMany extends Relation {
 	 * @param string           $other_attribute
 	 */
 	public function __construct( $related, Model $parent, AssociationTable $association, $attribute, $other_attribute ) {
-		parent::__construct( $related, $parent );
+		parent::__construct( $related, $parent, $attribute );
 
 		$this->association = $association;
 
@@ -75,7 +70,6 @@ class ManyToMany extends Relation {
 			$this->primary_column = $association->get_col_b();
 		}
 
-		$this->attribute       = $attribute;
 		$this->other_attribute = $other_attribute;
 	}
 
@@ -239,11 +233,12 @@ class ManyToMany extends Relation {
 	/**
 	 * @inheritDoc
 	 */
-	public function eager_load( array $models, $attribute, $callback = null ) {
-
-		$results = $this->fetch_results_for_eager_load( $models, $callback );
-		$memory  = (bool) $this->keep_synced;
-		$related = array();
+	public function eager_load( array $models, $callback = null ) {
+		
+		$results   = $this->fetch_results_for_eager_load( $models, $callback );
+		$memory    = (bool) $this->keep_synced;
+		$attribute = $this->attribute;
+		$related   = array();
 
 		$relationship_map = array();
 

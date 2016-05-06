@@ -10,11 +10,9 @@
 
 namespace IronBound\DB\Relations;
 
-use Doctrine\Common\Collections\Collection;
 use IronBound\DB\Collections\ModelCollection;
 use IronBound\DB\Model;
 use IronBound\WPEvents\GenericEvent;
-use PhpParser\Node\Expr\AssignOp\Mod;
 
 /**
  * Class Relation
@@ -33,7 +31,7 @@ abstract class Relation {
 	protected $parent;
 
 	/**
-	 * @var bool|string
+	 * @var bool
 	 */
 	protected $keep_synced = false;
 
@@ -45,12 +43,18 @@ abstract class Relation {
 	protected $results;
 
 	/**
+	 * @var string
+	 */
+	protected $attribute;
+
+	/**
 	 * Relation constructor.
 	 *
 	 * @param string $related Class name of the related model.
 	 * @param Model  $parent
+	 * @param string $attribute
 	 */
-	public function __construct( $related, Model $parent ) {
+	public function __construct( $related, Model $parent, $attribute ) {
 
 		if ( ! is_subclass_of( $related, 'IronBound\DB\Model' ) ) {
 			throw new \InvalidArgumentException( '$related must be a subclass of IronBound\DB\Model' );
@@ -58,6 +62,7 @@ abstract class Relation {
 
 		$this->related_model = $related;
 		$this->parent        = $parent;
+		$this->attribute     = $attribute;
 	}
 
 	/**
@@ -158,12 +163,11 @@ abstract class Relation {
 	 * @since 2.0
 	 *
 	 * @param Model[]  $models   Array of models to eager-load. Keyed by their primary key.
-	 * @param string   $attribute
 	 * @param callable $callback Called with the FluentQuery object to customize the relations loaded.
 	 *
 	 * @return $this
 	 */
-	public abstract function eager_load( array $models, $attribute, $callback = null );
+	public abstract function eager_load( array $models, $callback = null );
 
 	/**
 	 * Persist the results of a relation.

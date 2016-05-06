@@ -33,9 +33,10 @@ class HasMany extends Relation {
 	 * @param string $foreign_key   Foreign key that references the $parent model.
 	 * @param string $related_model Class name of the related model.
 	 * @param Model  $parent
+	 * @param string $attribute
 	 */
-	public function __construct( $foreign_key, $related_model, Model $parent ) {
-		parent::__construct( $related_model, $parent );
+	public function __construct( $foreign_key, $related_model, Model $parent, $attribute ) {
+		parent::__construct( $related_model, $parent, $attribute );
 
 		$this->foreign_key = $foreign_key;
 	}
@@ -49,7 +50,7 @@ class HasMany extends Relation {
 
 		$results = $related::query()->where( $this->foreign_key, true, $this->parent->get_pk() )->results();
 		$results->keep_memory();
-		
+
 		return $results;
 	}
 
@@ -110,7 +111,7 @@ class HasMany extends Relation {
 	/**
 	 * @inheritDoc
 	 */
-	public function eager_load( array $models, $attribute, $callback = null ) {
+	public function eager_load( array $models, $callback = null ) {
 
 		$results = $this->fetch_results_for_eager_load( $models, $callback );
 
@@ -122,7 +123,7 @@ class HasMany extends Relation {
 			if ( isset( $map[ $model->get_pk() ] ) ) {
 				$related = $map[ $model->get_pk() ];
 
-				$model->set_relation_value( $attribute, new ArrayCollection( $related ) );
+				$model->set_relation_value( $this->attribute, new ArrayCollection( $related ) );
 			}
 		}
 
