@@ -104,7 +104,7 @@ class ManyToMany extends Relation {
 		$results         = $this->results;
 		$attribute       = $this->attribute;
 		$other_attribute = $this->other_attribute;
-		
+
 		$related::saved( function ( GenericEvent $event ) use ( $parent, $results, $attribute, $other_attribute ) {
 
 			/** @var Model $model */
@@ -223,33 +223,69 @@ class ManyToMany extends Relation {
 	 */
 	public function persist( $values ) {
 
-		/** @var \wpdb $wpdb */
-		global $wpdb;
-
 		if ( $this->parent->get_pk() && $values->get_removed() ) {
-
-			$where = new Where( 1, true, 1 );
-
-			foreach ( $values->get_removed() as $removed ) {
-
-				$remove_where = new Where( $this->other_column, true, $this->parent->get_pk() );
-				$remove_where->qAnd( new Where( $this->primary_column, true, $removed->get_pk() ) );
-
-				$where->qOr( $remove_where );
-			}
-
-			$wpdb->query( "DELETE FROM `{$this->association->get_table_name( $wpdb )}` $where" );
+			$this->persist_removed( $values->get_removed() );
 		}
 
-		$insert = array();
+		$this->persist_do_save( $values );
+
+		$this->persist_added( $values->get_added() );
+	}
+
+	/**
+	 * Save all models that are being persisted.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Model[] $values
+	 */
+	protected function persist_do_save( $values ) {
 
 		foreach ( $values as $value ) {
 			// prevent recursion
 			$value->save( array( 'exclude_relations' => $this->other_attribute ) );
 		}
+	}
 
-		foreach ( $values->get_added() as $added ) {
-			$insert[] = "({$this->parent->get_pk()},{$added->get_pk()})";
+	/**
+	 * Persist the removed models.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Model[] $removed
+	 */
+	protected function persist_removed( $removed ) {
+
+		global $wpdb;
+
+		$where = new Where( 1, true, 1 );
+
+		foreach ( $removed as $model ) {
+
+			$remove_where = new Where( $this->other_column, true, $this->parent->get_pk() );
+			$remove_where->qAnd( new Where( $this->primary_column, true, $model->get_pk() ) );
+
+			$where->qOr( $remove_where );
+		}
+
+		$wpdb->query( "DELETE FROM `{$this->association->get_table_name( $wpdb )}` $where" );
+	}
+
+	/**
+	 * Persist the added models.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Model[] $added
+	 */
+	protected function persist_added( $added ) {
+
+		global $wpdb;
+
+		$insert = array();
+
+		foreach ( $added as $model ) {
+			$insert[] = "({$this->parent->get_pk()},{$model->get_pk()})";
 		}
 
 		if ( empty( $insert ) ) {
