@@ -12,8 +12,8 @@ namespace IronBound\DB\Query;
 
 use Closure;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use IronBound\DB\Collections\ModelCollection;
+use Doctrine\Common\Collections\Collection as DoctrineCollection;
+use IronBound\DB\Collections\Collection;
 use IronBound\DB\Exception\InvalidColumnException;
 use IronBound\DB\Exception\ModelNotFoundException;
 use IronBound\DB\Model;
@@ -638,7 +638,7 @@ class FluentQuery {
 	 *
 	 * @since 2.0
 	 *
-	 * @return ModelCollection|Collection
+	 * @return Collection|DoctrineCollection
 	 */
 	public function results() {
 
@@ -669,7 +669,7 @@ class FluentQuery {
 			$this->handle_eager_loading( $models );
 		}
 
-		$collection = new ModelCollection( $models );
+		$collection = new Collection( $models );
 
 		$this->results = $collection;
 

@@ -10,8 +10,7 @@
 
 namespace IronBound\DB\Relations;
 
-use Doctrine\Common\Collections\Collection;
-use IronBound\DB\Collections\ModelCollection;
+use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Query\Tag\Where;
@@ -114,13 +113,13 @@ class ManyToMany extends Relation {
 				return;
 			}
 
-			/** @var ModelCollection $relation */
+			/** @var Collection $relation */
 			$relation = $model->get_attribute( $other_attribute );
 
 			$added = $relation->get_added();
 
 			if ( isset( $added[ $parent->get_pk() ] ) ) {
-				$results->dont_remember( function ( ModelCollection $collection ) use ( $model ) {
+				$results->dont_remember( function ( Collection $collection ) use ( $model ) {
 					$collection->add( $model );
 				} );
 			}
@@ -128,7 +127,7 @@ class ManyToMany extends Relation {
 			$removed = $relation->get_removed();
 
 			if ( isset( $removed[ $parent->get_pk() ] ) ) {
-				$results->dont_remember( function ( ModelCollection $collection ) use ( $model ) {
+				$results->dont_remember( function ( Collection $collection ) use ( $model ) {
 					$collection->remove( $model->get_pk() );
 				} );
 			}
@@ -211,9 +210,9 @@ class ManyToMany extends Relation {
 		foreach ( $models as $model ) {
 
 			if ( isset( $relationship_map[ $model->get_pk() ] ) ) {
-				$model->set_relation_value( $attribute, new ModelCollection( $relationship_map[ $model->get_pk() ], $memory ) );
+				$model->set_relation_value( $attribute, new Collection( $relationship_map[ $model->get_pk() ], $memory ) );
 			} else {
-				$model->set_relation_value( $attribute, new ModelCollection( array(), $memory ) );
+				$model->set_relation_value( $attribute, new Collection( array(), $memory ) );
 			}
 		}
 	}

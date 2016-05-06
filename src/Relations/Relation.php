@@ -10,7 +10,7 @@
 
 namespace IronBound\DB\Relations;
 
-use IronBound\DB\Collections\ModelCollection;
+use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\WPEvents\GenericEvent;
 
@@ -38,7 +38,7 @@ abstract class Relation {
 	/**
 	 * Results will only be cached here if they are a Collection.
 	 *
-	 * @var ModelCollection
+	 * @var Collection
 	 */
 	protected $results;
 
@@ -91,7 +91,7 @@ abstract class Relation {
 
 		$results = $this->fetch_results();
 
-		if ( $this->keep_synced && $results instanceof ModelCollection ) {
+		if ( $this->keep_synced && $results instanceof Collection ) {
 			$this->results = $results;
 			$this->register_events();
 		}
@@ -174,7 +174,7 @@ abstract class Relation {
 	 *
 	 * @since 2.0
 	 *
-	 * @param ModelCollection|Model $values
+	 * @param Collection|Model $values
 	 */
 	public abstract function persist( $values );
 

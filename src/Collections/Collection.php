@@ -1,6 +1,6 @@
 <?php
 /**
- * Collection interface.
+ * Collection class.
  *
  * @author    Iron Bound Designs
  * @since     2.0
@@ -12,19 +12,20 @@ namespace IronBound\DB\Collections;
 
 use Closure;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Collection as DoctrineCollection;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Selectable;
-use IronBound\DB\Model;
+use IronBound\DB\Saver\ModelSaver;
+use IronBound\DB\Saver\Saver;
 
 /**
- * Class ModelCollection
+ * Class Collection
  * @package IronBound\DB\Collections
  */
-class ModelCollection implements Collection, Selectable {
+class Collection implements DoctrineCollection, Selectable {
 
 	/**
-	 * @var Collection|Selectable
+	 * @var \Doctrine\Common\Collections\Collection|Selectable
 	 */
 	protected $collection;
 
@@ -44,14 +45,20 @@ class ModelCollection implements Collection, Selectable {
 	protected $keep_memory = false;
 
 	/**
+	 * @var Saver
+	 */
+	protected $saver;
+
+	/**
 	 * ModelCollection constructor.
 	 *
-	 * @param Collection|Selectable|array $collection
-	 * @param bool                        $keep_memory
+	 * @param DoctrineCollection|Selectable|array $collection
+	 * @param bool                                $keep_memory
+	 * @param Saver                               $saver
 	 */
-	public function __construct( $collection = array(), $keep_memory = false ) {
+	public function __construct( $collection = array(), $keep_memory = false, Saver $saver = null ) {
 
-		if ( $collection instanceof Collection && ! $collection instanceof Selectable ) {
+		if ( $collection instanceof DoctrineCollection && ! $collection instanceof Selectable ) {
 			throw new \InvalidArgumentException( '$collection must implement Selectable and Collection.' );
 		}
 
@@ -62,6 +69,7 @@ class ModelCollection implements Collection, Selectable {
 		}
 
 		$this->keep_memory = $keep_memory;
+		$this->saver       = $saver ?: new ModelSaver();
 	}
 
 	/**
@@ -99,7 +107,7 @@ class ModelCollection implements Collection, Selectable {
 	 *
 	 * @since 2.0
 	 *
-	 * @return Model[]
+	 * @return array
 	 */
 	public function get_added() {
 		return $this->added;
@@ -110,7 +118,7 @@ class ModelCollection implements Collection, Selectable {
 	 *
 	 * @since 2.0
 	 *
-	 * @return Model[]
+	 * @return array
 	 */
 	public function get_removed() {
 		return $this->removed;
@@ -137,8 +145,8 @@ class ModelCollection implements Collection, Selectable {
 	 */
 	public function add( $element ) {
 
-		if ( $element->get_pk() ) {
-			$this->set( $element->get_pk(), $element );
+		if ( $this->saver->get_pk( $element ) ) {
+			$this->set( $this->saver->get_pk( $element ), $element );
 		} else {
 			$this->collection->add( $element );
 		}
@@ -158,8 +166,8 @@ class ModelCollection implements Collection, Selectable {
 	 */
 	public function contains( $element ) {
 
-		if ( $element->get_pk() ) {
-			return $this->collection->containsKey( $element->get_pk() );
+		if ( $this->saver->get_pk( $element ) ) {
+			return $this->collection->containsKey( $this->saver->get_pk( $element ) );
 		} else {
 			return $this->collection->contains( $element );
 		}
@@ -189,8 +197,8 @@ class ModelCollection implements Collection, Selectable {
 	 */
 	public function removeElement( $element ) {
 
-		if ( $element->get_pk() ) {
-			return $this->collection->remove( $element->get_pk() );
+		if ( $this->saver->get_pk( $element ) ) {
+			return $this->collection->remove( $this->saver->get_pk( $element ) );
 		} else {
 			return $this->collection->remove( $element );
 		}

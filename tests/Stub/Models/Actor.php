@@ -10,7 +10,7 @@
 
 namespace IronBound\DB\Tests\Stub\Models;
 
-use IronBound\DB\Collections\ModelCollection;
+use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Relations\ManyToMany;
 
@@ -18,12 +18,12 @@ use IronBound\DB\Relations\ManyToMany;
  * Class Actor
  * @package IronBound\DB\Tests\Stub\Models
  *
- * @property int             $id
- * @property string          $name
- * @property \DateTime       $birth_date
- * @property string          $bio
- * @property \WP_Post        $picture
- * @property ModelCollection $movies
+ * @property int        $id
+ * @property string     $name
+ * @property \DateTime  $birth_date
+ * @property string     $bio
+ * @property \WP_Post   $picture
+ * @property Collection $movies
  */
 class Actor extends Model {
 

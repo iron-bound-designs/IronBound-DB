@@ -10,10 +10,9 @@
 
 namespace IronBound\DB;
 
-use Doctrine\Common\Collections\Collection;
 use IronBound\Cache\Cacheable;
 use IronBound\Cache\Cache;
-use IronBound\DB\Collections\ModelCollection;
+use IronBound\DB\Collections\Collection;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Relations\Relation;
 use IronBound\DB\Table\Column\Contracts\Savable;
@@ -890,7 +889,7 @@ abstract class Model implements Cacheable, \Serializable {
 		$this->fire_model_event( 'saved' );
 
 		foreach ( $this->_relations as $relation ) {
-			if ( $relation instanceof ModelCollection ) {
+			if ( $relation instanceof Collection ) {
 				$relation->clear_memory();
 			}
 		}
