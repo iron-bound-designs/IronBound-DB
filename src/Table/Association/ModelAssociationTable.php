@@ -12,7 +12,7 @@ namespace IronBound\DB\Table\Association;
 
 use Doctrine\Common\Inflector\Inflector;
 use IronBound\DB\Saver\ModelSaver;
-use IronBound\DB\Table\Column\Foreign;
+use IronBound\DB\Table\Column\SimpleForeign;
 use IronBound\DB\Table\Table;
 
 /**
@@ -170,8 +170,8 @@ class ModelAssociationTable extends BaseAssociationTable {
 	 */
 	public function get_columns() {
 		return array(
-			$this->col_a => new Foreign( $this->col_a, $this->table_a ),
-			$this->col_b => new Foreign( $this->col_b, $this->table_b )
+			$this->col_a => new SimpleForeign( $this->col_a, $this->table_a ),
+			$this->col_b => new SimpleForeign( $this->col_b, $this->table_b )
 		);
 	}
 

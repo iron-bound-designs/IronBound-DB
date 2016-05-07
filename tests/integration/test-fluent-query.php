@@ -15,6 +15,7 @@ use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Query\Tag\Order;
 use IronBound\DB\Tests\Stub\Models\Author;
+use IronBound\DB\Tests\Stub\Models\Book;
 use IronBound\DB\Tests\Stub\Tables\Authors;
 use IronBound\DB\Tests\Stub\Tables\Books;
 use IronBound\WPEvents\EventDispatcher;
@@ -29,7 +30,7 @@ class Test_Fluent_Query extends \WP_UnitTestCase {
 		parent::setUp();
 
 		Manager::register( new Authors() );
-		Manager::register( new Books() );
+		Manager::register( new Books(), '', get_class( new Book() ) );
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
 

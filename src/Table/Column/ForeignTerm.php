@@ -17,7 +17,7 @@ use IronBound\DB\Table\Column\Contracts\Savable;
  * Class ForeignTerm
  * @package IronBound\DB\Table\Column
  */
-class ForeignTerm extends BaseColumn implements Savable {
+class ForeignTerm extends BaseColumn implements Savable, Foreign {
 
 	/**
 	 * @var TermSaver
@@ -34,6 +34,20 @@ class ForeignTerm extends BaseColumn implements Savable {
 		parent::__construct( $name );
 
 		$this->saver = $saver;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_foreign_table_name( \wpdb $wpdb ) {
+		return $wpdb->terms;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_foreign_table_column_name() {
+		return 'term_id';
 	}
 
 	/**

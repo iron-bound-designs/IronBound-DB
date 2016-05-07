@@ -11,7 +11,7 @@
 namespace IronBound\DB\Table\Association;
 
 use IronBound\DB\Saver\PostSaver;
-use IronBound\DB\Table\Column\Foreign;
+use IronBound\DB\Table\Column\SimpleForeign;
 use IronBound\DB\Table\Column\ForeignPost;
 use IronBound\DB\Table\Table;
 
@@ -130,7 +130,7 @@ class PostAssociationTable extends BaseAssociationTable {
 	 */
 	public function get_columns() {
 		return array(
-			$this->get_col_a() => new Foreign( $this->get_col_a(), $this->model_table ),
+			$this->get_col_a() => new SimpleForeign( $this->get_col_a(), $this->model_table ),
 			$this->get_col_b() => new ForeignPost( $this->get_col_b(), new PostSaver() )
 		);
 	}

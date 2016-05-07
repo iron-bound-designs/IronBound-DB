@@ -17,7 +17,7 @@ use IronBound\DB\Table\Column\Contracts\Savable;
  * Class ForeignUser
  * @package IronBound\DB\Table\Column
  */
-class ForeignUser extends BaseColumn implements Savable {
+class ForeignUser extends BaseColumn implements Savable, Foreign {
 
 	/**
 	 * @var UserSaver
@@ -45,6 +45,29 @@ class ForeignUser extends BaseColumn implements Savable {
 
 		$this->saver = $saver;
 		$this->key   = $key;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_foreign_table_name( \wpdb $wpdb ) {
+		return $wpdb->users;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_foreign_table_column_name() {
+		switch ( $this->key ) {
+			case 'id':
+				return 'ID';
+			case 'login':
+				return 'user_login';
+			case 'slug':
+				return 'user_nicename';
+			default:
+				throw new \UnexpectedValueException( 'Unexpected key type.' );
+		}
 	}
 
 	/**

@@ -13,13 +13,15 @@ namespace IronBound\DB\Table\Column;
 use IronBound\DB\Model;
 use IronBound\DB\Saver\ModelSaver;
 use IronBound\DB\Table\Column\Contracts\Savable;
+use IronBound\DB\Table\ForeignKey\DeleteConstrainable;
 use IronBound\DB\Table\Table;
+use IronBound\WPEvents\GenericEvent;
 
 /**
  * Class ForeignModel
  * @package IronBound\DB\Table\Column
  */
-class ForeignModel extends BaseColumn implements Savable {
+class ForeignModel extends SimpleForeign implements Savable, DeleteConstrainable {
 
 	/**
 	 * @var Table
@@ -45,42 +47,12 @@ class ForeignModel extends BaseColumn implements Savable {
 	 * @param ModelSaver $saver
 	 */
 	public function __construct( $name, $model_class, Table $foreign_table, ModelSaver $saver ) {
-		parent::__construct( $name );
+		parent::__construct( $name, $foreign_table, $foreign_table->get_primary_key() );
 
-		$this->foreign_table = $foreign_table;
-		$this->model_class   = $model_class;
-		$this->saver         = $saver;
+		$this->model_class = $model_class;
+		$this->saver       = $saver;
 
 		$this->saver->set_model_class( $model_class );
-	}
-
-	/**
-	 * Get the referenced column.
-	 *
-	 * @since 2.0
-	 *
-	 * @return BaseColumn
-	 */
-	protected function get_column() {
-
-		$column  = $this->foreign_table->get_primary_key();
-		$columns = $this->foreign_table->get_columns();
-
-		return $columns[ $column ];
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function get_definition() {
-		return "{$this->name} {$this->get_column()->get_definition_without_column_name( array( 'auto_increment' ) )}";
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function get_mysql_type() {
-		return $this->get_column()->get_mysql_type();
 	}
 
 	/**
@@ -107,5 +79,14 @@ class ForeignModel extends BaseColumn implements Savable {
 	 */
 	public function save( $value ) {
 		return $this->saver->save( $value );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function register_delete_callback( $callback ) {
+		call_user_func( array( $this->model_class, 'deleting' ), function ( GenericEvent $event ) use ( $callback ) {
+			$callback( $event->get_subject()->get_pk(), $event->get_subject() );
+		} );
 	}
 }

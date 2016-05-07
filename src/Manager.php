@@ -12,6 +12,7 @@ namespace IronBound\DB;
 
 use IronBound\DB\Query\Complex_Query;
 use IronBound\DB\Query\Simple_Query;
+use IronBound\DB\Table\Plugins\Plugin;
 use IronBound\DB\Table\Table;
 
 /**
@@ -27,25 +28,38 @@ final class Manager {
 	private static $tables = array();
 
 	/**
+	 * @var Plugin[]
+	 */
+	private static $plugins = array();
+
+	/**
 	 * Register a db table.
 	 *
 	 * @since 1.0
 	 *
 	 * @param Table  $table Table object.
 	 * @param string $complex_query_class
+	 * @param string $model_class
 	 *
 	 * @throws \InvalidArgumentException If $complex_query_class is not a subclass of Complex_Query.
 	 */
-	public static function register( Table $table, $complex_query_class = '' ) {
+	public static function register( Table $table, $complex_query_class = '', $model_class = '' ) {
 
 		if ( $complex_query_class && ! is_subclass_of( $complex_query_class, 'IronBound\DB\Query\Complex_Query' ) ) {
 			throw new \InvalidArgumentException( '$complex_query_class must subclass Complex_Query' );
 		}
 
+		if ( $model_class && ! is_subclass_of( $model_class, 'IronBound\DB\Model' ) ) {
+			throw new \InvalidArgumentException( '$model_class must subclass Model.' );
+		}
+
 		self::$tables[ $table->get_slug() ] = array(
 			'table' => $table,
-			'query' => $complex_query_class
+			'query' => $complex_query_class,
+			'model' => $model_class
 		);
+
+		self::fire_plugin_event( $table, 'registered' );
 	}
 
 	/**
@@ -114,6 +128,26 @@ final class Manager {
 	}
 
 	/**
+	 * Get the model for a table.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string|Table $slug
+	 *
+	 * @return string|null
+	 */
+	public static function get_model( $slug ) {
+
+		$slug = $slug instanceof Table ? $slug->get_slug() : $slug;
+
+		if ( isset( self::$tables[ $slug ] ) ) {
+			return self::$tables[ $slug ]['model'];
+		} else {
+			return null;
+		}
+	}
+
+	/**
 	 * Maybe install a table.
 	 *
 	 * Will skip a table if it is up-to-date.
@@ -137,6 +171,12 @@ final class Manager {
 			dbDelta( $table->get_creation_sql( $wpdb ) );
 
 			update_option( $table->get_table_name( $wpdb ) . '_version', $table->get_version() );
+
+			if ( $installed === 0 ) {
+				self::fire_plugin_event( $table, 'installed' );
+			} else {
+				self::fire_plugin_event( $table, 'updated' );
+			}
 
 			return true;
 		}
@@ -163,5 +203,35 @@ final class Manager {
 		$results = $wpdb->get_results( "SHOW TABLES LIKE '$name'" );
 
 		return count( $results ) > 0;
+	}
+
+	/**
+	 * Register a plugin with the table manager.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Plugin $plugin
+	 */
+	public static function register_plugin( Plugin $plugin ) {
+		self::$plugins[] = $plugin;
+	}
+
+	/**
+	 * Fire a plugin event on a given table.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Table  $table
+	 * @param string $event Name of the method on the plugin object. Either 'registered', 'installed', or 'updated'.
+	 */
+	protected static function fire_plugin_event( Table $table, $event ) {
+
+		foreach ( self::$plugins as $plugin ) {
+			if ( $plugin->accepts( $table ) ) {
+				if ( method_exists( $plugin, $event ) ) {
+					call_user_func( array( $plugin, $event ), $table );
+				}
+			}
+		}
 	}
 }

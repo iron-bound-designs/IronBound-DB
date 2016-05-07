@@ -28,7 +28,7 @@ class Test_HasMany extends \WP_UnitTestCase {
 		parent::setUp();
 
 		Manager::register( new Authors() );
-		Manager::register( new Books() );
+		Manager::register( new Books(), '', get_class( new Book() ) );
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
 

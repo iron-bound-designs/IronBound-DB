@@ -1,6 +1,6 @@
 <?php
 /**
- * Contains the class for the Foreign column type.
+ * Foreign column interface.
  *
  * @author    Iron Bound Designs
  * @since     2.0
@@ -10,78 +10,32 @@
 
 namespace IronBound\DB\Table\Column;
 
-use IronBound\DB\Table\Table;
-
 /**
- * Class Foreign
+ * Interface Foreign
  * @package IronBound\DB\Table\Column
  */
-class Foreign extends BaseColumn {
+interface Foreign extends Column {
 
 	/**
-	 * @var Table
-	 */
-	protected $foreign_table;
-
-	/**
-	 * @var string
-	 */
-	protected $foreign_column;
-
-	/**
-	 * Foreign constructor.
-	 *
-	 * @param string      $name           Column name.
-	 * @param Table       $foreign_table  Table the foreign key resides in.
-	 * @param string|null $foreign_column Specify the column being related to. If null, the primary key column is used.
-	 */
-	public function __construct( $name, Table $foreign_table, $foreign_column = null ) {
-		parent::__construct( $name );
-
-		$this->foreign_table  = $foreign_table;
-		$this->foreign_column = $foreign_column;
-	}
-
-	/**
-	 * Get the referenced column.
+	 * Get the table name being connected to.
 	 *
 	 * @since 2.0
 	 *
-	 * @return BaseColumn
+	 * @param \wpdb $wpdb
+	 *
+	 * @return string
 	 */
-	protected function get_column() {
-
-		$column  = $this->foreign_column ?: $this->foreign_table->get_primary_key();
-		$columns = $this->foreign_table->get_columns();
-
-		return $columns[ $column ];
-	}
+	public function get_foreign_table_name( \wpdb $wpdb );
 
 	/**
-	 * @inheritDoc
+	 * Get the column name of the foreign table being connected to.
+	 *
+	 * Typically, this would be the primary key of the foreign table.
+	 * For example 'ID' for the wp_posts table.
+	 *
+	 * @since 2.0
+	 *
+	 * @return string
 	 */
-	public function get_definition() {
-		return "{$this->name} {$this->get_column()->get_definition_without_column_name( array( 'auto_increment' ) )}";
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function get_mysql_type() {
-		return $this->get_column()->get_mysql_type();
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function convert_raw_to_value( $raw, \stdClass $row = null ) {
-		return $this->get_column()->convert_raw_to_value( $raw, $row );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function prepare_for_storage( $value ) {
-		return $this->get_column()->prepare_for_storage( $value );
-	}
+	public function get_foreign_table_column_name();
 }

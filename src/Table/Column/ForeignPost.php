@@ -17,7 +17,7 @@ use IronBound\DB\Table\Column\Contracts\Savable;
  * Class ForeignPost
  * @package IronBound\DB\Table\Column
  */
-class ForeignPost extends BaseColumn implements Savable {
+class ForeignPost extends BaseColumn implements Savable, Foreign {
 
 	/**
 	 * @var Saver
@@ -34,6 +34,20 @@ class ForeignPost extends BaseColumn implements Savable {
 		parent::__construct( $name );
 
 		$this->saver = $value;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_foreign_table_name( \wpdb $wpdb ) {
+		return $wpdb->posts;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_foreign_table_column_name() {
+		return 'ID';
 	}
 
 	/**

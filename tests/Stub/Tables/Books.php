@@ -18,13 +18,28 @@ use IronBound\DB\Table\Column\DecimalBased;
 use IronBound\DB\Table\Column\ForeignModel;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\StringBased;
+use IronBound\DB\Table\ForeignKey\DeleteConstrained;
 use IronBound\DB\Tests\Stub\Models\Author;
 
 /**
  * Class Books
  * @package IronBound\DB\Tests\Stub\Tables
  */
-class Books extends BaseTable {
+class Books extends BaseTable implements DeleteConstrained {
+
+	/**
+	 * @var string
+	 */
+	protected $constraint;
+
+	/**
+	 * Books constructor.
+	 *
+	 * @param string $constraint
+	 */
+	public function __construct( $constraint = self::CASCADE ) {
+		$this->constraint = $constraint;
+	}
 
 	/**
 	 * @inheritDoc
@@ -78,5 +93,14 @@ class Books extends BaseTable {
 	 */
 	public function get_version() {
 		return 1;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_delete_constraints() {
+		return array(
+			'author' => $this->constraint
+		);
 	}
 }
