@@ -12,12 +12,13 @@ namespace IronBound\DB\Table\Column;
 
 use IronBound\DB\Saver\Saver;
 use IronBound\DB\Table\Column\Contracts\Savable;
+use IronBound\DB\Table\ForeignKey\DeleteConstrainable;
 
 /**
  * Class ForeignPost
  * @package IronBound\DB\Table\Column
  */
-class ForeignPost extends BaseColumn implements Savable, Foreign {
+class ForeignPost extends BaseColumn implements Savable, Foreign, DeleteConstrainable {
 
 	/**
 	 * @var Saver
@@ -88,5 +89,14 @@ class ForeignPost extends BaseColumn implements Savable, Foreign {
 	 */
 	public function save( $value ) {
 		return $this->saver->save( $value );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function register_delete_callback( $callback ) {
+		add_action( 'before_delete_post', function ( $post_id ) use ( $callback ) {
+			$callback( $post_id, get_post( $post_id ) );
+		} );
 	}
 }

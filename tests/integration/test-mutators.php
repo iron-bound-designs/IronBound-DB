@@ -11,6 +11,7 @@
 namespace IronBound\DB\Tests;
 
 use IronBound\DB\Manager;
+use IronBound\DB\Tests\Stub\Models\ModelWithForeignPost;
 use IronBound\DB\Tests\Stub\Models\ModelWithMutators;
 use IronBound\DB\Tests\Stub\Tables\TableWithForeignPost;
 
@@ -23,7 +24,7 @@ class Test_Mutators extends \WP_UnitTestCase {
 	public function setUp() {
 		parent::setUp();
 
-		Manager::register( new TableWithForeignPost() );
+		Manager::register( new TableWithForeignPost(), '', get_class( new ModelWithForeignPost() ) );
 		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );
 	}
 

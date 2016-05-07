@@ -25,7 +25,7 @@ class Test_Events extends \WP_UnitTestCase {
 	public function setUp() {
 		parent::setUp();
 
-		Manager::register( new TableWithForeignPost() );
+		Manager::register( new TableWithForeignPost(), '', get_class( new ModelWithForeignPost() ) );
 		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );
 	}
 

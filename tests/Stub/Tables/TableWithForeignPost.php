@@ -16,12 +16,27 @@ use IronBound\DB\Table\Column\DecimalBased;
 use IronBound\DB\Table\Column\ForeignPost;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Saver\PostSaver;
+use IronBound\DB\Table\ForeignKey\DeleteConstrained;
 
 /**
  * Class TableWithForeignPost
  * @package IronBound\DB\Tests\Stub\Tables
  */
-class TableWithForeignPost extends BaseTable {
+class TableWithForeignPost extends BaseTable implements DeleteConstrained {
+
+	/**
+	 * @var string
+	 */
+	protected $constraint;
+
+	/**
+	 * TableWithForeignPost constructor.
+	 *
+	 * @param string $constraint
+	 */
+	public function __construct( $constraint = self::CASCADE ) {
+		$this->constraint = $constraint;
+	}
 
 	/**
 	 * @inheritDoc
@@ -73,5 +88,14 @@ class TableWithForeignPost extends BaseTable {
 	 */
 	public function get_version() {
 		return 1;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_delete_constraints() {
+		return array(
+			'post' => $this->constraint
+		);
 	}
 }
