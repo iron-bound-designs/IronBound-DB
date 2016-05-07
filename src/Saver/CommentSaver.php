@@ -26,7 +26,7 @@ class CommentSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
-	public function save( $value ) {
+	public function save( $value, array $options = array() ) {
 
 		if ( ! $value instanceof \WP_Comment && ! property_exists( $value, 'comment_ID' ) ) {
 			throw new \InvalidArgumentException( 'ForeignComment can only save WP_Comment objects.' );

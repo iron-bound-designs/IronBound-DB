@@ -200,7 +200,7 @@ class Collection implements DoctrineCollection, Selectable {
 		if ( $this->saver->get_pk( $element ) ) {
 			return $this->collection->remove( $this->saver->get_pk( $element ) );
 		} else {
-			return $this->collection->remove( $element );
+			return $this->collection->removeElement( $element );
 		}
 	}
 

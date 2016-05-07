@@ -26,7 +26,7 @@ class PostSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
-	public function save( $value ) {
+	public function save( $value, array $options = array() ) {
 
 		if ( ! $value instanceof \WP_Post ) {
 			throw new \InvalidArgumentException( 'ForeignPost can only save WP_Post objects.' );

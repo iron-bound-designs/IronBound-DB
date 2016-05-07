@@ -15,7 +15,6 @@ use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Query\Tag\Where;
 use IronBound\DB\Table\Association\AssociationTable;
-use IronBound\DB\Table\Table;
 use IronBound\WPEvents\GenericEvent;
 
 /**
@@ -47,22 +46,19 @@ class ManyToMany extends Relation {
 	/**
 	 * ManyToMany constructor.
 	 *
-	 * @param string           $related Related class name.
-	 * @param Model            $parent  Parent object.
-	 * @param AssociationTable $association
-	 * @param string           $attribute
-	 * @param string           $other_attribute
+	 * @param string           $related         Related class name.
+	 * @param Model            $parent          Parent object.
+	 * @param AssociationTable $association     Association table.
+	 * @param string           $attribute       Attribute name on this model.
+	 * @param string           $other_attribute Attribute name of the corresponding relation on the related model.
 	 */
-	public function __construct( $related, Model $parent, AssociationTable $association, $attribute, $other_attribute ) {
+	public function __construct( $related, Model $parent, AssociationTable $association, $attribute, $other_attribute = '' ) {
 		parent::__construct( $related, $parent, $attribute );
 
 		$this->association = $association;
 
-		/** @var Table $related_table */
-		$related_table = $related::table();
-
-		$this->other_column   = $association->get_other_column_for_table( $related_table );
-		$this->primary_column = $association->get_primary_column_for_table( $related_table );
+		$this->other_column   = $association->get_other_column_for_table( $parent::table() );
+		$this->primary_column = $association->get_primary_column_for_table( $parent::table() );
 
 		$this->other_attribute = $other_attribute;
 	}
@@ -200,11 +196,11 @@ class ManyToMany extends Relation {
 			unset( $attributes[ $this->primary_column ] );
 			unset( $attributes[ $this->other_column ] );
 
-			$model = call_user_func( array( $this->related_model, 'from_query' ), $attributes );
+			$model = $this->make_model_from_attributes( $attributes );
+			$pk    = $this->association->get_saver()->get_pk( $model );
 
-			$related[ $model->get_pk() ] = $model;
-
-			$relationship_map[ $result[ $this->other_column ] ][ $model->get_pk() ] = $model;
+			$related[ $pk ]                                            = $model;
+			$relationship_map[ $result[ $this->other_column ] ][ $pk ] = $model;
 		}
 
 		foreach ( $models as $model ) {
@@ -218,6 +214,19 @@ class ManyToMany extends Relation {
 	}
 
 	/**
+	 * Make a model from attributes.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $attributes
+	 *
+	 * @return mixed
+	 */
+	protected function make_model_from_attributes( $attributes ) {
+		return call_user_func( array( $this->related_model, 'from_query' ), $attributes );
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	public function persist( $values ) {
@@ -226,9 +235,9 @@ class ManyToMany extends Relation {
 			$this->persist_removed( $values->get_removed() );
 		}
 
-		$this->persist_do_save( $values );
+		$added = $this->persist_do_save( $values );
 
-		$this->persist_added( $values->get_added() );
+		$this->persist_added( $values->get_added() + $added );
 	}
 
 	/**
@@ -236,14 +245,34 @@ class ManyToMany extends Relation {
 	 *
 	 * @since 2.0
 	 *
-	 * @param Model[] $values
+	 * @param Collection $values
+	 *
+	 * @return array Models that have been newly created, not updated.
 	 */
-	protected function persist_do_save( $values ) {
+	protected function persist_do_save( Collection $values ) {
+
+		$added = array();
 
 		foreach ( $values as $value ) {
-			// prevent recursion
-			$value->save( array( 'exclude_relations' => $this->other_attribute ) );
+
+			$new = ! $this->association->get_saver()->get_pk( $value );
+
+			// prevent recursion by excluding the relation that references this from being saved.
+			$saved = $this->association->get_saver()->save( $value, array( 'exclude_relations' => $this->other_attribute ) );
+			$pk    = $this->association->get_saver()->get_pk( $saved );
+
+			if ( $new && $pk ) {
+				$added[ $pk ] = $saved;
+
+				$values->removeElement( $value );
+			}
+
+			$values->dont_remember( function ( Collection $collection ) use ( $saved, $pk ) {
+				$collection->set( $pk, $saved );
+			} );
 		}
+
+		return $added;
 	}
 
 	/**
@@ -262,7 +291,7 @@ class ManyToMany extends Relation {
 		foreach ( $removed as $model ) {
 
 			$remove_where = new Where( $this->other_column, true, $this->parent->get_pk() );
-			$remove_where->qAnd( new Where( $this->primary_column, true, $model->get_pk() ) );
+			$remove_where->qAnd( new Where( $this->primary_column, true, $this->association->get_saver()->get_pk( $model ) ) );
 
 			$where->qOr( $remove_where );
 		}
@@ -284,7 +313,9 @@ class ManyToMany extends Relation {
 		$insert = array();
 
 		foreach ( $added as $model ) {
-			$insert[] = "({$this->parent->get_pk()},{$model->get_pk()})";
+			$pk = $this->association->get_saver()->get_pk( $model );
+
+			$insert[] = "({$this->parent->get_pk()},{$pk})";
 		}
 
 		if ( empty( $insert ) ) {

@@ -11,7 +11,7 @@
 namespace IronBound\DB\Table\Association;
 
 use Doctrine\Common\Inflector\Inflector;
-use IronBound\DB\Table\BaseTable;
+use IronBound\DB\Saver\ModelSaver;
 use IronBound\DB\Table\Column\Foreign;
 use IronBound\DB\Table\Table;
 
@@ -19,7 +19,7 @@ use IronBound\DB\Table\Table;
  * Class AssociationTable
  * @package IronBound\DB\Table
  */
-class ModelAssociationTable extends BaseTable implements AssociationTable {
+class ModelAssociationTable extends BaseAssociationTable {
 
 	/**
 	 * @var Table
@@ -95,17 +95,24 @@ class ModelAssociationTable extends BaseTable implements AssociationTable {
 	}
 
 	/**
+	 * @inheritDoc
+	 */
+	public function get_saver() {
+		return new ModelSaver();
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	public function get_primary_column_for_table( Table $table ) {
-		return $this->get_table_a()->get_slug() === $table->get_slug() ? $this->get_col_a() : $this->get_col_b();
+		return $this->get_table_a()->get_slug() === $table->get_slug() ? $this->get_col_b() : $this->get_col_a();
 	}
 	
 	/**
 	 * @inheritdoc
 	 */
 	public function get_other_column_for_table( Table $table ) {
-		return $this->get_table_a()->get_slug() === $table->get_slug() ? $this->get_col_b() : $this->get_col_a();
+		return $this->get_table_a()->get_slug() === $table->get_slug() ? $this->get_col_a() : $this->get_col_b();
 	}
 
 	/**
@@ -143,47 +150,6 @@ class ModelAssociationTable extends BaseTable implements AssociationTable {
 	public function get_table_b() {
 		return $this->table_b;
 	}
-	
-	/**
-	 * Build the column name for a table.
-	 *
-	 * @since 2.0
-	 *
-	 * @param Table $table
-	 *
-	 * @return string
-	 */
-	protected function build_column_name_for_table( Table $table ) {
-
-		$basename  = $this->class_basename( $table );
-		$tableized = Inflector::tableize( $basename );
-
-		$parts         = explode( '_', $tableized );
-		$last_plural   = array_pop( $parts );
-		$last_singular = Inflector::singularize( $last_plural );
-		$parts[]       = $last_singular;
-
-		$column_name = implode( '_', $parts );
-		$column_name .= '_' . $table->get_primary_key();
-
-		return $column_name;
-	}
-
-	/**
-	 * Get the basename for a class.
-	 *
-	 * @since 2.0
-	 *
-	 * @param string|object $class
-	 *
-	 * @return string
-	 */
-	protected function class_basename( $class ) {
-
-		$class = is_object( $class ) ? get_class( $class ) : $class;
-
-		return basename( str_replace( '\\', '/', $class ) );
-	}
 
 	/**
 	 * @inheritDoc
@@ -207,23 +173,6 @@ class ModelAssociationTable extends BaseTable implements AssociationTable {
 			$this->col_a => new Foreign( $this->col_a, $this->table_a ),
 			$this->col_b => new Foreign( $this->col_b, $this->table_b )
 		);
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function get_column_defaults() {
-		return array(
-			$this->col_a => '',
-			$this->col_b => ''
-		);
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function get_primary_key() {
-		return '';
 	}
 
 	/**

@@ -56,7 +56,7 @@ abstract class Relation {
 	 */
 	public function __construct( $related, Model $parent, $attribute ) {
 
-		if ( ! is_subclass_of( $related, 'IronBound\DB\Model' ) ) {
+		if ( ! empty( $related ) && ! is_subclass_of( $related, 'IronBound\DB\Model' ) ) {
 			throw new \InvalidArgumentException( '$related must be a subclass of IronBound\DB\Model' );
 		}
 

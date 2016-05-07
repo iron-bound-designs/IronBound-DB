@@ -25,11 +25,12 @@ abstract class Saver {
 	 *
 	 * @since 2.0
 	 *
-	 * @param mixed $value The value object.
+	 * @param mixed $value   The value object.
+	 * @param array $options Additional options to use when saving.
 	 *
 	 * @return mixed Updated value object. If created, the primary key should be set.
 	 */
-	public abstract function save( $value );
+	public abstract function save( $value, array $options = array() );
 
 	/**
 	 * Get the primary key from a value.

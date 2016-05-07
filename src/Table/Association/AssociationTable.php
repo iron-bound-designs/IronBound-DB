@@ -10,6 +10,7 @@
 
 namespace IronBound\DB\Table\Association;
 
+use IronBound\DB\Saver\Saver;
 use IronBound\DB\Table\Table;
 
 /**
@@ -57,4 +58,13 @@ interface AssociationTable extends Table {
 	 * @return string
 	 */
 	public function get_col_b();
+
+	/**
+	 * Get the saver to use.
+	 * 
+	 * @since 2.0
+	 * 
+	 * @return Saver
+	 */
+	public function get_saver();
 }

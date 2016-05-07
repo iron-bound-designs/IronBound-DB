@@ -26,7 +26,7 @@ class TermSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
-	public function save( $value ) {
+	public function save( $value, array $options = array() ) {
 
 		if ( ! $value instanceof \WP_Term && ! property_exists( $value, 'term_id' ) ) {
 			throw new \InvalidArgumentException( 'ForeignTerm can only save WP_Term objects.' );

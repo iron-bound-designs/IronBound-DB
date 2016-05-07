@@ -54,7 +54,7 @@ class UserSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
-	public function save( $value ) {
+	public function save( $value, array $options = array() ) {
 
 		if ( ! $value instanceof \WP_User ) {
 			throw new \InvalidArgumentException( 'ForeignUser can only save WP_User objects.' );

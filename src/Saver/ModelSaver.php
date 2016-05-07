@@ -51,13 +51,13 @@ class ModelSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
-	public function save( $value ) {
+	public function save( $value, array $options = array() ) {
 
 		if ( ! $value instanceof $this->model_class ) {
 			throw new \InvalidArgumentException( 'ForeignModel column can only save IronBound\DB\Model objects.' );
 		}
 
-		$value->save();
+		$value->save( $options );
 
 		return $value;
 	}
