@@ -15,9 +15,11 @@ use IronBound\DB\Model;
 use IronBound\DB\Table\ForeignKey\DeleteConstrained;
 use IronBound\DB\Tests\Stub\Models\Author;
 use IronBound\DB\Tests\Stub\Models\Book;
+use IronBound\DB\Tests\Stub\Models\ModelWithAllForeign;
 use IronBound\DB\Tests\Stub\Models\ModelWithForeignPost;
 use IronBound\DB\Tests\Stub\Tables\Authors;
 use IronBound\DB\Tests\Stub\Tables\Books;
+use IronBound\DB\Tests\Stub\Tables\TableWithAllForeign;
 use IronBound\DB\Tests\Stub\Tables\TableWithForeignPost;
 use IronBound\WPEvents\EventDispatcher;
 
@@ -149,7 +151,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 			'post_title' => 'The Title'
 		) );
 
-		$model = ModelWithForeignPost::create( array(
+		ModelWithForeignPost::create( array(
 			'post'  => $post,
 			'price' => '9.99'
 		) );
@@ -182,5 +184,192 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 		$this->assertEmpty( ModelWithForeignPost::get( $m1->get_pk() )->post );
 		$this->assertEquals( $p2->ID, ModelWithForeignPost::get( $m2->get_pk() )->post->ID );
+	}
+
+	public function test_cascade_comment() {
+
+		Manager::register( new TableWithAllForeign(), '', get_class( new ModelWithAllForeign() ) );
+		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
+
+		$c1 = self::factory()->comment->create_and_get( array(
+			'comment_content' => 'My Comment'
+		) );
+		$c2 = self::factory()->comment->create_and_get( array(
+			'comment_content' => 'My Other Comment'
+		) );
+
+		$m1 = ModelWithAllForeign::create( array(
+			'comment' => $c1,
+		) );
+		$m2 = ModelWithAllForeign::create( array(
+			'comment' => $c2,
+		) );
+
+		wp_delete_comment( $c1->comment_ID, true );
+
+		$this->assertNull( ModelWithAllForeign::get( $m1->get_pk() ) );
+		$this->assertNotNull( ModelWithAllForeign::get( $m2->get_pk() ) );
+	}
+
+	/**
+	 * @expectedException \IronBound\DB\Exception\DeleteRestrictedException
+	 */
+	public function test_restrict_comment() {
+
+		Manager::register( new TableWithAllForeign( DeleteConstrained::RESTRICT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
+
+		$comment = self::factory()->comment->create_and_get( array(
+			'comment_content' => 'My Comment'
+		) );
+
+		ModelWithAllForeign::create( array(
+			'comment' => $comment,
+		) );
+
+		wp_delete_comment( $comment->comment_ID, true );
+	}
+
+	public function test_set_default_comment() {
+
+		Manager::register( new TableWithAllForeign( DeleteConstrained::SET_DEFAULT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
+
+		$c1 = self::factory()->comment->create_and_get( array(
+			'comment_content' => 'My Comment'
+		) );
+		$c2 = self::factory()->comment->create_and_get( array(
+			'comment_content' => 'My Other Comment'
+		) );
+
+		$m1 = ModelWithAllForeign::create( array(
+			'comment' => $c1,
+		) );
+		$m2 = ModelWithAllForeign::create( array(
+			'comment' => $c2,
+		) );
+
+		wp_delete_comment( $c1->comment_ID, true );
+
+		$this->assertEmpty( ModelWithAllForeign::get( $m1->get_pk() )->comment );
+		$this->assertEquals( $c2->comment_ID, ModelWithAllForeign::get( $m2->get_pk() )->comment->comment_ID );
+	}
+
+	public function test_cascade_user() {
+
+		Manager::register( new TableWithAllForeign(), '', get_class( new ModelWithAllForeign() ) );
+		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
+
+		$u1 = self::factory()->user->create_and_get();
+		$u2 = self::factory()->user->create_and_get();
+
+		$m1 = ModelWithAllForeign::create( array(
+			'user' => $u1,
+		) );
+		$m2 = ModelWithAllForeign::create( array(
+			'user' => $u2,
+		) );
+
+		wp_delete_user( $u1->ID );
+
+		$this->assertNull( ModelWithAllForeign::get( $m1->get_pk() ) );
+		$this->assertNotNull( ModelWithAllForeign::get( $m2->get_pk() ) );
+	}
+
+	/**
+	 * @expectedException \IronBound\DB\Exception\DeleteRestrictedException
+	 */
+	public function test_restrict_user() {
+
+		Manager::register( new TableWithAllForeign( DeleteConstrained::RESTRICT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
+
+		$user = self::factory()->user->create_and_get();
+
+		ModelWithAllForeign::create( array(
+			'user' => $user,
+		) );
+
+		wp_delete_user( $user->ID );
+	}
+
+	public function test_set_default_user() {
+
+		Manager::register( new TableWithAllForeign( DeleteConstrained::SET_DEFAULT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
+
+		$u1 = self::factory()->user->create_and_get();
+		$u2 = self::factory()->user->create_and_get();
+
+		$m1 = ModelWithAllForeign::create( array(
+			'user' => $u1,
+		) );
+		$m2 = ModelWithAllForeign::create( array(
+			'user' => $u2,
+		) );
+
+		wp_delete_user( $u1->ID );
+
+		$this->assertEmpty( ModelWithAllForeign::get( $m1->get_pk() )->user );
+		$this->assertEquals( $u2->ID, ModelWithAllForeign::get( $m2->get_pk() )->user->ID );
+	}
+
+	public function test_cascade_term() {
+
+		Manager::register( new TableWithAllForeign(), '', get_class( new ModelWithAllForeign() ) );
+		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
+
+		$t1 = self::factory()->term->create_and_get();
+		$t2 = self::factory()->term->create_and_get();
+
+		$m1 = ModelWithAllForeign::create( array(
+			'term' => $t1,
+		) );
+		$m2 = ModelWithAllForeign::create( array(
+			'term' => $t2,
+		) );
+
+		wp_delete_term( $t1->term_id, $t1->taxonomy );
+
+		$this->assertNull( ModelWithAllForeign::get( $m1->get_pk() ) );
+		$this->assertNotNull( ModelWithAllForeign::get( $m2->get_pk() ) );
+	}
+
+	/**
+	 * @expectedException \IronBound\DB\Exception\DeleteRestrictedException
+	 */
+	public function test_restrict_term() {
+
+		Manager::register( new TableWithAllForeign( DeleteConstrained::RESTRICT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
+
+		$term = self::factory()->term->create_and_get();
+
+		ModelWithAllForeign::create( array(
+			'term' => $term,
+		) );
+
+		wp_delete_term( $term->term_id, $term->taxonomy );
+	}
+
+	public function test_set_default_term() {
+
+		Manager::register( new TableWithAllForeign( DeleteConstrained::SET_DEFAULT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
+
+		$t1 = self::factory()->term->create_and_get();
+		$t2 = self::factory()->term->create_and_get();
+
+		$m1 = ModelWithAllForeign::create( array(
+			'term' => $t1,
+		) );
+		$m2 = ModelWithAllForeign::create( array(
+			'term' => $t2,
+		) );
+
+		wp_delete_term( $t1->term_id, $t1->taxonomy );
+
+		$this->assertEmpty( ModelWithAllForeign::get( $m1->get_pk() )->term );
+		$this->assertEquals( $t2->term_id, ModelWithAllForeign::get( $m2->get_pk() )->term->term_id );
 	}
 }

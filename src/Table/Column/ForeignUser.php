@@ -12,12 +12,13 @@ namespace IronBound\DB\Table\Column;
 
 use IronBound\DB\Saver\UserSaver;
 use IronBound\DB\Table\Column\Contracts\Savable;
+use IronBound\DB\Table\ForeignKey\DeleteConstrainable;
 
 /**
  * Class ForeignUser
  * @package IronBound\DB\Table\Column
  */
-class ForeignUser extends BaseColumn implements Savable, Foreign {
+class ForeignUser extends BaseColumn implements Savable, Foreign, DeleteConstrainable {
 
 	/**
 	 * @var UserSaver
@@ -143,5 +144,21 @@ class ForeignUser extends BaseColumn implements Savable, Foreign {
 	 */
 	public function save( $value ) {
 		return $this->saver->save( $value );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function register_delete_callback( $callback ) {
+
+		$saver = $this->saver;
+
+		add_action( 'delete_user', function ( $id, $reassign ) use ( $callback, $saver ) {
+
+			$user = get_user_by( 'id', $id );
+
+			$callback( $saver->get_pk( $user ), $user, $reassign );
+
+		}, 10, 2 );
 	}
 }

@@ -21,6 +21,7 @@ use IronBound\DB\Table\Column\ForeignPost;
 use IronBound\DB\Table\Column\ForeignTerm;
 use IronBound\DB\Table\Column\ForeignUser;
 use IronBound\DB\Table\Column\IntegerBased;
+use IronBound\DB\Table\ForeignKey\DeleteConstrained;
 use IronBound\DB\Tests\Stub\Models\Book;
 use IronBound\DB\Saver\PostSaver;
 
@@ -28,7 +29,21 @@ use IronBound\DB\Saver\PostSaver;
  * Class TableWithAllForeign
  * @package IronBound\DB\Tests\Stub\Tables
  */
-class TableWithAllForeign extends BaseTable {
+class TableWithAllForeign extends BaseTable implements DeleteConstrained {
+
+	/**
+	 * @var string
+	 */
+	protected $constraint;
+
+	/**
+	 * TableWithAllForeign constructor.
+	 *
+	 * @param string $constraint
+	 */
+	public function __construct( $constraint = self::CASCADE ) {
+		$this->constraint = $constraint;
+	}
 
 	/**
 	 * @inheritDoc
@@ -84,5 +99,16 @@ class TableWithAllForeign extends BaseTable {
 	 */
 	public function get_version() {
 		return 1;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_delete_constraints() {
+		return array(
+			'comment' => $this->constraint,
+			'user'    => $this->constraint,
+			'term'    => $this->constraint
+		);
 	}
 }

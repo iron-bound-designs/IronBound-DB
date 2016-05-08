@@ -31,7 +31,7 @@ class Test_Crud extends \WP_UnitTestCase {
 		Manager::register( new TableWithForeignPost(), '', get_class( new ModelWithForeignPost() ) );
 		Manager::register( new Authors() );
 		Manager::register( new Books(), '', get_class( new Book() ) );
-		Manager::register( new TableWithAllForeign() );
+		Manager::register( new TableWithAllForeign(), '', get_class( new ModelWithAllForeign() ) );
 
 		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );
 		Manager::maybe_install_table( Manager::get( 'books' ) );

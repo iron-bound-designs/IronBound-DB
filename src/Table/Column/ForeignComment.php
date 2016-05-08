@@ -12,12 +12,13 @@ namespace IronBound\DB\Table\Column;
 
 use IronBound\DB\Saver\CommentSaver;
 use IronBound\DB\Table\Column\Contracts\Savable;
+use IronBound\DB\Table\ForeignKey\DeleteConstrainable;
 
 /**
  * Class ForeignComment
  * @package IronBound\DB\Table\Column
  */
-class ForeignComment extends BaseColumn implements Savable {
+class ForeignComment extends BaseColumn implements Savable, Foreign, DeleteConstrainable {
 
 	/**
 	 * @var CommentSaver
@@ -34,6 +35,20 @@ class ForeignComment extends BaseColumn implements Savable {
 		parent::__construct( $name );
 
 		$this->saver = $saver;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_foreign_table_name( \wpdb $wpdb ) {
+		return $wpdb->comments;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_foreign_table_column_name() {
+		return 'comment_ID';
 	}
 
 	/**
@@ -75,4 +90,16 @@ class ForeignComment extends BaseColumn implements Savable {
 	public function save( $value ) {
 		return $this->saver->save( $value );
 	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function register_delete_callback( $callback ) {
+
+		add_action( 'delete_comment', function ( $comment_id ) use ( $callback ) {
+			$callback( $comment_id, get_comment( $comment_id ) );
+		} );
+	}
+
+
 }

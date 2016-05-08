@@ -12,12 +12,13 @@ namespace IronBound\DB\Table\Column;
 
 use IronBound\DB\Saver\TermSaver;
 use IronBound\DB\Table\Column\Contracts\Savable;
+use IronBound\DB\Table\ForeignKey\DeleteConstrainable;
 
 /**
  * Class ForeignTerm
  * @package IronBound\DB\Table\Column
  */
-class ForeignTerm extends BaseColumn implements Savable, Foreign {
+class ForeignTerm extends BaseColumn implements Savable, Foreign, DeleteConstrainable {
 
 	/**
 	 * @var TermSaver
@@ -94,5 +95,14 @@ class ForeignTerm extends BaseColumn implements Savable, Foreign {
 	 */
 	public function save( $value ) {
 		return $this->saver->save( $value );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function register_delete_callback( $callback ) {
+		add_action( 'pre_delete_term', function ( $term_id, $taxonomy ) use ( $callback ) {
+			$callback( $term_id, get_term( $term_id, $taxonomy ) );
+		}, 10, 2 );
 	}
 }
