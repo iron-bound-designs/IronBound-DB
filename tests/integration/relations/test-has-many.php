@@ -12,6 +12,7 @@ namespace IronBound\DB\Tests\Relations;
 
 use IronBound\DB\Manager;
 use IronBound\DB\Model;
+use IronBound\DB\Table\Meta\BaseMetaTable;
 use IronBound\DB\Tests\Stub\Models\Author;
 use IronBound\DB\Tests\Stub\Models\Book;
 use IronBound\DB\Tests\Stub\Tables\Authors;
@@ -29,8 +30,11 @@ class Test_HasMany extends \WP_UnitTestCase {
 
 		Manager::register( new Authors() );
 		Manager::register( new Books(), '', get_class( new Book() ) );
+		Manager::register( new BaseMetaTable( new Books() ) );
+		
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
+		Manager::maybe_install_table( Manager::get( 'books-meta' ) );
 
 		Model::set_event_dispatcher( new EventDispatcher() );
 	}

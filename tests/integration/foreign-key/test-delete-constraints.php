@@ -13,6 +13,7 @@ namespace IronBound\DB\Tests\Foreign_Key;
 use IronBound\DB\Manager;
 use IronBound\DB\Model;
 use IronBound\DB\Table\ForeignKey\DeleteConstrained;
+use IronBound\DB\Table\Meta\BaseMetaTable;
 use IronBound\DB\Tests\Stub\Models\Author;
 use IronBound\DB\Tests\Stub\Models\Book;
 use IronBound\DB\Tests\Stub\Models\ModelWithAllForeign;
@@ -35,7 +36,10 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 		Model::set_event_dispatcher( new EventDispatcher() );
 
 		Manager::register( new Authors(), '', get_class( new Author() ) );
+		Manager::register( new BaseMetaTable( new Books() ) );
+		
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
+		Manager::maybe_install_table( Manager::get( 'books-meta' ) );
 	}
 
 	public function test_cascade_model() {

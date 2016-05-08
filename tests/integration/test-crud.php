@@ -11,6 +11,7 @@
 namespace IronBound\DB\Tests;
 
 use IronBound\DB\Manager;
+use IronBound\DB\Table\Meta\BaseMetaTable;
 use IronBound\DB\Tests\Stub\Models\Book;
 use IronBound\DB\Tests\Stub\Models\ModelWithAllForeign;
 use IronBound\DB\Tests\Stub\Models\ModelWithForeignPost;
@@ -32,11 +33,13 @@ class Test_Crud extends \WP_UnitTestCase {
 		Manager::register( new Authors() );
 		Manager::register( new Books(), '', get_class( new Book() ) );
 		Manager::register( new TableWithAllForeign(), '', get_class( new ModelWithAllForeign() ) );
-
+		Manager::register( new BaseMetaTable( new Books() ) );
+		
 		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
 		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
+		Manager::maybe_install_table( Manager::get( 'books-meta' ) );
 	}
 
 	public function test_create() {

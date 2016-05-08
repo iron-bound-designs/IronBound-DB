@@ -59,6 +59,15 @@ final class Manager {
 			'model' => $model_class
 		);
 
+		/** @var \wpdb $wpdb */
+		global $wpdb;
+
+		$name = $table->get_table_name( $wpdb );
+		$name = preg_replace( "/^{$wpdb->prefix}/", "", $name );
+
+		$wpdb->{$name}  = $table->get_table_name( $wpdb );
+		$wpdb->tables[] = $name;
+
 		self::fire_plugin_event( $table, 'registered' );
 	}
 

@@ -862,12 +862,15 @@ abstract class Model implements Cacheable, \Serializable {
 			}
 		}
 
-		$default_values = (array) static::make_query_object()->get(
-			$this->get_pk(), $default_columns_to_fill
-		);
+		if ( $default_columns_to_fill ) {
 
-		foreach ( $default_values as $column => $value ) {
-			$this->set_attribute( $column, $value );
+			$default_values = (array) static::make_query_object()->get(
+				$this->get_pk(), $default_columns_to_fill
+			);
+
+			foreach ( $default_values as $column => $value ) {
+				$this->set_attribute( $column, $value );
+			}
 		}
 
 		$this->_exists = true;

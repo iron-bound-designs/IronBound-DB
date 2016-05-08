@@ -18,6 +18,7 @@ use IronBound\DB\Exception\InvalidColumnException;
 use IronBound\DB\Exception\ModelNotFoundException;
 use IronBound\DB\Model;
 use IronBound\DB\Query\Tag\From;
+use IronBound\DB\Query\Tag\Generic;
 use IronBound\DB\Query\Tag\Group;
 use IronBound\DB\Query\Tag\Having;
 use IronBound\DB\Query\Tag\Join;
@@ -27,6 +28,7 @@ use IronBound\DB\Query\Tag\Select;
 use IronBound\DB\Query\Tag\Where;
 use IronBound\DB\Query\Tag\Where_Date;
 use IronBound\DB\Query\Tag\Where_Raw;
+use IronBound\DB\Table\Meta\MetaTable;
 use IronBound\DB\Table\Table;
 
 /**
@@ -61,9 +63,9 @@ class FluentQuery {
 	protected $from;
 
 	/**
-	 * @var Join
+	 * @var Join[]
 	 */
-	protected $join;
+	protected $joins = array();
 
 	/**
 	 * @var Where
@@ -93,6 +95,21 @@ class FluentQuery {
 	/**
 	 * @var string
 	 */
+	protected $meta_join;
+
+	/**
+	 * @var string
+	 */
+	protected $meta_type;
+
+	/**
+	 * @var MetaTable
+	 */
+	protected $meta_table;
+
+	/**
+	 * @var string
+	 */
 	protected $alias = 't1';
 
 	/**
@@ -114,6 +131,11 @@ class FluentQuery {
 	 * @var bool
 	 */
 	protected $calc_found_rows = false;
+
+	/**
+	 * @var bool
+	 */
+	protected $prime_meta_cache = true;
 
 	/**
 	 * @var string
@@ -344,7 +366,7 @@ class FluentQuery {
 	 * @param Closure|null   $callback
 	 * @param string         $boolean
 	 *
-	 * @return FluentQuery
+	 * @return $this
 	 * @throws InvalidColumnException
 	 */
 	public function where_date( \WP_Date_Query $date, Closure $callback = null, $boolean = 'and' ) {
@@ -352,6 +374,74 @@ class FluentQuery {
 		$date->column = $this->prepare_column( $date->column );
 
 		return $this->where( new Where_Date( $date ), '', '', $callback, $boolean );
+	}
+
+	/**
+	 * Perform a meta query.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array|\WP_Meta_Query $query
+	 * @param MetaTable|null       $table     Table metadata is stored in. If not specified, will be retrieved from the model.
+	 * @param string               $meta_type Type of metadata. Will be determined from the model if not given.
+	 *
+	 * @return $this
+	 *
+	 * @throws \InvalidArgumentException If a MetaTable or $meta_type can't be determined.
+	 */
+	public function where_meta( $query, MetaTable $table = null, $meta_type = '' ) {
+
+		if ( ! $table && $this->model && method_exists( $this->model, 'get_meta_table' ) ) {
+			$table = call_user_func( array( $this->model, 'get_meta_table' ) );
+		}
+
+		if ( ! $meta_type && $this->model && method_exists( $this->model, 'get_meta_type' ) ) {
+			$meta_type = call_user_func( array( $this->model, 'get_meta_type' ) );
+		}
+
+		if ( ! $table ) {
+			throw new \InvalidArgumentException( "MetaTable can't be determined from the given arguments." );
+		}
+
+		if ( ! $meta_type ) {
+			throw new \InvalidArgumentException( "\$meta_type can't be determined from the given arguments." );
+		}
+
+		if ( ! $query instanceof \WP_Meta_Query ) {
+			$query = new \WP_Meta_Query( $query );
+		}
+
+		$fn = function ( $key, $original ) use ( $table, $meta_type ) {
+
+			if ( $original === $meta_type . '_id' ) {
+				$key = $table->get_primary_id_column();
+			}
+
+			return $key;
+		};
+
+		add_filter( 'sanitize_key', $fn, 10, 2 );
+
+		$sql = $query->get_sql(
+			$meta_type,
+			$this->alias,
+			$this->table->get_primary_key()
+		);
+
+		remove_filter( 'sanitize_key', $fn, 10 );
+
+		$this->meta_join = $sql['join'];
+
+		$where = $sql['where'];
+		$where = substr( $where, 5 );
+
+		if ( $this->where ) {
+			$this->where->qAnd( new Where_Raw( $where ) );
+		} else {
+			$this->where = new Where_Raw( $where );
+		}
+
+		return $this;
 	}
 
 	/**
@@ -441,7 +531,7 @@ class FluentQuery {
 			}
 		}
 
-		$this->join = new Join( $from, $where, $type );
+		$this->joins[] = new Join( $from, $where, $type );
 
 		return $this;
 	}
@@ -571,6 +661,21 @@ class FluentQuery {
 	}
 
 	/**
+	 * Prime the meta cache.
+	 *
+	 * @since 2.0
+	 *
+	 * @param bool $prime
+	 *
+	 * @return $this
+	 */
+	public function prime_meta_cache( $prime = true ) {
+		$this->prime_meta_cache = $prime;
+
+		return $this;
+	}
+
+	/**
 	 * Make the limit tag for this query.
 	 *
 	 * @since 2.0
@@ -606,8 +711,12 @@ class FluentQuery {
 		$builder->append( $this->select );
 		$builder->append( $this->from );
 
-		if ( $this->join ) {
-			$builder->append( $this->join );
+		foreach ( $this->joins as $join ) {
+			$builder->append( $join );
+		}
+
+		if ( $this->meta_join ) {
+			$builder->append( new Generic( '', $this->meta_join ) );
 		}
 
 		if ( $this->where ) {
@@ -684,7 +793,38 @@ class FluentQuery {
 			}
 		}
 
+		if ( $this->prime_meta_cache && ( $this->meta_table || ( $this->model && method_exists( $this->model, 'get_meta_table' ) ) ) ) {
+			$this->update_meta_cache();
+		}
+
 		return $collection;
+	}
+
+	/**
+	 * Update the meta cache.
+	 *
+	 * @since 2.0
+	 */
+	protected function update_meta_cache() {
+
+		$ids       = $this->results->getKeys();
+		$table     = $this->meta_table ?: call_user_func( array( $this->model, 'get_meta_table' ) );
+		$meta_type = $this->meta_type ?: call_user_func( array( $this->model, 'get_meta_type' ) );
+
+		$fn = function ( $key, $original ) use ( $table, $meta_type ) {
+
+			if ( $original === $meta_type . '_id' ) {
+				$key = $table->get_primary_id_column();
+			}
+
+			return $key;
+		};
+
+		add_filter( 'sanitize_key', $fn, 10, 2 );
+
+		update_meta_cache( $meta_type, $ids );
+
+		remove_filter( 'sanitize_key', $fn );
 	}
 
 	/**

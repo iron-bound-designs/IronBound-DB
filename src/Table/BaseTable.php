@@ -9,6 +9,7 @@
  */
 
 namespace IronBound\DB\Table;
+use Doctrine\Common\Inflector\Inflector;
 
 /**
  * Class BaseTable
@@ -73,5 +74,46 @@ abstract class BaseTable implements Table {
 		}
 
 		return $keys;
+	}
+
+	/**
+	 * Build the column name for a table.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Table $table
+	 *
+	 * @return string
+	 */
+	protected function build_column_name_for_table( Table $table ) {
+
+		$basename  = $this->class_basename( $table );
+		$tableized = Inflector::tableize( $basename );
+
+		$parts         = explode( '_', $tableized );
+		$last_plural   = array_pop( $parts );
+		$last_singular = Inflector::singularize( $last_plural );
+		$parts[]       = $last_singular;
+
+		$column_name = implode( '_', $parts );
+		$column_name .= '_' . $table->get_primary_key();
+
+		return $column_name;
+	}
+
+	/**
+	 * Get the basename for a class.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string|object $class
+	 *
+	 * @return string
+	 */
+	protected function class_basename( $class ) {
+
+		$class = is_object( $class ) ? get_class( $class ) : $class;
+
+		return basename( str_replace( '\\', '/', $class ) );
 	}
 }

@@ -21,9 +21,11 @@ class Test_Manager extends \WP_UnitTestCase {
 	public function test_register() {
 
 		$slug  = uniqid();
-		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )->setMethods( array( 'get_slug' ) )
+		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )
+		              ->setMethods( array( 'get_slug', 'get_table_name' ) )
 		              ->getMockForAbstractClass();
 		$table->method( 'get_slug' )->willReturn( $slug );
+		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
 
 		Manager::register( $table );
 
@@ -42,9 +44,11 @@ class Test_Manager extends \WP_UnitTestCase {
 	public function test_make_simple_query_object() {
 
 		$slug  = uniqid();
-		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )->setMethods( array( 'get_slug' ) )
+		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )
+		              ->setMethods( array( 'get_slug', 'get_table_name' ) )
 		              ->getMockForAbstractClass();
 		$table->method( 'get_slug' )->willReturn( $slug );
+		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
 
 		Manager::register( $table );
 
@@ -60,7 +64,7 @@ class Test_Manager extends \WP_UnitTestCase {
 		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )
 		              ->setMethods( array( 'get_slug', 'get_table_name' ) )->getMockForAbstractClass();
 		$table->method( 'get_slug' )->willReturn( $slug );
-		$table->method( 'get_table_name' )->with( $wpdb )->willReturn( 'wp_table' );
+		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
 
 		Manager::register( $table );
 
