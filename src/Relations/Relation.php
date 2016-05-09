@@ -85,7 +85,7 @@ abstract class Relation {
 	 *
 	 * @since 2.0
 	 *
-	 * @return mixed
+	 * @return Collection|Model|mixed
 	 */
 	public function get_results() {
 

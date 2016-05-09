@@ -362,4 +362,45 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 		$this->assertTrue( $g2_art->containsKey( $a2->ID ) );
 		$this->assertTrue( $g2_art->containsKey( $a3->ID ) );
 	}
+
+	public function test_many_to_many_posts_caching() {
+
+		$art = self::factory()->post->create_and_get( array(
+			'post_type'  => 'attachment',
+			'post_title' => 'Piece 1'
+		) );
+
+		$gallery = Gallery::create( array(
+			'title' => 'The Best'
+		) );
+		$gallery->art->add( $art );
+		$gallery->save();
+
+		add_post_meta( $art->ID, 'test', 'value' );
+
+		$this->flush_cache();
+
+		$gallery = Gallery::get( $gallery->get_pk() );
+		$gallery->art;
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$this->assertEquals( 'value', get_post_meta( $art->ID, 'test', true ) );
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries, 'Postmeta caches not updated.' );
+
+		$this->assertEquals( 'Piece 1', get_post( $art->ID )->post_title );
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries, 'Post caches not updated.' );
+
+		$this->flush_cache();
+
+		Gallery::with( 'art' )->results();
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$this->assertEquals( 'value', get_post_meta( $art->ID, 'test', true ) );
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries, 'Postmeta caches not updated during eager-load.' );
+
+		$this->assertEquals( 'Piece 1', get_post( $art->ID )->post_title );
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries, 'Post caches not updated during eager-load.' );
+	}
 }

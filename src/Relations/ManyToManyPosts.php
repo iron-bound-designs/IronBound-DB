@@ -27,10 +27,50 @@ use IronBound\DB\Table\Association\PostAssociationTable;
 class ManyToManyPosts extends ManyToMany {
 
 	/**
+	 * @var bool
+	 */
+	protected $update_meta_cache = true;
+
+	/**
+	 * @var bool
+	 */
+	protected $update_term_cache = true;
+
+	/**
 	 * @inheritDoc
 	 */
 	public function __construct( Model $parent, PostAssociationTable $association, $attribute ) {
 		parent::__construct( '', $parent, $association, $attribute );
+	}
+
+	/**
+	 * Update the post meta cache when loading this relation.
+	 *
+	 * @since 2.0
+	 *
+	 * @param bool $update
+	 *
+	 * @return $this
+	 */
+	public function update_meta_cache( $update = true ) {
+		$this->update_meta_cache = $update;
+
+		return $this;
+	}
+
+	/**
+	 * Update the term cache when loading this relation.
+	 *
+	 * @since 2.0
+	 *
+	 * @param bool $update
+	 *
+	 * @return $this
+	 */
+	public function update_term_cache( $update = true ) {
+		$this->update_term_cache = $update;
+
+		return $this;
 	}
 
 	/**
@@ -70,6 +110,18 @@ class ManyToManyPosts extends ManyToMany {
 	/**
 	 * @inheritDoc
 	 */
+	public function get_results() {
+		$results = parent::get_results();
+		$posts   = $results->toArray();
+
+		update_post_caches( $posts, 'any', $this->update_term_cache, $this->update_meta_cache );
+
+		return $results;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	protected function register_events() {
 		// no-op there is no corresponding model to keep synced
 	}
@@ -98,6 +150,18 @@ class ManyToManyPosts extends ManyToMany {
 		$sql = $builder->build();
 
 		return new Collection( $wpdb->get_results( $sql, ARRAY_A ) );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function eager_load( array $models, $callback = null ) {
+		$loaded = parent::eager_load( $models, $callback );
+		$posts  = $loaded->toArray();
+
+		update_post_caches( $posts, 'any', $this->update_term_cache, $this->update_meta_cache );
+
+		return $loaded;
 	}
 
 	/**

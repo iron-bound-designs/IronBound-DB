@@ -209,12 +209,8 @@ class ManyToMany extends Relation {
 		}
 
 		foreach ( $models as $model ) {
-
-			if ( isset( $relationship_map[ $model->get_pk() ] ) ) {
-				$model->set_relation_value( $attribute, new Collection( $relationship_map[ $model->get_pk() ], $memory ) );
-			} else {
-				$model->set_relation_value( $attribute, new Collection( array(), $memory ) );
-			}
+			$data = isset( $relationship_map[ $model->get_pk() ] ) ? $relationship_map[ $model->get_pk() ] : array();
+			$model->set_relation_value( $attribute, new Collection( $data, $memory, $this->association->get_saver() ) );
 		}
 
 		return new Collection( $related );
