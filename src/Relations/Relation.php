@@ -165,7 +165,7 @@ abstract class Relation {
 	 * @param Model[]  $models   Array of models to eager-load. Keyed by their primary key.
 	 * @param callable $callback Called with the FluentQuery object to customize the relations loaded.
 	 *
-	 * @return $this
+	 * @return Collection All eager loaded models.
 	 */
 	public abstract function eager_load( array $models, $callback = null );
 

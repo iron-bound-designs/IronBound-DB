@@ -10,11 +10,9 @@
 
 namespace IronBound\DB\Relations;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
-use IronBound\DB\Query\Simple_Query;
 
 /**
  * Class HasMany
@@ -123,11 +121,13 @@ class HasMany extends Relation {
 			if ( isset( $map[ $model->get_pk() ] ) ) {
 				$related = $map[ $model->get_pk() ];
 
-				$model->set_relation_value( $this->attribute, new ArrayCollection( $related ) );
+				$model->set_relation_value( $this->attribute, new Collection( $related ) );
+			} else {
+				$model->set_relation_value( $this->attribute, new Collection() );
 			}
 		}
 
-		return $this;
+		return $results;
 	}
 
 	/**

@@ -10,17 +10,20 @@
 
 namespace IronBound\DB\Tests\Stub\Models;
 
+use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
+use IronBound\DB\Relations\HasMany;
 
 /**
  * Class Book
  * @package IronBound\DB\Tests\Stub\Models
  *
- * @property int       $id
- * @property string    $title
- * @property float     $price
- * @property \DateTime $published
- * @property Author    $author
+ * @property int        $id
+ * @property string     $title
+ * @property float      $price
+ * @property \DateTime  $published
+ * @property Author     $author
+ * @property Collection $reviews
  */
 class Book extends Model\ModelWithMeta {
 
@@ -29,6 +32,14 @@ class Book extends Model\ModelWithMeta {
 	 */
 	public function get_pk() {
 		return $this->id;
+	}
+
+	protected function _reviews_relation() {
+
+		$relation = new HasMany( 'book', get_class( new Review() ), $this, 'reviews' );
+		$relation->keep_synced();
+
+		return $relation;
 	}
 
 	/**

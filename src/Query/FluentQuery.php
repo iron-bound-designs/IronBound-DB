@@ -12,7 +12,6 @@ namespace IronBound\DB\Query;
 
 use Closure;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection as DoctrineCollection;
 use IronBound\DB\Collections\Collection;
 use IronBound\DB\Exception\InvalidColumnException;
 use IronBound\DB\Exception\ModelNotFoundException;
@@ -631,6 +630,9 @@ class FluentQuery {
 	 */
 	public function with( $relations, $callback = null ) {
 
+		$default = function () {
+		};
+
 		if ( is_string( $relations ) ) {
 			$relations = func_get_args();
 
@@ -647,17 +649,61 @@ class FluentQuery {
 
 			if ( ! $callback instanceof Closure ) {
 				$relation = $callback;
-				$callback = function () {
-				};
+				$callback = $default;
 			}
 
-			$parsed[ $relation ] = $callback;
-
+			if ( strpos( $relation, '.' ) !== false ) {
+				$parsed = $this->parse_nested_with( $relation, $parsed );
+			} else {
+				$parsed[ $relation ] = $callback;
+			}
 		}
 
 		$this->relations = $parsed;
 
 		return $this;
+	}
+
+	/**
+	 * Parse the nested relations.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $name
+	 * @param array  $results
+	 *
+	 * @return array
+	 */
+	protected function parse_nested_with( $name, $results ) {
+
+		$parts = explode( '.', $name );
+		$first = $parts[0];
+
+		$results[ $first ] = false;
+
+		$this->assign_array_by_path( $results, $name, true );
+
+		return $results;
+	}
+
+	/**
+	 * Fill an array by array dot notation.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array  $arr
+	 * @param string $path
+	 * @param mixed  $value
+	 */
+	protected function assign_array_by_path( &$arr, $path, $value ) {
+
+		$keys = explode( '.', $path );
+
+		foreach ( $keys as $key ) {
+			$arr = &$arr[ $key ];
+		}
+
+		$arr = $value;
 	}
 
 	/**
@@ -1001,9 +1047,47 @@ class FluentQuery {
 		$model = new $this->model;
 
 		foreach ( $this->relations as $relation => $customize_callback ) {
-			$model->get_relation( $relation )->eager_load( $models, $customize_callback );
+			if ( is_array( $customize_callback ) ) {
+				$loaded = $model->get_relation( $relation )->eager_load( $models );
+				$this->do_nested_eager_load( $loaded, $relation, $customize_callback );
+			} else {
+				$model->get_relation( $relation )->eager_load( $models, $customize_callback );
+			}
 		}
 	}
+
+	/**
+	 * Handle a nested eager loaded.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Collection $loaded
+	 * @param string     $relation
+	 * @param array      $nested
+	 */
+	protected function do_nested_eager_load( Collection $loaded, $relation, $nested ) {
+
+		$model = $loaded->first();
+
+		foreach ( $nested as $value => $ignore ) {
+			if ( is_string( $value ) ) {
+				if ( $model instanceof Model ) {
+					$model->get_relation( $value )->eager_load( $loaded->toArray() );
+				}
+
+				return;
+			} else {
+				if ( ! $model instanceof Model ) {
+					return;
+				}
+
+				$loaded = $model->get_relation( $relation )->eager_load( $loaded->toArray() );
+
+				$this->do_nested_eager_load( $loaded, $nested, $value );
+			}
+		}
+	}
+
 
 	/**
 	 * Get the SQL statement executed.

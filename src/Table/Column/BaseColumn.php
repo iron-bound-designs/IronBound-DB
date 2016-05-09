@@ -48,7 +48,7 @@ abstract class BaseColumn implements Column {
 	 * @inheritdoc
 	 */
 	public function get_definition() {
-		return "{$this->name} {$this->get_definition_without_column_name()}";
+		return "`{$this->name}` {$this->get_definition_without_column_name()}";
 	}
 
 	/**

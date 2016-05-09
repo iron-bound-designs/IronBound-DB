@@ -199,7 +199,12 @@ class ManyToMany extends Relation {
 			$model = $this->make_model_from_attributes( $attributes );
 			$pk    = $this->association->get_saver()->get_pk( $model );
 
-			$related[ $pk ]                                            = $model;
+			if ( isset( $related[ $pk ] ) ) {
+				$model = $related[ $pk ];
+			} else {
+				$related[ $pk ] = $model;
+			}
+
 			$relationship_map[ $result[ $this->other_column ] ][ $pk ] = $model;
 		}
 
@@ -211,6 +216,8 @@ class ManyToMany extends Relation {
 				$model->set_relation_value( $attribute, new Collection( array(), $memory ) );
 			}
 		}
+
+		return new Collection( $related );
 	}
 
 	/**
