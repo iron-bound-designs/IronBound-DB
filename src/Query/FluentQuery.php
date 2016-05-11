@@ -12,6 +12,7 @@ namespace IronBound\DB\Query;
 
 use Closure;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection as DoctrineCollection;
 use IronBound\DB\Collections\Collection;
 use IronBound\DB\Exception\InvalidColumnException;
 use IronBound\DB\Exception\ModelNotFoundException;
@@ -361,18 +362,19 @@ class FluentQuery {
 	 *
 	 * @since 2.0
 	 *
-	 * @param \WP_Date_Query $date
-	 * @param Closure|null   $callback
-	 * @param string         $boolean
+	 * @param array        $query
+	 * @param string       $column
+	 * @param Closure|null $callback
+	 * @param string       $boolean
 	 *
 	 * @return $this
 	 * @throws InvalidColumnException
 	 */
-	public function where_date( \WP_Date_Query $date, Closure $callback = null, $boolean = 'and' ) {
+	public function where_date( $query, $column, Closure $callback = null, $boolean = 'and' ) {
 
-		$date->column = $this->prepare_column( $date->column );
+		$query = new \WP_Date_Query( $query, $this->prepare_column( $column ) );
 
-		return $this->where( new Where_Date( $date ), '', '', $callback, $boolean );
+		return $this->where( new Where_Date( $query ), '', '', $callback, $boolean );
 	}
 
 	/**
@@ -808,15 +810,12 @@ class FluentQuery {
 
 		$model_class  = $this->model;
 		$models       = array();
-		$primary_keys = array();
 
 		foreach ( $results as $result ) {
 			$model = $model_class::from_query( $result );
 
 			if ( $model ) {
 				$models[ $model->get_pk() ] = $model;
-
-				$primary_keys[] = $model->get_pk();
 			}
 		}
 

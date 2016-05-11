@@ -115,27 +115,7 @@ abstract class Relation {
 	 *
 	 * @since 2.0
 	 */
-	protected function register_events() {
-
-		$class = $this->related_model;
-
-		$self    = $this;
-		$results = $this->results;
-
-		$class::saved( function ( GenericEvent $event ) use ( $self, $results ) {
-
-			if ( $self->model_matches_relation( $event->get_subject() ) ) {
-				$results->set( $event->get_subject()->get_pk(), $event->get_subject() );
-			} else {
-				$results->remove( $event->get_subject()->get_pk() );
-			}
-
-		} );
-
-		$class::deleted( function ( GenericEvent $event ) use ( $self, $results ) {
-			$results->remove( $event->get_subject()->get_pk() );
-		} );
-	}
+	protected abstract function register_events();
 
 	/**
 	 * Fetch results from the database.

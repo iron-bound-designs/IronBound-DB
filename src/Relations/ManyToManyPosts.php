@@ -10,6 +10,7 @@
 
 namespace IronBound\DB\Relations;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Query\Builder;
@@ -149,7 +150,7 @@ class ManyToManyPosts extends ManyToMany {
 		$builder->append( $select )->append( $from )->append( $join );
 		$sql = $builder->build();
 
-		return new Collection( $wpdb->get_results( $sql, ARRAY_A ) );
+		return new ArrayCollection( $wpdb->get_results( $sql, ARRAY_A ) );
 	}
 
 	/**

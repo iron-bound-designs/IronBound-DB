@@ -10,6 +10,8 @@
 
 namespace IronBound\DB\Relations;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection as DoctrineCollection;
 use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
@@ -99,8 +101,9 @@ class ManyToMany extends Relation {
 		$results         = $this->results;
 		$attribute       = $this->attribute;
 		$other_attribute = $this->other_attribute;
+		$saver           = $this->association->get_saver();
 
-		$related::saved( function ( GenericEvent $event ) use ( $parent, $results, $attribute, $other_attribute ) {
+		$related::saved( function ( GenericEvent $event ) use ( $parent, $results, $attribute, $other_attribute, $saver ) {
 
 			/** @var Model $model */
 			$model = $event->get_subject();
@@ -114,7 +117,10 @@ class ManyToMany extends Relation {
 
 			$added = $relation->get_added();
 
-			if ( isset( $added[ $parent->get_pk() ] ) ) {
+			if ( $added->exists( function ( $key, $model ) use ( $saver, $parent ) {
+				return $saver->get_pk( $model ) === $parent->get_pk();
+			} )
+			) {
 				$results->dont_remember( function ( Collection $collection ) use ( $model ) {
 					$collection->add( $model );
 				} );
@@ -122,16 +128,19 @@ class ManyToMany extends Relation {
 
 			$removed = $relation->get_removed();
 
-			if ( isset( $removed[ $parent->get_pk() ] ) ) {
+			if ( $removed->exists( function ( $key, $model ) use ( $saver, $parent ) {
+				return $saver->get_pk( $model ) === $parent->get_pk();
+			} )
+			) {
 				$results->dont_remember( function ( Collection $collection ) use ( $model ) {
-					$collection->remove( $model->get_pk() );
+					$collection->remove_model( $model->get_pk() );
 				} );
 			}
 
 		} );
 
 		$related::deleted( function ( GenericEvent $event ) use ( $self, $results ) {
-			$results->remove( $event->get_subject()->get_pk() );
+			$results->remove_model( $event->get_subject()->get_pk() );
 		} );
 	}
 
@@ -213,7 +222,7 @@ class ManyToMany extends Relation {
 			$model->set_relation_value( $attribute, new Collection( $data, $memory, $this->association->get_saver() ) );
 		}
 
-		return new Collection( $related );
+		return new Collection( $related, true, $this->association->get_saver() );
 	}
 
 	/**
@@ -234,13 +243,13 @@ class ManyToMany extends Relation {
 	 */
 	public function persist( $values ) {
 
-		if ( $this->parent->get_pk() && $values->get_removed() ) {
+		if ( $this->parent->get_pk() && ! $values->get_removed()->isEmpty() ) {
 			$this->persist_removed( $values->get_removed() );
 		}
 
 		$added = $this->persist_do_save( $values );
 
-		$this->persist_added( $values->get_added() + $added );
+		$this->persist_added( new ArrayCollection( $values->get_added()->toArray() + $added ) );
 	}
 
 	/**
@@ -271,7 +280,9 @@ class ManyToMany extends Relation {
 			}
 
 			$values->dont_remember( function ( Collection $collection ) use ( $saved, $pk ) {
-				$collection->set( $pk, $saved );
+				if ( ! $collection->contains( $saved ) ) {
+					$collection->add( $saved );
+				}
 			} );
 		}
 
@@ -283,7 +294,7 @@ class ManyToMany extends Relation {
 	 *
 	 * @since 2.0
 	 *
-	 * @param Model[] $removed
+	 * @param DoctrineCollection $removed
 	 */
 	protected function persist_removed( $removed ) {
 
@@ -307,7 +318,7 @@ class ManyToMany extends Relation {
 	 *
 	 * @since 2.0
 	 *
-	 * @param Model[] $added
+	 * @param DoctrineCollection $added
 	 */
 	protected function persist_added( $added ) {
 
@@ -318,7 +329,9 @@ class ManyToMany extends Relation {
 		foreach ( $added as $model ) {
 			$pk = $this->association->get_saver()->get_pk( $model );
 
-			$insert[] = "({$this->parent->get_pk()},{$pk})";
+			if ( $pk ) {
+				$insert[] = "({$this->parent->get_pk()},{$pk})";
+			}
 		}
 
 		if ( empty( $insert ) ) {

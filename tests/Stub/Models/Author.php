@@ -10,7 +10,7 @@
 
 namespace IronBound\DB\Tests\Stub\Models;
 
-use Doctrine\Common\Collections\Collection;
+use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Relations\HasMany;
 

@@ -14,7 +14,9 @@ use Closure;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection as DoctrineCollection;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Expr\ClosureExpressionVisitor;
 use Doctrine\Common\Collections\Selectable;
+use IronBound\DB\Model;
 use IronBound\DB\Saver\ModelSaver;
 use IronBound\DB\Saver\Saver;
 
@@ -25,19 +27,28 @@ use IronBound\DB\Saver\Saver;
 class Collection implements DoctrineCollection, Selectable {
 
 	/**
-	 * @var \Doctrine\Common\Collections\Collection|Selectable
-	 */
-	protected $collection;
-
-	/**
 	 * @var array
 	 */
-	protected $removed = array();
+	protected $elements = array();
 
 	/**
+	 * Map of primary keys to indexes in the $elements array.
+	 *
+	 * This exists to provide O(1) lookup for models by their PK.
+	 *
 	 * @var array
 	 */
-	protected $added = array();
+	protected $pk_map = array();
+
+	/**
+	 * @var DoctrineCollection
+	 */
+	protected $added;
+
+	/**
+	 * @var DoctrineCollection
+	 */
+	protected $removed;
 
 	/**
 	 * @var bool
@@ -52,24 +63,28 @@ class Collection implements DoctrineCollection, Selectable {
 	/**
 	 * ModelCollection constructor.
 	 *
-	 * @param DoctrineCollection|Selectable|array $collection
-	 * @param bool                                $keep_memory
-	 * @param Saver                               $saver
+	 * @param DoctrineCollection|array $collection
+	 * @param bool                     $keep_memory
+	 * @param Saver                    $saver
 	 */
 	public function __construct( $collection = array(), $keep_memory = false, Saver $saver = null ) {
 
-		if ( $collection instanceof DoctrineCollection && ! $collection instanceof Selectable ) {
-			throw new \InvalidArgumentException( '$collection must implement Selectable and Collection.' );
+		if ( $collection instanceof DoctrineCollection ) {
+			$collection = $collection->toArray();
 		}
 
-		if ( $collection instanceof Collection ) {
-			$this->collection = $collection;
-		} else {
-			$this->collection = new ArrayCollection( $collection );
-		}
-
+		$this->elements    = $collection;
 		$this->keep_memory = $keep_memory;
 		$this->saver       = $saver ?: new ModelSaver();
+
+		$this->added   = new ArrayCollection();
+		$this->removed = new ArrayCollection();
+
+		foreach ( $this->elements as $i => $element ) {
+			if ( $pk = $this->saver->get_pk( $element ) ) {
+				$this->pk_map[ $pk ] = $i;
+			}
+		}
 	}
 
 	/**
@@ -78,8 +93,8 @@ class Collection implements DoctrineCollection, Selectable {
 	 * @since 2.0
 	 */
 	public function clear_memory() {
-		$this->added   = array();
-		$this->removed = array();
+		$this->added->clear();
+		$this->removed->clear();
 	}
 
 	/**
@@ -107,7 +122,7 @@ class Collection implements DoctrineCollection, Selectable {
 	 *
 	 * @since 2.0
 	 *
-	 * @return array
+	 * @return DoctrineCollection
 	 */
 	public function get_added() {
 		return $this->added;
@@ -118,7 +133,7 @@ class Collection implements DoctrineCollection, Selectable {
 	 *
 	 * @since 2.0
 	 *
-	 * @return array
+	 * @return DoctrineCollection
 	 */
 	public function get_removed() {
 		return $this->removed;
@@ -141,14 +156,90 @@ class Collection implements DoctrineCollection, Selectable {
 	}
 
 	/**
+	 * Retrieve a model by its primary key.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string|int $pk
+	 *
+	 * @return Model|mixed|null
+	 */
+	public function get_model( $pk ) {
+
+		$i = $this->get_model_index( $pk );
+
+		if ( $i === - 1 ) {
+			return null;
+		}
+
+		return $this->elements[ $i ];
+	}
+
+	/**
+	 * Remove a model from the collection.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string|int $pk
+	 *
+	 * @return bool
+	 */
+	public function remove_model( $pk ) {
+
+		$i = $this->get_model_index( $pk );
+
+		if ( $i === - 1 ) {
+			return false;
+		}
+
+		$this->remove( $i );
+
+		return true;
+	}
+
+	/**
+	 * Get the index of a model.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string|int $pk
+	 *
+	 * @return int
+	 */
+	protected function get_model_index( $pk ) {
+
+		if ( isset( $this->pk_map[ $pk ] ) ) {
+			return $this->pk_map[ $pk ];
+		}
+
+		foreach ( $this->elements as $i => $element ) {
+
+			if ( $this->saver->get_pk( $element ) === $pk ) {
+
+				$this->pk_map[ $pk ] = $i;
+
+				return $i;
+			}
+		}
+
+		return - 1;
+	}
+
+	/**
 	 * @inheritDoc
 	 */
 	public function add( $element ) {
 
-		if ( $this->saver->get_pk( $element ) ) {
-			$this->set( $this->saver->get_pk( $element ), $element );
-		} else {
-			$this->collection->add( $element );
+		$this->elements[] = $element;
+
+		if ( $this->keep_memory ) {
+			$this->added[] = $element;
+		}
+
+		if ( $pk = $this->saver->get_pk( $element ) ) {
+			$keys = $this->getKeys();
+
+			$this->pk_map[ $pk ] = end( $keys );
 		}
 
 		return true;
@@ -158,7 +249,10 @@ class Collection implements DoctrineCollection, Selectable {
 	 * @inheritDoc
 	 */
 	public function clear() {
-		$this->collection->clear();
+
+		$this->removed  = $this->elements;
+		$this->elements = array();
+		$this->pk_map   = array();
 	}
 
 	/**
@@ -166,10 +260,10 @@ class Collection implements DoctrineCollection, Selectable {
 	 */
 	public function contains( $element ) {
 
-		if ( $this->saver->get_pk( $element ) ) {
-			return $this->collection->containsKey( $this->saver->get_pk( $element ) );
+		if ( $pk = $this->saver->get_pk( $element ) ) {
+			return (bool) $this->get_model( $pk );
 		} else {
-			return $this->collection->contains( $element );
+			return in_array( $element, $this->elements, true );
 		}
 	}
 
@@ -177,7 +271,7 @@ class Collection implements DoctrineCollection, Selectable {
 	 * @inheritDoc
 	 */
 	public function isEmpty() {
-		return $this->collection->isEmpty();
+		return ! empty( $this->elements );
 	}
 
 	/**
@@ -185,11 +279,17 @@ class Collection implements DoctrineCollection, Selectable {
 	 */
 	public function remove( $key ) {
 
-		if ( $this->keep_memory ) {
-			$this->removed[ $key ] = $this->get( $key );
+		$model = $this->get( $key );
+
+		if ( $model && $pk = $this->saver->get_pk( $model ) ) {
+			unset( $this->pk_map[ $pk ] );
 		}
 
-		return $this->collection->remove( $key );
+		if ( $this->keep_memory ) {
+			$this->removed[] = $model;
+		}
+
+		unset( $this->elements[ $key ] );
 	}
 
 	/**
@@ -197,10 +297,34 @@ class Collection implements DoctrineCollection, Selectable {
 	 */
 	public function removeElement( $element ) {
 
-		if ( $this->saver->get_pk( $element ) ) {
-			return $this->collection->remove( $this->saver->get_pk( $element ) );
+		if ( $pk = $this->saver->get_pk( $element ) ) {
+
+			if ( $this->keep_memory ) {
+				$this->removed[] = $element;
+			}
+
+			if ( isset( $this->pk_map[ $pk ] ) ) {
+				$i = $this->pk_map[ $pk ];
+
+				unset( $this->elements[ $i ] );
+				unset( $this->pk_map[ $pk ] );
+			} else {
+
+				foreach ( $this->elements as $i => $element ) {
+
+					if ( $this->saver->get_pk( $element ) === $pk ) {
+						unset( $this->elements[ $i ] );
+
+						return;
+					}
+				}
+			}
 		} else {
-			return $this->collection->removeElement( $element );
+			$i = array_search( $element, $this->elements, true );
+
+			if ( $i !== false ) {
+				unset( $this->elements[ $i ] );
+			}
 		}
 	}
 
@@ -208,28 +332,28 @@ class Collection implements DoctrineCollection, Selectable {
 	 * @inheritDoc
 	 */
 	public function containsKey( $key ) {
-		return $this->collection->containsKey( $key );
+		return isset( $this->elements[ $key ] ) ? true : false;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function get( $key ) {
-		return $this->collection->get( $key );
+		return isset( $this->elements[ $key ] ) ? $this->elements[ $key ] : null;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function getKeys() {
-		return $this->collection->getKeys();
+		return array_keys( $this->elements );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function getValues() {
-		return $this->collection->getValues();
+		return array_values( $this->elements );
 	}
 
 	/**
@@ -237,88 +361,121 @@ class Collection implements DoctrineCollection, Selectable {
 	 */
 	public function set( $key, $value ) {
 
+		$this->elements[ $key ] = $value;
+
 		if ( $this->keep_memory ) {
-			$this->added[ $key ] = $value;
+			$this->added[] = $value;
 		}
 
-		$this->collection->set( $key, $value );
+		if ( $pk = $this->saver->get_pk( $value ) ) {
+			$this->pk_map[ $pk ] = $key;
+		} else {
+			$i = array_search( $key, $this->pk_map, true );
+
+			if ( $i !== false ) {
+				unset( $this->pk_map[ $i ] );
+			}
+		}
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function toArray() {
-		return $this->collection->toArray();
+		return $this->elements;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function first() {
-		return $this->collection->first();
+		return reset( $this->elements );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function last() {
-		return $this->collection->last();
+		return end( $this->elements );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function key() {
-		return $this->collection->key();
+		return key( $this->elements );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function current() {
-		return $this->collection->current();
+		return current( $this->elements );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function next() {
-		return $this->collection->next();
+		return next( $this->elements );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function exists( Closure $p ) {
-		return $this->collection->exists( $p );
+
+		foreach ( $this->elements as $key => $element ) {
+			if ( $p( $key, $element ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function filter( Closure $p ) {
-		return $this->collection->filter( $p );
+		return new static( array_filter( $this->elements, $p ) );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function forAll( Closure $p ) {
-		return $this->collection->forAll( $p );
+		foreach ( $this->elements as $key => $element ) {
+			if ( ! $p( $key, $element ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function map( Closure $func ) {
-		return $this->collection->map( $func );
+		return new static( array_map( $func, $this->elements ) );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function partition( Closure $p ) {
-		return $this->collection->partition( $p );
+		$matches = $noMatches = array();
+
+		foreach ( $this->elements as $key => $element ) {
+			if ( $p( $key, $element ) ) {
+				$matches[ $key ] = $element;
+			} else {
+				$noMatches[ $key ] = $element;
+			}
+		}
+
+		return array( new static( $matches ), new static( $noMatches ) );
 	}
 
 	/**
@@ -326,42 +483,44 @@ class Collection implements DoctrineCollection, Selectable {
 	 */
 	public function indexOf( $element ) {
 
-		if ( $element->get_pk() ) {
+		if ( $pk = $this->saver->get_pk( $element ) ) {
 
-			$keys = $this->getKeys();
+			$i = $this->get_model_index( $pk );
 
-			return array_search( $element->get_pk(), $keys, true );
-		} else {
-			return $this->collection->indexOf( $element );
+			if ( $i !== - 1 ) {
+				return $i;
+			}
 		}
+
+		return array_search( $element, $this->elements, true );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function slice( $offset, $length = null ) {
-		return $this->collection->slice( $offset, $length );
+		return array_slice( $this->elements, $offset, $length, true );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function getIterator() {
-		return $this->collection->getIterator();
+		return new \ArrayIterator( $this->elements );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function offsetExists( $offset ) {
-		return $this->collection->offsetExists( $offset );
+		return $this->containsKey( $offset );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function offsetGet( $offset ) {
-		return $this->collection->offsetGet( $offset );
+		return $this->get( $offset );
 	}
 
 	/**
@@ -387,14 +546,39 @@ class Collection implements DoctrineCollection, Selectable {
 	 * @inheritDoc
 	 */
 	public function count() {
-		return $this->collection->count();
+		return count( $this->elements );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function matching( Criteria $criteria ) {
-		return $this->collection->matching( $criteria );
+
+		$expr     = $criteria->getWhereExpression();
+		$filtered = $this->elements;
+
+		if ( $expr ) {
+			$visitor  = new ClosureExpressionVisitor();
+			$filter   = $visitor->dispatch( $expr );
+			$filtered = array_filter( $filtered, $filter );
+		}
+
+		if ( $orderings = $criteria->getOrderings() ) {
+			foreach ( array_reverse( $orderings ) as $field => $ordering ) {
+				$next = ClosureExpressionVisitor::sortByField( $field, $ordering == Criteria::DESC ? - 1 : 1 );
+			}
+
+			uasort( $filtered, $next );
+		}
+
+		$offset = $criteria->getFirstResult();
+		$length = $criteria->getMaxResults();
+
+		if ( $offset || $length ) {
+			$filtered = array_slice( $filtered, (int) $offset, $length );
+		}
+
+		return new static( $filtered );
 	}
 }
 

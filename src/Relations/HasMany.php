@@ -13,6 +13,7 @@ namespace IronBound\DB\Relations;
 use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
+use IronBound\WPEvents\GenericEvent;
 
 /**
  * Class HasMany
@@ -50,6 +51,33 @@ class HasMany extends Relation {
 		$results->keep_memory();
 
 		return $results;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	protected function register_events() {
+
+		$class = $this->related_model;
+
+		$self    = $this;
+		$results = $this->results;
+
+		$class::saved( function ( GenericEvent $event ) use ( $self, $results ) {
+
+			if ( $self->model_matches_relation( $event->get_subject() ) ) {
+				if ( ! $results->contains( $event->get_subject() ) ) {
+					$results->add( $event->get_subject() );
+				}
+			} else {
+				$results->remove_model( $event->get_subject()->get_pk() );
+			}
+
+		} );
+
+		$class::deleted( function ( GenericEvent $event ) use ( $self, $results ) {
+			$results->remove_model( $event->get_subject()->get_pk() );
+		} );
 	}
 
 	/**
@@ -137,7 +165,24 @@ class HasMany extends Relation {
 
 		/** @var Model $value */
 		foreach ( $values as $value ) {
-			$value->set_attribute( $this->foreign_key, $this->parent->get_pk() )->save();
+
+			$new = ! $value->get_pk();
+
+			if ( $new ) {
+				$old = clone $value;
+			}
+
+			$saved = $value->set_attribute( $this->foreign_key, $this->parent->get_pk() )->save();
+
+			if ( $new && $saved && isset( $old ) ) {
+
+				/*$values->removeElement( $old );
+				$values->add( $value );
+
+				if ( $this->keep_synced && $this->results ) {
+					$this->results->removeElement( $old );
+				}*/
+			}
 		}
 	}
 }

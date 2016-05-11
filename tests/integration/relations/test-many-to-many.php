@@ -86,13 +86,13 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 			'release_date' => new \DateTime( '2011-10-31' )
 		) );
 
-		$actor->movies->set( $m1->get_pk(), $m1 );
-		$actor->movies->set( $m2->get_pk(), $m2 );
+		$actor->movies->add( $m1 );
+		$actor->movies->add( $m2 );
 		$actor->save();
 
 		$this->assertEquals( 1, Movie::get( $m2->get_pk() )->actors->count() );
 
-		$actor->movies->remove( $m2->get_pk() );
+		$actor->movies->remove_model( $m2->get_pk() );
 		$this->assertEquals( 1, $actor->movies->count() );
 		$actor->save();
 
@@ -130,7 +130,7 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 		$this->assertEquals( 1, $m1->actors->count() );
 		$this->assertEquals( 1, $m2->actors->count() );
 
-		$actor->movies->remove( $m2->get_pk() );
+		$actor->movies->remove_model( $m2->get_pk() );
 		$actor->save();
 
 		$this->assertEquals( 1, $m1->actors->count() );
@@ -175,28 +175,28 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 
 		$actors = Actor::with( 'movies' )->results();
 
-		$this->assertTrue( $actors->containsKey( $a1->get_pk() ) );
-		$this->assertTrue( $actors->containsKey( $a2->get_pk() ) );
+		$this->assertNotNull( $actors->get_model( $a1->get_pk() ) );
+		$this->assertNotNull( $actors->get_model( $a2->get_pk() ) );
 
 		$num_queries = $GLOBALS['wpdb']->num_queries;
 
 		/** @var Actor $a1 */
-		$a1        = $actors->get( $a1->get_pk() );
+		$a1        = $actors->get_model( $a1->get_pk() );
 		$a1_movies = $a1->movies;
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
 
 		$this->assertEquals( 2, $a1_movies->count() );
-		$this->assertTrue( $a1_movies->containsKey( $m1->get_pk() ) );
-		$this->assertTrue( $a1_movies->containsKey( $m2->get_pk() ) );
+		$this->assertNotNull( $a1_movies->get_model( $m1->get_pk() ) );
+		$this->assertNotNull( $a1_movies->get_model( $m2->get_pk() ) );
 
 		/** @var Actor $a2 */
-		$a2        = $actors->get( $a2->get_pk() );
+		$a2        = $actors->get_model( $a2->get_pk() );
 		$a2_movies = $a2->movies;
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
 
 		$this->assertEquals( 2, $a2_movies->count() );
-		$this->assertTrue( $a2_movies->containsKey( $m2->get_pk() ) );
-		$this->assertTrue( $a2_movies->containsKey( $m3->get_pk() ) );
+		$this->assertNotNull( $a2_movies->get_model( $m2->get_pk() ) );
+		$this->assertNotNull( $a2_movies->get_model( $m3->get_pk() ) );
 
 		// --- Movies --- //
 
@@ -206,26 +206,26 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 		$num_queries = $GLOBALS['wpdb']->num_queries;
 
 		/** @var Movie $m1 */
-		$m1 = $movies->get( $m1->get_pk() );
+		$m1 = $movies->get_model( $m1->get_pk() );
 		$this->assertEquals( 1, $m1->actors->count() );
-		$this->assertTrue( $m1->actors->containsKey( $a1->get_pk() ) );
+		$this->assertNotNull( $m1->actors->containsKey( $a1->get_pk() ) );
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
 
 		/** @var Movie $m2 */
-		$m2 = $movies->get( $m2->get_pk() );
+		$m2 = $movies->get_model( $m2->get_pk() );
 		$this->assertEquals( 2, $m2->actors->count() );
-		$this->assertTrue( $m2->actors->containsKey( $a1->get_pk() ) );
-		$this->assertTrue( $m2->actors->containsKey( $a2->get_pk() ) );
+		$this->assertNotNull( $m2->actors->get_model( $a1->get_pk() ) );
+		$this->assertNotNull( $m2->actors->get_model( $a2->get_pk() ) );
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
 
 		/** @var Movie $m3 */
-		$m3 = $movies->get( $m3->get_pk() );
+		$m3 = $movies->get_model( $m3->get_pk() );
 		$this->assertEquals( 1, $m3->actors->count() );
-		$this->assertTrue( $m3->actors->containsKey( $a2->get_pk() ) );
+		$this->assertNotNull( $m3->actors->get_model( $a2->get_pk() ) );
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
 
 		/** @var Movie $m4 */
-		$m4 = $movies->get( $m4->get_pk() );
+		$m4 = $movies->get_model( $m4->get_pk() );
 		$this->assertEquals( 0, $m4->actors->count() );
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
 	}
@@ -339,28 +339,28 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 
 		$galleries = Gallery::with( 'art' )->results();
 
-		$this->assertTrue( $galleries->containsKey( $g1->get_pk() ) );
-		$this->assertTrue( $galleries->containsKey( $g2->get_pk() ) );
+		$this->assertNotNull( $galleries->get_model( $g1->get_pk() ) );
+		$this->assertNotNull( $galleries->get_model( $g2->get_pk() ) );
 
 		$num_queries = $wpdb->num_queries;
 
 		/** @var Gallery $g1 */
-		$g1     = $galleries->get( $g1->get_pk() );
+		$g1     = $galleries->get_model( $g1->get_pk() );
 		$g1_art = $g1->art;
 		$this->assertEquals( $num_queries, $wpdb->num_queries );
 
 		$this->assertEquals( 2, $g1_art->count() );
-		$this->assertTrue( $g1_art->containsKey( $a1->ID ) );
-		$this->assertTrue( $g1_art->containsKey( $a2->ID ) );
+		$this->assertNotNull( $g1_art->get_model( $a1->ID ) );
+		$this->assertNotNull( $g1_art->get_model( $a2->ID ) );
 
 		/** @var Gallery $g2 */
-		$g2     = $galleries->get( $g2->get_pk() );
+		$g2     = $galleries->get_model( $g2->get_pk() );
 		$g2_art = $g2->art;
 		$this->assertEquals( $num_queries, $wpdb->num_queries );
 
 		$this->assertEquals( 2, $g2_art->count() );
-		$this->assertTrue( $g2_art->containsKey( $a2->ID ) );
-		$this->assertTrue( $g2_art->containsKey( $a3->ID ) );
+		$this->assertNotNull( $g2_art->get_model( $a2->ID ) );
+		$this->assertNotNull( $g2_art->get_model( $a3->ID ) );
 	}
 
 	public function test_many_to_many_posts_caching() {

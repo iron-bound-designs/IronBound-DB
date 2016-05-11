@@ -31,7 +31,7 @@ class Test_HasMany extends \WP_UnitTestCase {
 		Manager::register( new Authors() );
 		Manager::register( new Books(), '', get_class( new Book() ) );
 		Manager::register( new BaseMetaTable( new Books() ) );
-		
+
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
 		Manager::maybe_install_table( Manager::get( 'books-meta' ) );
@@ -51,14 +51,72 @@ class Test_HasMany extends \WP_UnitTestCase {
 
 		$books = $author->books;
 
-		$this->assertTrue( $books->containsKey( $b1->get_pk() ) );
+		$this->assertNotNull( $books->get_model( $b1->get_pk() ) );
 
 		$b2 = Book::create( array(
 			'title'  => 'The Songs of John Smith',
 			'author' => $author,
 			'price'  => 14.95
 		) );
-		$this->assertTrue( $books->containsKey( $b2->get_pk() ) );
+		$this->assertNotNull( $books->get_model( $b2->get_pk() ) );
+	}
+
+	public function test_persist_new_models() {
+
+		$author = Author::create( array(
+			'name' => 'John Smith'
+		) );
+
+		$author->books->add( new Book( array( 'title' => 'Book 1' ) ) );
+		$author->books->add( new Book( array( 'title' => 'Book 2' ) ) );
+		$author->books->add( new Book( array( 'title' => 'Book 3' ) ) );
+		$author->books->add( new Book( array( 'title' => 'Book 4' ) ) );
+
+		$author->save();
+
+		$this->assertEquals( 4, $author->books->count() );
+
+		$b1 = null;
+		$b2 = null;
+		$b3 = null;
+		$b4 = null;
+
+		$this->assertTrue( $author->books->exists( function ( $key, Book $model ) use ( &$b1 ) {
+			if ( $model->title === 'Book 1' ) {
+				$b1 = $model->get_pk();
+
+				return true;
+			}
+
+			return false;
+		} ) );
+		$this->assertTrue( $author->books->exists( function ( $key, Book $model ) use ( &$b2 ) {
+			if ( $model->title === 'Book 2' ) {
+				$b2 = $model->get_pk();
+
+				return true;
+			}
+
+			return false;
+		} ) );
+		$this->assertTrue( $author->books->exists( function ( $key, Book $model ) use ( &$b3 ) {
+			if ( $model->title === 'Book 3' ) {
+				$b3 = $model->get_pk();
+
+				return true;
+			}
+
+			return false;
+		} ) );
+		$this->assertTrue( $author->books->exists( function ( $key, Book $model ) use ( &$b4 ) {
+			if ( $model->title === 'Book 4' ) {
+				$b4 = $model->get_pk();
+
+				return true;
+			}
+
+			return false;
+		} ) );
 	}
 
 	public function test_loaded_relations_are_saved() {
@@ -126,5 +184,49 @@ class Test_HasMany extends \WP_UnitTestCase {
 		$this->assertTrue( $books->containsKey( $b2->get_pk() ) );
 		$this->assertTrue( $books->containsKey( $b3->get_pk() ) );
 		$this->assertTrue( $books->containsKey( $b4->get_pk() ) );
+	}
+
+	public function test_keep_synced() {
+
+		$b1 = Book::create( array( 'title' => 'R+L=J' ) );
+
+		$author = Author::create( array(
+			'name' => 'Jon Snow'
+		) );
+		$author->books->add( $b1 );
+		$author->save();
+
+		$b2 = Book::create( array(
+			'title'  => 'The Tower of Joy',
+			'author' => $author
+		) );
+
+		$books = $author->books;
+
+		$this->assertEquals( 2, $books->count() );
+		$this->assertTrue( $books->contains( $b1 ) );
+		$this->assertTrue( $books->contains( $b2 ) );
+	}
+
+	public function test_keep_synced_new_models() {
+
+		$author = Author::create( array(
+			'name' => 'Jon Snow'
+		) );
+		$author->books->add( new Book( array( 'title' => 'R+L=J' ) ) );
+		$author->save();
+
+		$b2 = Book::create( array(
+			'title'  => 'The Tower of Joy',
+			'author' => $author
+		) );
+
+		$books = $author->books;
+
+		$this->assertEquals( 2, $books->count() );
+		$this->assertTrue( $books->exists( function ( $key, Book $model ) {
+			return $model->title === 'R+L=J';
+		} ) );
+		$this->assertTrue( $books->contains( $b2 ) );
 	}
 }

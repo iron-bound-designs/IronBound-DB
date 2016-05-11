@@ -124,14 +124,14 @@ class Test_Nested extends \WP_UnitTestCase {
 		$this->assertTrue( $libraries->contains( $l2 ) );
 
 		/** @var Library $l1 */
-		$l1 = $libraries->get( $l1->get_pk() );
+		$l1 = $libraries->get_model( $l1->get_pk() );
 
 		$this->assertEquals( 2, $l1->books->count() );
 		$this->assertTrue( $l1->books->contains( $b1 ) );
 		$this->assertTrue( $l1->books->contains( $b3 ) );
 
 		/** @var Library $l2 */
-		$l2 = $libraries->get( $l2->get_pk() );
+		$l2 = $libraries->get_model( $l2->get_pk() );
 
 		$this->assertEquals( 2, $l2->books->count() );
 		$this->assertTrue( $l2->books->contains( $b2 ) );
@@ -140,18 +140,18 @@ class Test_Nested extends \WP_UnitTestCase {
 		// --- Books --- //
 
 		/** @var Book $b1 */
-		$b1 = $l1->books->get( $b1->get_pk() );
+		$b1 = $l1->books->get_model( $b1->get_pk() );
 		$this->assertEquals( 2, $b1->reviews->count() );
 		$this->assertTrue( $b1->reviews->contains( $r1 ) );
 		$this->assertTrue( $b1->reviews->contains( $r2 ) );
 
 		/** @var Book $b2 */
-		$b2 = $l2->books->get( $b2->get_pk() );
+		$b2 = $l2->books->get_model( $b2->get_pk() );
 		$this->assertEquals( 1, $b2->reviews->count() );
 		$this->assertTrue( $b2->reviews->contains( $r3 ) );
 
 		/** @var Book $b3 */
-		$b3 = $l2->books->get( $b3->get_pk() );
+		$b3 = $l2->books->get_model( $b3->get_pk() );
 		$this->assertEquals( 0, $b3->reviews->count() );
 	}
 }
