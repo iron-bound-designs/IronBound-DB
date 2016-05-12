@@ -14,6 +14,8 @@ composer require ironbound/db
 ## Basic Usage
 
 ### Relationships
+
+#### One to Many
 ```php
 $author = Author::create( array( 'name' => 'John Doe' ) );
 $author->books->add( new Book( array( 'title' => "John's Book" ) ) );
@@ -32,7 +34,32 @@ $authors->save();
 
 ```
 
+#### Many to Many
+
+```php
+$book1 = Book::create( array( 'title' => 'Book 1' ) );
+$book2 = Book::create( array( 'title' => 'Book 2' ) );
+$book3 = Book::create( array( 'title' => 'Book 3' ) );
+
+$bronx		= Library::create( array( 'name' => 'Bronx Library' ) );
+$manhattan  = Library::create( array( 'name' => 'Manhattan Library' ) );
+
+$manhattan->books->add( $book2 );
+$manhattan->books->add( $book3 );
+$manhattan->save();
+
+$bronx->books->add( $book1 );
+$bronx->books->add( $book2 );
+$bronx->save();
+
+$manhattan->books->removeElement( $book3 );
+$manhattan->books->add( $book1 );
+$manhattan->save();
+```
+
 ### Interacting with WordPress Models
+Model's can have any of the four WordPress objects (Posts, Users, Comments, Terms) as attributes.
+They will be saved or created whenever the Model is saved.
 
 ```php
 $author = Author::get( 1 );
@@ -40,7 +67,7 @@ $author->user->display_name = 'John Doe'; // This is a WP_User object
 $author->picture->post_title = 'John Doe'; // This is a WP_Post object
 $author->save(); // The User and Post were automatically saved
 
-// You can have posts inserted too
+// You can have WP objects inserted too
 
 $author = new Author(
 	'picture' => new WP_Post( (object) array( 
@@ -104,6 +131,33 @@ $book 	= Book::create( array( 'title' => "John's Book", 'author' => $author ) );
 $author->delete();
 ```
 
+## Defining Models
+
+```php
+class Author extends \IronBound\DB\Model\ModelWithMeta {
+
+	public function get_pk() {
+		return $this->id;
+	}
+	
+	protected function _books_relation() {
+		
+		$relation = new HasMany( 'author', get_class( new Book() ), $this, 'books' );
+		$relation->keep_synced();
+		
+		return $relation;
+	}
+	
+	protected static function get_table() {
+		return static::$_db_manager->get( 'authors' );
+	}
+	
+	public static function get_meta_table() {
+    		return static::$_db_manager->get( 'authors-meta' );
+    }
+}
+```
+
 ## Defining Tables
 
 Tables are defined in PHP. Each model is represented by a table. Tables are generally defined by a PHP class.
@@ -111,7 +165,6 @@ Tables are defined in PHP. Each model is represented by a table. Tables are gene
 ### Basic Model Tables
 
 ```php
-
 class Authors extends \IronBound\DB\Table\BaseTable {
 
 	public function get_table_name( \wpdb $wpdb ) {
@@ -139,7 +192,7 @@ class Authors extends \IronBound\DB\Table\BaseTable {
 			'birth_date' => '',
 			'bio'        => '',
 			'picture'    => 0,
-			'user		 => 0
+			'user'		 => 0
 		);
 	}
 
@@ -153,13 +206,14 @@ class Authors extends \IronBound\DB\Table\BaseTable {
 }
 
 \IronBound\DB\Manager::register( new Authors() );
+\IronBound\DB\Manager::register( new BaseMetaTable( new Authors() ) );
 \IronBound\DB\Manager::maybe_install_table( new Authors() );
+\IronBound\DB\Manager::maybe_install_table( new BaseMetaTable( new Authors() ) );
 ```
 
 ### Foreign Key Constrains
 
 ```php
-
 class Authors extends \IronBound\DB\Table\BaseTable implements \IronBound\DB\Table\ForeignKey\DeleteConstrained {
 
 	// ... other methods
