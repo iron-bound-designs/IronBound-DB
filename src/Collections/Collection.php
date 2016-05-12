@@ -226,6 +226,20 @@ class Collection implements DoctrineCollection, Selectable {
 	}
 
 	/**
+	 * Save all items in the collection.
+	 * 
+	 * @since 2.0
+	 * 
+	 * @param array $options
+	 */
+	public function save( array $options = array() ) {
+
+		foreach ( $this->elements as $element ) {
+			$this->saver->save( $element, $options );
+		}
+	}
+
+	/**
 	 * @inheritDoc
 	 */
 	public function add( $element ) {
