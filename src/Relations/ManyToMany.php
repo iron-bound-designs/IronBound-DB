@@ -304,8 +304,10 @@ class ManyToMany extends Relation {
 
 		foreach ( $removed as $model ) {
 
-			$remove_where = new Where( $this->other_column, true, $this->parent->get_pk() );
-			$remove_where->qAnd( new Where( $this->primary_column, true, $this->association->get_saver()->get_pk( $model ) ) );
+			$remove_where = new Where( $this->other_column, true, esc_sql( $this->parent->get_pk() ) );
+			$remove_where->qAnd(
+				new Where( $this->primary_column, true, esc_sql( $this->association->get_saver()->get_pk( $model ) ) )
+			);
 
 			$where->qOr( $remove_where );
 		}
@@ -326,11 +328,13 @@ class ManyToMany extends Relation {
 
 		$insert = array();
 
+		$parent = esc_sql( $this->parent->get_pk() );
+
 		foreach ( $added as $model ) {
-			$pk = $this->association->get_saver()->get_pk( $model );
+			$pk = esc_sql( $this->association->get_saver()->get_pk( $model ) );
 
 			if ( $pk ) {
-				$insert[] = "({$this->parent->get_pk()},{$pk})";
+				$insert[] = "({$parent},{$pk})";
 			}
 		}
 
