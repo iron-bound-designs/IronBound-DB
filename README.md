@@ -1,6 +1,6 @@
 # IronBound DB
 
-[![Build Status](https://travis-ci.org/iron-bound-designs/IronBound-DB.svg?branch=master)](https://travis-ci.org/iron-bound-designs/IronBound-DB) [![codecov.io](https://codecov.io/github/iron-bound-designs/IronBound-DB/coverage.svg?branch=master)](https://codecov.io/github/iron-bound-designs/IronBound-DB?branch=master)
+[![Build Status](https://travis-ci.org/iron-bound-designs/IronBound-DB.svg?branch=master)](https://travis-ci.org/iron-bound-designs/IronBound-DB) [![codecov](https://codecov.io/gh/iron-bound-designs/IronBound-DB/branch/2.0/graph/badge.svg)
 
 IronBound DB is a straightforward, but powerful, ORM for WordPress. It facilitates the creation of custom database tables,
  and bridges the gap between WordPress functionality and IronBound Models.
