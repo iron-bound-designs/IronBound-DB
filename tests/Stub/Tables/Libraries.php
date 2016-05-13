@@ -11,6 +11,7 @@
 namespace IronBound\DB\Tests\Stub\Tables;
 
 use IronBound\DB\Table\BaseTable;
+use IronBound\DB\Table\Column\DecimalBased;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\StringBased;
 
@@ -41,8 +42,8 @@ class Libraries extends BaseTable {
 		return array(
 			'id'   => new IntegerBased( 'BIGINT', 'id', array( 'unsigned', 'auto_increment' ), array( 20 ) ),
 			'name' => new StringBased( 'VARCHAR', 'name', array(), array( 255 ) ),
-			'lat'  => new IntegerBased( 'DECIMAL', 'lat', array(), array( 10, 6 ) ),
-			'lon'  => new IntegerBased( 'DECIMAL', 'lon', array(), array( 10, 6 ) )
+			'lat'  => new DecimalBased( 'DECIMAL', 'lat', array(), array( 10, 6 ) ),
+			'lon'  => new DecimalBased( 'DECIMAL', 'lon', array(), array( 10, 6 ) )
 		);
 	}
 

@@ -12,6 +12,7 @@ namespace IronBound\DB\Tests\Stub\Tables;
 
 use IronBound\DB\Table\BaseTable;
 use IronBound\DB\Table\Column\DateTime;
+use IronBound\DB\Table\Column\DecimalBased;
 use IronBound\DB\Table\Column\ForeignPost;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\StringBased;
@@ -47,7 +48,7 @@ class Movies extends BaseTable {
 			'release_date' => new DateTime( 'release_date' ),
 			'poster'       => new ForeignPost( 'poster', new PostSaver() ),
 			'description'  => new StringBased( 'LONGTEXT', 'description' ),
-			'earnings'     => new IntegerBased( 'DECIMAL', 'earnings', array(), array( 10, 2 ) )
+			'earnings'     => new DecimalBased( 'DECIMAL', 'earnings', array(), array( 10, 2 ) )
 		);
 	}
 
