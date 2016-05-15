@@ -170,7 +170,7 @@ class FluentQuery {
 		$this->wpdb  = $wpdb ?: $GLOBALS['wpdb'];
 
 		$this->select = new Select( null );
-		$this->from   = new From( $this->table->get_table_name( $wpdb ), $this->alias );
+		$this->from   = new From( $this->table->get_table_name( $this->wpdb ), $this->alias );
 	}
 
 	/**

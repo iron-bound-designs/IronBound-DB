@@ -14,12 +14,14 @@ use Doctrine\Common\Collections\ArrayCollection;
 use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Query\Builder;
+use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Query\Tag\From;
 use IronBound\DB\Query\Tag\Join;
 use IronBound\DB\Query\Tag\Select;
 use IronBound\DB\Query\Tag\Where;
 use IronBound\DB\Query\Tag\Where_Raw;
 use IronBound\DB\Table\Association\PostAssociationTable;
+use IronBound\DB\WP\Posts;
 
 /**
  * Class ManyToManyPosts
@@ -79,25 +81,18 @@ class ManyToManyPosts extends ManyToMany {
 	 */
 	protected function fetch_results() {
 
-		/** @var \wpdb $wpdb */
-		global $wpdb;
+		$query = new FluentQuery( new Posts() );
+		$query->distinct();
 
-		$builder = new Builder();
+		$parent = $this->parent;
+		$column = $this->other_column;
 
-		$select = new Select( 't1.*' );
-		$select->filter_distinct();
+		$query->join( $this->association, 'ID', $this->primary_column, '=',
+			function ( FluentQuery $query ) use ( $parent, $column ) {
+				$query->where( $column, true, $parent->get_pk() );
+			} );
 
-		$from = new From( $wpdb->posts, 't1' );
-
-		$join_where = new Where_Raw( "t1.ID = t2.{$this->primary_column}" );
-		$join_where->qAnd( new Where( "t2.{$this->other_column}", true, $this->parent->get_pk() ) );
-
-		$join = new Join( new From( $this->association->get_table_name( $wpdb ), 't2' ), $join_where );
-
-		$builder->append( $select )->append( $from )->append( $join );
-		$sql = $builder->build();
-
-		$results = $wpdb->get_results( $sql, ARRAY_A );
+		$results = $query->results();
 
 		$posts = array();
 
@@ -132,25 +127,22 @@ class ManyToManyPosts extends ManyToMany {
 	 */
 	protected function fetch_results_for_eager_load( array $models, $callback = null ) {
 
-		/** @var \wpdb $wpdb */
-		global $wpdb;
+		$query = new FluentQuery( new Posts() );
+		$query->distinct();
+		$query->select_all( false );
 
-		$builder = new Builder();
+		$other_column = $this->other_column;
 
-		$select = new Select();
-		$select->filter_distinct();
+		$query->join( $this->association, 'ID', $this->primary_column, '=',
+			function ( FluentQuery $query ) use ( $other_column, $models ) {
+				$query->where( $other_column, true, array_keys( $models ) );
+			}, 'LEFT' );
 
-		$from = new From( $wpdb->posts, 't1' );
+		if ( $callback ) {
+			$callback( $query );
+		}
 
-		$join_where = new Where_Raw( "t1.ID = t2.{$this->primary_column}" );
-		$join_where->qAnd( new Where( "t2.{$this->other_column}", true, array_keys( $models ) ) );
-
-		$join = new Join( new From( $this->association->get_table_name( $wpdb ), 't2' ), $join_where, 'LEFT' );
-
-		$builder->append( $select )->append( $from )->append( $join );
-		$sql = $builder->build();
-
-		return new ArrayCollection( $wpdb->get_results( $sql, ARRAY_A ) );
+		return $query->results();
 	}
 
 	/**
