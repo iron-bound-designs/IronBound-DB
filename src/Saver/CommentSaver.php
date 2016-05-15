@@ -26,6 +26,13 @@ class CommentSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
+	public function make_model( $attributes ) {
+		return new \WP_Comment( (object) $attributes );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function save( $value, array $options = array() ) {
 
 		if ( ! $value instanceof \WP_Comment && ! property_exists( $value, 'comment_ID' ) ) {

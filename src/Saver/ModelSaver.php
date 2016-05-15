@@ -51,6 +51,13 @@ class ModelSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
+	public function make_model( $attributes ) {
+		return call_user_func( array( $this->model_class, 'from_query' ), $attributes );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function save( $value, array $options = array() ) {
 
 		if ( ! $value instanceof $this->model_class ) {

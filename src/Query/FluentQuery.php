@@ -28,6 +28,8 @@ use IronBound\DB\Query\Tag\Select;
 use IronBound\DB\Query\Tag\Where;
 use IronBound\DB\Query\Tag\Where_Date;
 use IronBound\DB\Query\Tag\Where_Raw;
+use IronBound\DB\Saver\ModelSaver;
+use IronBound\DB\Saver\Saver;
 use IronBound\DB\Table\Meta\MetaTable;
 use IronBound\DB\Table\Table;
 
@@ -150,7 +152,7 @@ class FluentQuery {
 	protected $relations = array();
 
 	/**
-	 * @var Collection
+	 * @var Collection|ArrayCollection
 	 */
 	protected $results;
 
@@ -188,6 +190,21 @@ class FluentQuery {
 		$query->model = $model;
 
 		return $query;
+	}
+
+	/**
+	 * Set the Model class.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $model
+	 *
+	 * @return $this
+	 */
+	public function set_model_class( $model ) {
+		$this->model = $model;
+
+		return $this;
 	}
 
 	/**
@@ -795,27 +812,44 @@ class FluentQuery {
 	 *
 	 * @since 2.0
 	 *
+	 * @param Saver $saver
+	 *
 	 * @return Collection|DoctrineCollection
 	 */
-	public function results() {
+	public function results( Saver $saver = null ) {
+
+		if ( $this->results ) {
+			return $this->results;
+		}
+
+		if ( $saver instanceof ModelSaver && $this->model ) {
+			$saver->set_model_class( $this->model );
+		} elseif ( ! $saver && $this->model ) {
+			$saver = new ModelSaver( $this->model );
+		}
 
 		$this->make_limit_tag();
 		$this->sql = $sql = $this->build_sql();
 
 		$results = $this->wpdb->get_results( $sql, ARRAY_A );
 
-		if ( ! $this->model ) {
-			return new ArrayCollection( $results );
+		if ( ! $saver ) {
+
+			$collection = new ArrayCollection( $results );
+
+			$this->results = $collection;
+
+			return $collection;
 		}
 
-		$model_class  = $this->model;
-		$models       = array();
+		$models = array();
 
 		foreach ( $results as $result ) {
-			$model = $model_class::from_query( $result );
+
+			$model = $saver->make_model( $result );
 
 			if ( $model ) {
-				$models[ $model->get_pk() ] = $model;
+				$models[ $saver->get_pk( $model ) ] = $model;
 			}
 		}
 
@@ -823,7 +857,7 @@ class FluentQuery {
 			$this->handle_eager_loading( $models );
 		}
 
-		$collection = new Collection( $models );
+		$collection = new Collection( $models, false, $saver );
 
 		$this->results = $collection;
 

@@ -26,6 +26,13 @@ class PostSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
+	public function make_model( $attributes ) {
+		return new \WP_Post( (object) $attributes );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function save( $value, array $options = array() ) {
 
 		if ( ! $value instanceof \WP_Post ) {

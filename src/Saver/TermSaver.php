@@ -22,7 +22,14 @@ class TermSaver extends Saver {
 	public function get_pk( $value ) {
 		return $value->term_id;
 	}
-	
+
+	/**
+	 * @inheritDoc
+	 */
+	public function make_model( $attributes ) {
+		return new \WP_Term( (object) $attributes );
+	}
+
 	/**
 	 * @inheritDoc
 	 */

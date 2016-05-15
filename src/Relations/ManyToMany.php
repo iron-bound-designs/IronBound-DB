@@ -46,6 +46,11 @@ class ManyToMany extends Relation {
 	protected $other_attribute;
 
 	/**
+	 * @var string
+	 */
+	protected $join_on;
+
+	/**
 	 * ManyToMany constructor.
 	 *
 	 * @param string           $related         Related class name.
@@ -63,6 +68,28 @@ class ManyToMany extends Relation {
 		$this->primary_column = $association->get_primary_column_for_table( $parent::table() );
 
 		$this->other_attribute = $other_attribute;
+
+		if ( $related ) {
+			$this->join_on = $related::table()->get_primary_key();
+		}
+	}
+
+	/**
+	 * Make a FluentQuery object.
+	 *
+	 * @since 2.0
+	 *
+	 * @param bool $model_class Set the Model class if possible.
+	 *
+	 * @return FluentQuery
+	 */
+	protected function make_query_object( $model_class = false ) {
+
+		if ( $model_class && $this->related_model ) {
+			return call_user_func( array( $this->related_model, 'query' ) );
+		} else {
+			return new FluentQuery( call_user_func( array( $this->related_model, 'table' ) ) );
+		}
 	}
 
 	/**
@@ -70,20 +97,18 @@ class ManyToMany extends Relation {
 	 */
 	protected function fetch_results() {
 
-		/** @var FluentQuery $query */
-		$query = call_user_func( array( $this->related_model, 'query' ) );
+		$query = $this->make_query_object( true );
 		$query->distinct();
 
-		$related = $this->related_model;
-		$parent  = $this->parent;
-		$column  = $this->other_column;
+		$parent = $this->parent;
+		$column = $this->other_column;
 
-		$query->join( $this->association, $related::table()->get_primary_key(), $this->primary_column, '=',
+		$query->join( $this->association, $this->join_on, $this->primary_column, '=',
 			function ( FluentQuery $query ) use ( $parent, $column ) {
 				$query->where( $column, true, $parent->get_pk() );
 			} );
 
-		$results = $query->results();
+		$results = $query->results( $this->association->get_saver() );
 		$results->keep_memory();
 
 		return $results;
@@ -168,14 +193,13 @@ class ManyToMany extends Relation {
 	 */
 	protected function fetch_results_for_eager_load( array $models, $callback = null ) {
 
-		$related      = $this->related_model;
 		$other_column = $this->other_column;
 
-		$query = new FluentQuery( $related::table(), $GLOBALS['wpdb'] );
+		$query = $this->make_query_object();
 		$query->distinct();
 		$query->select_all( false );
 
-		$query->join( $this->association, $related::table()->get_primary_key(), $this->primary_column, '=',
+		$query->join( $this->association, $this->join_on, $this->primary_column, '=',
 			function ( FluentQuery $query ) use ( $other_column, $models ) {
 				$query->where( $other_column, true, array_keys( $models ) );
 			}, 'LEFT' );

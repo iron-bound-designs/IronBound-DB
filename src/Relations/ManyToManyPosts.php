@@ -10,16 +10,8 @@
 
 namespace IronBound\DB\Relations;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
-use IronBound\DB\Query\Builder;
 use IronBound\DB\Query\FluentQuery;
-use IronBound\DB\Query\Tag\From;
-use IronBound\DB\Query\Tag\Join;
-use IronBound\DB\Query\Tag\Select;
-use IronBound\DB\Query\Tag\Where;
-use IronBound\DB\Query\Tag\Where_Raw;
 use IronBound\DB\Table\Association\PostAssociationTable;
 use IronBound\DB\WP\Posts;
 
@@ -44,6 +36,8 @@ class ManyToManyPosts extends ManyToMany {
 	 */
 	public function __construct( Model $parent, PostAssociationTable $association, $attribute ) {
 		parent::__construct( '', $parent, $association, $attribute );
+
+		$this->join_on = 'ID';
 	}
 
 	/**
@@ -79,28 +73,8 @@ class ManyToManyPosts extends ManyToMany {
 	/**
 	 * @inheritDoc
 	 */
-	protected function fetch_results() {
-
-		$query = new FluentQuery( new Posts() );
-		$query->distinct();
-
-		$parent = $this->parent;
-		$column = $this->other_column;
-
-		$query->join( $this->association, 'ID', $this->primary_column, '=',
-			function ( FluentQuery $query ) use ( $parent, $column ) {
-				$query->where( $column, true, $parent->get_pk() );
-			} );
-
-		$results = $query->results();
-
-		$posts = array();
-
-		foreach ( $results as $result ) {
-			$posts[ $result['ID'] ] = $this->make_model_from_attributes( $result );
-		}
-
-		return new Collection( $posts, true, $this->association->get_saver() );
+	protected function make_query_object( $model_class = false ) {
+		return new FluentQuery( new Posts() );
 	}
 
 	/**
@@ -120,29 +94,6 @@ class ManyToManyPosts extends ManyToMany {
 	 */
 	protected function register_events() {
 		// no-op there is no corresponding model to keep synced
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	protected function fetch_results_for_eager_load( array $models, $callback = null ) {
-
-		$query = new FluentQuery( new Posts() );
-		$query->distinct();
-		$query->select_all( false );
-
-		$other_column = $this->other_column;
-
-		$query->join( $this->association, 'ID', $this->primary_column, '=',
-			function ( FluentQuery $query ) use ( $other_column, $models ) {
-				$query->where( $other_column, true, array_keys( $models ) );
-			}, 'LEFT' );
-
-		if ( $callback ) {
-			$callback( $query );
-		}
-
-		return $query->results();
 	}
 
 	/**

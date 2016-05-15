@@ -54,6 +54,13 @@ class UserSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
+	public function make_model( $attributes ) {
+		return new \WP_User( (object) $attributes );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function save( $value, array $options = array() ) {
 
 		if ( ! $value instanceof \WP_User ) {

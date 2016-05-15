@@ -44,6 +44,17 @@ abstract class Saver {
 	public abstract function get_pk( $value );
 
 	/**
+	 * Make a model from its given attributes
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $attributes
+	 *
+	 * @return mixed
+	 */
+	public abstract function make_model( $attributes );
+
+	/**
 	 * Check if two things are numerically equivalent.
 	 *
 	 * @since 2.0
