@@ -149,7 +149,7 @@ class ManyToMany extends Relation {
 	 */
 	public function model_matches_relation( Model $model ) {
 
-		$query = new FluentQuery( $GLOBALS['wpdb'], $this->association );
+		$query = new FluentQuery( $this->association, $GLOBALS['wpdb'] );
 		$query->where( $this->primary_column, true, $this->parent->get_pk() );
 		$query->and_where( $this->other_column, true, $model->get_pk() );
 
@@ -171,7 +171,7 @@ class ManyToMany extends Relation {
 		$related      = $this->related_model;
 		$other_column = $this->other_column;
 
-		$query = new FluentQuery( $GLOBALS['wpdb'], $related::table() );
+		$query = new FluentQuery( $related::table(), $GLOBALS['wpdb'] );
 		$query->distinct();
 		$query->select_all( false );
 

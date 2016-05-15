@@ -162,12 +162,12 @@ class FluentQuery {
 	/**
 	 * FluentQuery constructor.
 	 *
-	 * @param \wpdb $wpdb
 	 * @param Table $table
+	 * @param \wpdb $wpdb
 	 */
-	public function __construct( \wpdb $wpdb, Table $table ) {
-		$this->wpdb  = $wpdb;
+	public function __construct( Table $table, \wpdb $wpdb = null ) {
 		$this->table = $table;
+		$this->wpdb  = $wpdb ?: $GLOBALS['wpdb'];
 
 		$this->select = new Select( null );
 		$this->from   = new From( $this->table->get_table_name( $wpdb ), $this->alias );
@@ -184,7 +184,7 @@ class FluentQuery {
 	 */
 	public static function from_model( $model ) {
 
-		$query        = new static( $GLOBALS['wpdb'], $model::table() );
+		$query        = new static( $model::table(), $GLOBALS['wpdb'] );
 		$query->model = $model;
 
 		return $query;
@@ -514,7 +514,7 @@ class FluentQuery {
 
 		$other_alias = 't' . ( $this->alias_count + 1 );
 
-		$other_query              = new FluentQuery( $this->wpdb, $table );
+		$other_query              = new FluentQuery( $table, $this->wpdb );
 		$other_query->alias       = $other_alias;
 		$other_query->alias_count = $this->alias_count + 1;
 
