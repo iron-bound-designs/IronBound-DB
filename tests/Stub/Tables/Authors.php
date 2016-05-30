@@ -16,12 +16,13 @@ use IronBound\DB\Table\Column\ForeignPost;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\StringBased;
 use IronBound\DB\Saver\PostSaver;
+use IronBound\DB\Table\TimestampedTable;
 
 /**
  * Class Authors
  * @package IronBound\DB\Tests\Stub\Tables
  */
-class Authors extends BaseTable {
+class Authors extends BaseTable implements TimestampedTable {
 
 	/**
 	 * @inheritDoc
@@ -46,7 +47,9 @@ class Authors extends BaseTable {
 			'name'       => new StringBased( 'VARCHAR', 'name', array(), array( 60 ) ),
 			'birth_date' => new DateTime( 'birth_date' ),
 			'bio'        => new StringBased( 'LONGTEXT', 'bio' ),
-			'picture'    => new ForeignPost( 'picture', new PostSaver() )
+			'picture'    => new ForeignPost( 'picture', new PostSaver() ),
+			'created_at' => new DateTime( 'created_at' ),
+			'updated_at' => new DateTime( 'updated_at' )
 		);
 	}
 
@@ -59,8 +62,24 @@ class Authors extends BaseTable {
 			'name'       => '',
 			'birth_date' => '',
 			'bio'        => '',
-			'picture'    => 0
+			'picture'    => 0,
+			'created_at' => '',
+			'updated_at' => ''
 		);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_created_at_column() {
+		return 'created_at';
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_updated_at_column() {
+		return 'updated_at';
 	}
 
 	/**

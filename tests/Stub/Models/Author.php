@@ -25,6 +25,8 @@ use IronBound\DB\Relations\HasOne;
  * @property \DateTime     $birth_date
  * @property string        $bio
  * @property \WP_Post      $picture
+ * @property \DateTime     $created_at
+ * @property \DateTime     $updated_at
  * @property Collection    $books
  * @property AuthorSession $session
  */

@@ -17,6 +17,7 @@ use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Relations\Relation;
 use IronBound\DB\Table\Column\Contracts\Savable;
 use IronBound\DB\Table\Table;
+use IronBound\DB\Table\TimestampedTable;
 use IronBound\WPEvents\EventDispatcher;
 use IronBound\WPEvents\GenericEvent;
 
@@ -841,6 +842,13 @@ abstract class Model implements Cacheable, \Serializable {
 			return true;
 		}
 
+		if ( static::table() instanceof TimestampedTable ) {
+			$time = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
+
+			$this->set_attribute( static::table()->get_updated_at_column(), $time->format( 'Y-m-d H:i:s' ) );
+			$dirty = $this->get_dirty();
+		}
+
 		$previous = array();
 
 		foreach ( $dirty as $column => $value ) {
@@ -879,6 +887,13 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @throws Exception
 	 */
 	protected function do_save_as_insert() {
+
+		if ( static::table() instanceof TimestampedTable ) {
+			$time = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
+
+			$this->set_attribute( static::table()->get_created_at_column(), $time->format( 'Y-m-d H:i:s' ) );
+			$this->set_attribute( static::table()->get_updated_at_column(), $time->format( 'Y-m-d H:i:s' ) );
+		}
 
 		$this->fire_model_event( 'creating' );
 

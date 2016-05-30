@@ -12,6 +12,7 @@ namespace IronBound\DB\Tests;
 
 use IronBound\DB\Manager;
 use IronBound\DB\Table\Meta\BaseMetaTable;
+use IronBound\DB\Tests\Stub\Models\Author;
 use IronBound\DB\Tests\Stub\Models\Book;
 use IronBound\DB\Tests\Stub\Models\ModelWithAllForeign;
 use IronBound\DB\Tests\Stub\Models\ModelWithForeignPost;
@@ -34,7 +35,7 @@ class Test_Crud extends \WP_UnitTestCase {
 		Manager::register( new Books(), '', get_class( new Book() ) );
 		Manager::register( new TableWithAllForeign(), '', get_class( new ModelWithAllForeign() ) );
 		Manager::register( new BaseMetaTable( new Books() ) );
-		
+
 		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
@@ -307,4 +308,28 @@ class Test_Crud extends \WP_UnitTestCase {
 
 		$this->assertEquals( 'My New Book', $model->model->title );
 	}
+
+	public function test_created_at_and_updated_at_columns_set() {
+
+		$author = Author::create( array(
+			'name' => 'John'
+		) );
+		$this->assertEquals( time(), $author->created_at->getTimestamp(), '', 1 );
+		$this->assertEquals( time(), $author->updated_at->getTimestamp(), '', 1 );
+	}
+
+	public function test_updated_at_column_updated() {
+
+		$author = Author::create( array(
+			'name' => 'John'
+		) );
+
+		sleep( 2 );
+
+		$author->bio = 'My Bio';
+		$author->save();
+		
+		$this->assertEquals( time(), $author->updated_at->getTimestamp(), '', 1 );
+	}
+
 }
