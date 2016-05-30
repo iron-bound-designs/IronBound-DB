@@ -12,7 +12,9 @@ namespace IronBound\DB\Tests\Stub\Models;
 
 use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
+use IronBound\DB\Relations\BelongsToMany;
 use IronBound\DB\Relations\HasMany;
+use IronBound\DB\Relations\HasOne;
 
 /**
  * Class Book
@@ -40,6 +42,10 @@ class Book extends Model\ModelWithMeta {
 		$relation->keep_synced();
 
 		return $relation;
+	}
+
+	protected function _author_relation() {
+		return new BelongsToMany( 'author', $this, get_class( new Author() ) );
 	}
 
 	/**

@@ -170,18 +170,6 @@ class ManyToMany extends Relation {
 	}
 
 	/**
-	 * @inheritDoc
-	 */
-	public function model_matches_relation( Model $model ) {
-
-		$query = new FluentQuery( $this->association, $GLOBALS['wpdb'] );
-		$query->where( $this->primary_column, true, $this->parent->get_pk() );
-		$query->and_where( $this->other_column, true, $model->get_pk() );
-
-		return ! is_null( $query->first() );
-	}
-
-	/**
 	 * Fetch results for eager loading.
 	 *
 	 * @since 2.0

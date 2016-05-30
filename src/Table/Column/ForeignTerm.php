@@ -100,6 +100,13 @@ class ForeignTerm extends BaseColumn implements Savable, Foreign, DeleteConstrai
 	/**
 	 * @inheritDoc
 	 */
+	public function get_pk( $value ) {
+		return $this->saver->get_pk( $value );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function register_delete_callback( $callback ) {
 		add_action( 'pre_delete_term', function ( $term_id, $taxonomy ) use ( $callback ) {
 			$callback( $term_id, get_term( $term_id, $taxonomy ) );

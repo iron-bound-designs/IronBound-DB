@@ -94,6 +94,13 @@ class ForeignPost extends BaseColumn implements Savable, Foreign, DeleteConstrai
 	/**
 	 * @inheritDoc
 	 */
+	public function get_pk( $value ) {
+		return $this->saver->get_pk( $value );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function register_delete_callback( $callback ) {
 		add_action( 'before_delete_post', function ( $post_id ) use ( $callback ) {
 			$callback( $post_id, get_post( $post_id ) );

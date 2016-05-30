@@ -194,6 +194,14 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$this->_attributes[ $attribute ] = $value;
 
+		if ( is_object( $value ) ) {
+			$columns = static::table()->get_columns();
+			$column  = $columns[ $attribute ];
+
+			$this->_attribute_value_cache[ $attribute ] = $value;
+			$this->_attributes[ $attribute ]            = $column->prepare_for_storage( $value );
+		}
+
 		return $this;
 	}
 
@@ -217,6 +225,30 @@ abstract class Model implements Cacheable, \Serializable {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Get a raw attribute.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 *
+	 * @return mixed
+	 */
+	public function get_raw_attribute( $attribute ) {
+		return $this->_attributes[ $attribute ];
+	}
+
+	/**
+	 * Get the raw attributes.
+	 *
+	 * @since 2.0
+	 *
+	 * @return array
+	 */
+	public function get_raw_attributes() {
+		return $this->_attributes;
 	}
 
 	/**
@@ -765,7 +797,10 @@ abstract class Model implements Cacheable, \Serializable {
 			$value = $this->get_attribute_from_array( $attribute );
 
 			if ( $column instanceof Savable && is_object( $value ) ) {
-				$this->_attributes[ $attribute ] = $column->save( $value );
+				$saved = $column->save( $value );
+
+				$this->_attributes[ $attribute ]            = $column->get_pk( $saved );
+				$this->_attribute_value_cache[ $attribute ] = $saved;
 			}
 		}
 	}
@@ -1164,7 +1199,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @param string $name
 	 */
 	public function __unset( $name ) {
-		$this->_attributes[ $name ] = null;
+		$this->set_attribute( $name, null );
 	}
 
 	/**

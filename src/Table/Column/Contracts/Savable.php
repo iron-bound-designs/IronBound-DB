@@ -34,4 +34,15 @@ interface Savable extends Column {
 	 * @return mixed Updated value object. If created, the primary key should be set.
 	 */
 	public function save( $value );
+
+	/**
+	 * Get the primary key from an object value.
+	 * 
+	 * @since 2.0
+	 * 
+	 * @param object $value
+	 *
+	 * @return mixed
+	 */
+	public function get_pk( $value );
 }

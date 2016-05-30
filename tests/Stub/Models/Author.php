@@ -12,6 +12,7 @@ namespace IronBound\DB\Tests\Stub\Models;
 
 use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
+use IronBound\DB\Relations\BelongsToManyPosts;
 use IronBound\DB\Relations\HasMany;
 
 /**
@@ -42,6 +43,10 @@ class Author extends Model {
 		$relation->keep_synced();
 
 		return $relation;
+	}
+
+	protected function _picture_relation() {
+		return new BelongsToManyPosts( 'picture', $this );
 	}
 
 	/**

@@ -914,12 +914,7 @@ class FluentQuery {
 	 * @return Model
 	 */
 	public function first() {
-
-		if ( $this->results ) {
-			return $this->results->first();
-		} else {
-			return $this->results()->first();
-		}
+		return $this->results()->first();
 	}
 
 	/**

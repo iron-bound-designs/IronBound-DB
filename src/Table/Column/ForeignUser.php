@@ -149,6 +149,13 @@ class ForeignUser extends BaseColumn implements Savable, Foreign, DeleteConstrai
 	/**
 	 * @inheritDoc
 	 */
+	public function get_pk( $value ) {
+		return $this->saver->get_pk( $value );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function register_delete_callback( $callback ) {
 
 		$saver = $this->saver;

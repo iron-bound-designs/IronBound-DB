@@ -84,6 +84,13 @@ class ForeignModel extends SimpleForeign implements Savable, DeleteConstrainable
 	/**
 	 * @inheritDoc
 	 */
+	public function get_pk( $value ) {
+		return $this->saver->get_pk( $value );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function register_delete_callback( $callback ) {
 		call_user_func( array( $this->model_class, 'deleting' ), function ( GenericEvent $event ) use ( $callback ) {
 			$callback( $event->get_subject()->get_pk(), $event->get_subject() );

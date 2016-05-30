@@ -94,6 +94,13 @@ class ForeignComment extends BaseColumn implements Savable, Foreign, DeleteConst
 	/**
 	 * @inheritDoc
 	 */
+	public function get_pk( $value ) {
+		return $this->saver->get_pk( $value );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function register_delete_callback( $callback ) {
 
 		add_action( 'delete_comment', function ( $comment_id ) use ( $callback ) {

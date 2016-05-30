@@ -165,24 +165,7 @@ class HasMany extends Relation {
 
 		/** @var Model $value */
 		foreach ( $values as $value ) {
-
-			$new = ! $value->get_pk();
-
-			if ( $new ) {
-				$old = clone $value;
-			}
-
-			$saved = $value->set_attribute( $this->foreign_key, $this->parent->get_pk() )->save();
-
-			if ( $new && $saved && isset( $old ) ) {
-
-				/*$values->removeElement( $old );
-				$values->add( $value );
-
-				if ( $this->keep_synced && $this->results ) {
-					$this->results->removeElement( $old );
-				}*/
-			}
+			$value->set_attribute( $this->foreign_key, $this->parent->get_pk() )->save();
 		}
 	}
 }

@@ -127,17 +127,6 @@ abstract class Relation {
 	protected abstract function fetch_results();
 
 	/**
-	 * Evaluate whether a given model matches this relation.
-	 *
-	 * @since 2.0
-	 *
-	 * @param Model $model
-	 *
-	 * @return bool
-	 */
-	public abstract function model_matches_relation( Model $model );
-
-	/**
 	 * Eager-load a relation on a set of models.
 	 *
 	 * @since 2.0
