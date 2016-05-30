@@ -14,17 +14,19 @@ use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Relations\BelongsToManyPosts;
 use IronBound\DB\Relations\HasMany;
+use IronBound\DB\Relations\HasOne;
 
 /**
  * Class Author
  * @package IronBound\DB\Tests\Stub\Models
  *
- * @property int        $id
- * @property string     $name
- * @property \DateTime  $birth_date
- * @property string     $bio
- * @property \WP_Post   $picture
- * @property Collection $books
+ * @property int           $id
+ * @property string        $name
+ * @property \DateTime     $birth_date
+ * @property string        $bio
+ * @property \WP_Post      $picture
+ * @property Collection    $books
+ * @property AuthorSession $session
  */
 class Author extends Model {
 
@@ -47,6 +49,10 @@ class Author extends Model {
 
 	protected function _picture_relation() {
 		return new BelongsToManyPosts( 'picture', $this );
+	}
+
+	protected function _session_relation() {
+		return new HasOne( 'author', get_class( new AuthorSession() ), $this, 'session' );
 	}
 
 	/**
