@@ -187,20 +187,21 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function set_attribute( $attribute, $value ) {
 
-		unset( $this->_attribute_value_cache[ $attribute ] );
-
-		if ( $this->has_set_mutator( $attribute ) ) {
-			return $this->call_set_mutator( $attribute, $value );
+		if ( method_exists( $this, $this->get_mutator_method_for_attribute( $attribute ) ) ) {
+			$value = call_user_func( array( $this, $this->get_mutator_method_for_attribute( $attribute ) ), $value );
 		}
 
-		$this->_attributes[ $attribute ] = $value;
+		$columns = static::table()->get_columns();
+		$column  = $columns[ $attribute ];
 
-		if ( is_object( $value ) ) {
-			$columns = static::table()->get_columns();
-			$column  = $columns[ $attribute ];
+		$prepared = $column->prepare_for_storage( $value );
 
+		if ( ! $prepared && $column instanceof Savable ) { // this is a yet to be saved model of some kind
+			$this->_attributes[ $attribute ]            = $value;
 			$this->_attribute_value_cache[ $attribute ] = $value;
-			$this->_attributes[ $attribute ]            = $column->prepare_for_storage( $value );
+		} else {
+			$this->_attributes[ $attribute ]            = $prepared;
+			$this->_attribute_value_cache[ $attribute ] = $column->convert_raw_to_value( $prepared );
 		}
 
 		return $this;
@@ -217,7 +218,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function get_attribute( $attribute ) {
 
-		if ( array_key_exists( $attribute, $this->_attributes ) || $this->has_get_mutator( $attribute ) ) {
+		if ( array_key_exists( $attribute, $this->_attributes ) ) {
 			return $this->get_attribute_value( $attribute );
 		}
 
@@ -265,8 +266,8 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$value = $this->get_attribute_from_array( $attribute );
 
-		if ( $this->has_get_mutator( $attribute ) ) {
-			$value = $this->call_get_mutator( $attribute, $value );
+		if ( method_exists( $this, $this->get_accessor_method_for_attribute( $attribute ) ) ) {
+			$value = call_user_func( array( $this, $this->get_accessor_method_for_attribute( $attribute ) ), $value );
 		}
 
 		return $value;
@@ -303,61 +304,29 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Check if a get mutator exists for a given attribute.
+	 * Get the accessor method name for an attribute.
 	 *
 	 * @since 2.0
 	 *
 	 * @param string $attribute
 	 *
-	 * @return bool
+	 * @return string
 	 */
-	protected function has_get_mutator( $attribute ) {
-		return method_exists( $this, "_get_{$attribute}" );
+	protected function get_accessor_method_for_attribute( $attribute ) {
+		return "_access_{$attribute}";
 	}
 
 	/**
-	 * Call the get mutator for a given attribute.
-	 *
-	 * @since 2.0
-	 *
-	 * @param string $attribute
-	 * @param mixed  $value
-	 *
-	 * @return mixed
-	 */
-	protected function call_get_mutator( $attribute, $value ) {
-		$method = "_get_{$attribute}";
-
-		return $this->{$method}( $value );
-	}
-
-	/**
-	 * Check if a set mutator exists for a given attribute.
+	 * Get the mutator method for an attribute.
 	 *
 	 * @since 2.0
 	 *
 	 * @param string $attribute
 	 *
-	 * @return bool
+	 * @return string
 	 */
-	protected function has_set_mutator( $attribute ) {
-		return method_exists( $this, "_set_{$attribute}" );
-	}
-
-	/**
-	 * Call the set mutator for a given attribute.
-	 *
-	 * @since 2.0
-	 *
-	 * @param string $attribute
-	 * @param mixed  $value
-	 *
-	 * @return mixed
-	 */
-	protected function call_set_mutator( $attribute, $value ) {
-		$method = "_set_{$attribute}";
-
-		return $this->{$method}( $value );
+	protected function get_mutator_method_for_attribute( $attribute ) {
+		return "_mutate_{$attribute}";
 	}
 
 	/**

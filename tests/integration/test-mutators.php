@@ -43,11 +43,4 @@ class Test_Mutators extends \WP_UnitTestCase {
 		) );
 		$this->assertEquals( $model, $model->post->model );
 	}
-
-	public function test_get_mutator_called_for_virtual_attributes() {
-
-		$model = new ModelWithMutators();
-		$this->assertEquals( 'Virtual', $model->virtual );
-	}
-
 }

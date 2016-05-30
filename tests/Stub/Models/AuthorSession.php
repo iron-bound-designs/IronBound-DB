@@ -29,7 +29,7 @@ class AuthorSession extends Model {
 		return $this->id;
 	}
 
-	protected function _get_data( $data ) {
+	protected function _access_data( $data ) {
 		if ( empty( $data ) ) {
 			return array();
 		}
@@ -37,12 +37,10 @@ class AuthorSession extends Model {
 		return json_decode( $data, true );
 	}
 
-	protected function _set_data( $data ) {
+	protected function _mutate_data( $data ) {
 		$data = json_encode( $data );
 
-		$this->_attributes['data'] = $data;
-
-		return $this;
+		return $data;
 	}
 
 	public function set_value( $key, $val ) {

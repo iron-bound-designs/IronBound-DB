@@ -20,7 +20,6 @@ use IronBound\DB\Model;
  * @property \WP_Post    $post
  * @property float       $price
  * @property \DateTime   $published
- * @property-read string $virtual
  */
 class ModelWithMutators extends Model {
 
@@ -31,30 +30,24 @@ class ModelWithMutators extends Model {
 		return $this->id;
 	}
 
-	protected function _set_price( $price ) {
+	protected function _mutate_price( $price ) {
 
 		if ( $price < 0 ) {
 			throw new \InvalidArgumentException( '$price < 0' );
 		}
 
-		$this->_attributes['price'] = round( $price, 2 );
-
-		return $this;
+		return round( $price, 2 );
 	}
 
-	protected function _get_post( $post ) {
-		
+	protected function _access_post( $post ) {
+
 		if ( ! $post ) {
 			return $post;
 		}
-		
-		$post->model = $this;
-		
-		return $post;
-	}
 
-	protected function _get_virtual() {
-		return 'Virtual';
+		$post->model = $this;
+
+		return $post;
 	}
 
 	/**
