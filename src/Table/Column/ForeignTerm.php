@@ -13,6 +13,8 @@ namespace IronBound\DB\Table\Column;
 use IronBound\DB\Saver\TermSaver;
 use IronBound\DB\Table\Column\Contracts\Savable;
 use IronBound\DB\Table\ForeignKey\DeleteConstrainable;
+use IronBound\DB\Table\Table;
+use IronBound\DB\WP\Terms;
 
 /**
  * Class ForeignTerm
@@ -40,8 +42,8 @@ class ForeignTerm extends BaseColumn implements Savable, Foreign, DeleteConstrai
 	/**
 	 * @inheritDoc
 	 */
-	public function get_foreign_table_name( \wpdb $wpdb ) {
-		return $wpdb->terms;
+	public function get_foreign_table() {
+		return new Terms();
 	}
 
 	/**

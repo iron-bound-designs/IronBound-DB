@@ -9,6 +9,7 @@
  */
 
 namespace IronBound\DB\Table\Column;
+use IronBound\DB\Table\Table;
 
 /**
  * Interface Foreign
@@ -17,15 +18,13 @@ namespace IronBound\DB\Table\Column;
 interface Foreign extends Column {
 
 	/**
-	 * Get the table name being connected to.
+	 * Get the foreign table object.
 	 *
 	 * @since 2.0
 	 *
-	 * @param \wpdb $wpdb
-	 *
-	 * @return string
+	 * @return Table
 	 */
-	public function get_foreign_table_name( \wpdb $wpdb );
+	public function get_foreign_table();
 
 	/**
 	 * Get the column name of the foreign table being connected to.

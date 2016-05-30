@@ -45,8 +45,8 @@ class SimpleForeign extends BaseColumn implements Foreign {
 	/**
 	 * @inheritDoc
 	 */
-	public function get_foreign_table_name( \wpdb $wpdb ) {
-		return $this->foreign_table->get_table_name( $wpdb );
+	public function get_foreign_table() {
+		return $this->foreign_table;
 	}
 
 	/**

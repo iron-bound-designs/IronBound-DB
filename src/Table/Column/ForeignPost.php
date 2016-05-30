@@ -13,6 +13,8 @@ namespace IronBound\DB\Table\Column;
 use IronBound\DB\Saver\Saver;
 use IronBound\DB\Table\Column\Contracts\Savable;
 use IronBound\DB\Table\ForeignKey\DeleteConstrainable;
+use IronBound\DB\Table\Table;
+use IronBound\DB\WP\Posts;
 
 /**
  * Class ForeignPost
@@ -40,8 +42,8 @@ class ForeignPost extends BaseColumn implements Savable, Foreign, DeleteConstrai
 	/**
 	 * @inheritDoc
 	 */
-	public function get_foreign_table_name( \wpdb $wpdb ) {
-		return $wpdb->posts;
+	public function get_foreign_table() {
+		return new Posts();
 	}
 
 	/**

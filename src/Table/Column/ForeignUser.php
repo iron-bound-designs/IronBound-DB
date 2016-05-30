@@ -13,6 +13,8 @@ namespace IronBound\DB\Table\Column;
 use IronBound\DB\Saver\UserSaver;
 use IronBound\DB\Table\Column\Contracts\Savable;
 use IronBound\DB\Table\ForeignKey\DeleteConstrainable;
+use IronBound\DB\Table\Table;
+use IronBound\DB\WP\Users;
 
 /**
  * Class ForeignUser
@@ -51,8 +53,8 @@ class ForeignUser extends BaseColumn implements Savable, Foreign, DeleteConstrai
 	/**
 	 * @inheritDoc
 	 */
-	public function get_foreign_table_name( \wpdb $wpdb ) {
-		return $wpdb->users;
+	public function get_foreign_table() {
+		return new Users();
 	}
 
 	/**
