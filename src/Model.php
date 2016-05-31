@@ -70,34 +70,14 @@ abstract class Model implements Cacheable, \Serializable {
 	/// Instance Configuration
 
 	/**
-	 * Raw attribute data.
+	 * Storage for the Model's attributes.
+	 *
+	 * May contain both the "raw" form of an attribute,
+	 * i.e. a post ID, or the value form, i.e. a `WP_Post` object.
 	 *
 	 * @var array
 	 */
 	private $_attributes = array();
-
-	/**
-	 * Whitelist of attributes that are automatically filled.
-	 *
-	 * @var array
-	 */
-	protected $_fillable = array();
-
-	/**
-	 * Blacklist of attributes that are not automatically filled.
-	 *
-	 * @var array
-	 */
-	protected $_guarded = array();
-
-	/**
-	 * Original state of the model.
-	 *
-	 * Updated whenever the model is saved.
-	 *
-	 * @var array
-	 */
-	protected $_original = array();
 
 	/**
 	 * Cache of attribute values.
@@ -107,6 +87,33 @@ abstract class Model implements Cacheable, \Serializable {
 	protected $_attribute_value_cache = array();
 
 	/**
+	 * A snapshot of the model's attributes when it is instantiated.
+	 *
+	 * Updated whenever the model is saved.
+	 *
+	 * @var array
+	 */
+	private $_original = array();
+
+	/**
+	 * Whitelist of attributes that are automatically filled.
+	 *
+	 * @see $_unguarded
+	 *
+	 * @var array
+	 */
+	protected $_fillable = array();
+
+	/**
+	 * Blacklist of attributes that are not automatically filled.
+	 *
+	 * @see $_unguarded
+	 *
+	 * @var array
+	 */
+	protected $_guarded = array();
+
+	/**
 	 * Map of relation name to results.
 	 *
 	 * @var array
@@ -114,6 +121,8 @@ abstract class Model implements Cacheable, \Serializable {
 	protected $_relations = array();
 
 	/**
+	 * Whether this model exists in the database.
+	 *
 	 * @var bool
 	 */
 	protected $_exists = false;
@@ -127,16 +136,37 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function __construct( $data = array() ) {
 		$this->init( (object) $data );
-
-		if ( ! isset( static::$_db_manager ) ) {
-			static::$_db_manager = new Manager();
-		}
 	}
 
 	/**
-	 * Fill data on this model automatically.
+	 * Initialize an object.
 	 *
-	 * @since 2.0
+	 * @since 1.0
+	 *
+	 * @param \stdClass $data
+	 */
+	protected function init( \stdClass $data ) {
+
+		$this->sync_original();
+		$this->fill( (array) $data );
+		$this->_exists = $this->get_raw_attributes() && (bool) $this->get_pk();
+	}
+
+	/**
+	 * Fill this model's attributes.
+	 *
+	 * Filling a model in this way is used to prevent sensitive properties from being mass-assigned.
+	 * For example when creating a new model like so: `MyModel::create( $_POST['model'] )`.
+	 *
+	 * If the model is unguarded, all attributes can be assigned via this method.
+	 * Otherwise, the attribute can be filled according to {$_fillable} or {$_guarded}.
+	 *
+	 * @since   2.0
+	 *
+	 * @used-by IronBound\DB\Model::__construct()
+	 * @used-by IronBound\DB\Model::create()
+	 * @used-by IronBound\DB\Model::init()
+	 * @used-by IronBound\DB\Query\FluentQuery::update_or_create()
 	 *
 	 * @param array $data
 	 *
@@ -155,12 +185,38 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Set an attribute.
+	 * Determine if a given attribute is fillable.
 	 *
 	 * @since 2.0
 	 *
-	 * @param string $attribute
-	 * @param mixed  $value
+	 * @param string $column
+	 *
+	 * @return bool
+	 */
+	protected function is_fillable( $column ) {
+
+		if ( static::$_unguarded ) {
+			return true;
+		}
+
+		if ( empty( $this->_fillable ) ) {
+			return ! in_array( $column, $this->_guarded );
+		} else {
+			return in_array( $column, $this->_fillable );
+		}
+	}
+
+	/**
+	 * Set an attribute's value.
+	 *
+	 * This will call any defined mutators.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute Attribute name to update.
+	 * @param mixed  $value     New value. In most cases this should be working form of the data.
+	 *                          Not the storage version. For example a `WP_Post` object instead of post ID or a
+	 *                          `DateTime` object instead of a 'Y-m-d H:i:s' string.
 	 *
 	 * @return $this
 	 */
@@ -177,16 +233,18 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Set the raw attribute value.
+	 * Set an attribute's value in the attributes storage.
 	 *
-	 * @since 2.0
+	 * @since   2.0
 	 *
-	 * @param string $attribute
-	 * @param mixed  $value
+	 * @used-by IronBound\DB\Model::set_attribute()
+	 *
+	 * @param string $attribute Attribute name to update.
+	 * @param mixed  $value     New value.
 	 *
 	 * @return $this
 	 */
-	public function set_raw_attribute( $attribute, $value ) {
+	protected function set_raw_attribute( $attribute, $value ) {
 
 		$attributes = $this->get_raw_attributes();
 
@@ -197,18 +255,23 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Set the attribute data for this model, ignoring guarding.
+	 * Overwrite all of the attributes for this model.
+	 *
+	 * Guarding is ignored and mutators are not called.
 	 *
 	 * @since 2.0
 	 *
-	 * @param array $attributes
-	 * @param bool  $sync
+	 * @see   IronBound\DB\Model::sync_original() for further documentation on the `$sync` parameter.
+	 *
+	 * @param array $attributes All attributes.
+	 * @param bool  $sync       Whether to sync the model so it isn't seen as dirty.
 	 *
 	 * @return $this
 	 */
 	public function set_raw_attributes( array $attributes = array(), $sync = false ) {
 
-		$this->_attributes = $attributes;
+		$this->_attribute_value_cache = array();
+		$this->_attributes            = $attributes;
 
 		if ( $sync ) {
 			$this->sync_original();
@@ -218,17 +281,23 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Get an attribute value.
+	 * Get an attribute's or relation's value.
+	 *
+	 * If it is an attribute, any accessors will be called.
+	 *
+	 * If it is a relation, its results will be loaded and returned. The relation's results are cached.
 	 *
 	 * @since 2.0
 	 *
-	 * @param string $attribute
+	 * @param string $attribute Attribute name.
 	 *
-	 * @return mixed|null
+	 * @return mixed
+	 *
+	 * @throws \OutOfBoundsException If the given attribute does not exist.
 	 */
 	public function get_attribute( $attribute ) {
 
-		if ( array_key_exists( $attribute, $this->get_raw_attributes() ) ) {
+		if ( array_key_exists( $attribute, static::table()->get_columns() ) ) {
 			return $this->get_attribute_value( $attribute );
 		}
 
@@ -236,13 +305,17 @@ abstract class Model implements Cacheable, \Serializable {
 			return $this->get_relation_value( $attribute );
 		}
 
-		return null;
+		throw new \OutOfBoundsException(
+			sprintf( "Requested attribute '%s' does not exist for '%s'.", $attribute, get_class( $this ) )
+		);
 	}
 
 	/**
-	 * Get a raw attribute.
+	 * Get an attribute's value from storage.
 	 *
-	 * @since 2.0
+	 * @since   2.0
+	 *
+	 * @used-by IronBound\DB\Model::get_attribute()
 	 *
 	 * @param string $attribute
 	 *
@@ -252,11 +325,13 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$attributes = $this->get_raw_attributes();
 
-		return $attributes[ $attribute ];
+		return isset( $attributes[ $attribute ] ) ? $attributes[ $attribute ] : null;
 	}
 
 	/**
-	 * Get the raw attributes.
+	 * Get all of the model's attributes.
+	 *
+	 * Accessors will not be called. Relations are not included.
 	 *
 	 * @since 2.0
 	 *
@@ -267,7 +342,7 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Get an attribute's value.
+	 * Retrieves an attribute's value and calls the accessor method if it exists.
 	 *
 	 * @since 2.0
 	 *
@@ -288,6 +363,9 @@ abstract class Model implements Cacheable, \Serializable {
 
 	/**
 	 * Get an attribute's value from the internal attributes array.
+	 *
+	 * Will preferentially retrieve the value from the attribute value cache,
+	 * and update the attribute value cache if the raw value is scalar.
 	 *
 	 * @since 2.0
 	 *
@@ -341,11 +419,14 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Check if a relation exists.
+	 * Check if a relation exists without loading the relation.
+	 *
+	 * This is only checking for a unique method name. The return value is not validated
+	 * until it is ued by `get_relation()`.
 	 *
 	 * @since 2.0
 	 *
-	 * @param string $attribute
+	 * @param string $attribute Relation name.
 	 *
 	 * @return bool
 	 */
@@ -354,15 +435,23 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Get a relation object.
+	 * Get a relation's controller object.
 	 *
 	 * @since 2.0
 	 *
-	 * @param string $attribute
+	 * @param string $attribute Relation name.
 	 *
 	 * @return Relation
+	 *
+	 * @throws \OutOfBoundsException If no relation exists by the given name.
 	 */
 	public function get_relation( $attribute ) {
+
+		if ( ! $this->has_relation( $attribute ) ) {
+			throw new \OutOfBoundsException(
+				sprintf( "Requested relation '%s' does not exist for '%s'.", $attribute, get_class( $this ) )
+			);
+		}
 
 		$method   = "_{$attribute}_relation";
 		$relation = $this->{$method}();
@@ -379,15 +468,19 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @since 2.0
 	 *
-	 * @param string $attribute
-	 * @param mixed  $value
+	 * @param string $attribute Relation name.
+	 * @param mixed  $value     Relation value.
 	 *
 	 * @return $this
+	 *
+	 * @throws \OutOfBoundsException If no relation exists by the given name.
 	 */
 	public function set_relation_value( $attribute, $value ) {
 
 		if ( ! $this->has_relation( $attribute ) ) {
-			throw new \UnexpectedValueException( "No relation exists by the name '$attribute'." );
+			throw new \OutOfBoundsException(
+				sprintf( "Requested relation '%s' does not exist for '%s'.", $attribute, get_class( $this ) )
+			);
 		}
 
 		$this->_relations[ $attribute ] = $value;
@@ -396,11 +489,14 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Get a relation value.
+	 * Get a relation's value.
+	 *
+	 * Will load from the cache if possible. Otherwise, will get the relation controller and retrieve and
+	 * cache the results.
 	 *
 	 * @since 2.0
 	 *
-	 * @param string $attribute
+	 * @param string $attribute Relation name.
 	 *
 	 * @return Collection|Model|mixed
 	 */
@@ -417,11 +513,11 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Check if a relation is loaded.
+	 * Check if a relation has already been loaded.
 	 *
 	 * @since 2.0
 	 *
-	 * @param string $attribute
+	 * @param string $attribute Relation name.
 	 *
 	 * @return bool
 	 */
@@ -430,29 +526,9 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Determine if a given attribute is fillable.
-	 *
-	 * @since 2.0
-	 *
-	 * @param string $column
-	 *
-	 * @return bool
-	 */
-	protected function is_fillable( $column ) {
-
-		if ( static::$_unguarded ) {
-			return true;
-		}
-
-		if ( empty( $this->_fillable ) ) {
-			return ! in_array( $column, $this->_guarded );
-		} else {
-			return in_array( $column, $this->_fillable );
-		}
-	}
-
-	/**
 	 * Sync the model's original attributes with its current state.
+	 *
+	 * This will prevent any updates attributes as showing up as dirty.
 	 *
 	 * @since 2.0
 	 *
@@ -465,7 +541,7 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Sync an individual attribute.
+	 * Sync an individual attribute's value.
 	 *
 	 * @since 2.0
 	 *
@@ -481,7 +557,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 
 	/**
-	 * Determine if the model or given attribute(s) have been modified.
+	 * Determine if the model as a whole or given attribute(s) have been modified.
 	 *
 	 * @since 2.0
 	 *
@@ -511,11 +587,11 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Get the attributes that have been changed since last sync.
+	 * Get the attributes that have been changed since the last sync.
 	 *
 	 * @since 2.0
 	 *
-	 * @return array
+	 * @return array Array of attribute names to changed values.
 	 */
 	public function get_dirty() {
 		$dirty = array();
@@ -534,6 +610,8 @@ abstract class Model implements Cacheable, \Serializable {
 	/**
 	 * Determine if the new and old values for a given key are numerically equivalent.
 	 *
+	 * {@internal Helper method used for determining which attributes are dirty.}
+	 *
 	 * @since 2.0
 	 *
 	 * @param string $key
@@ -551,15 +629,25 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Retrieve this object.
+	 * Retrieve an instance of this model by its primary key.
 	 *
 	 * @since 1.0
 	 *
 	 * @param int|string $pk Primary key of this record.
 	 *
 	 * @returns static|null
+	 *
+	 * @throws \InvalidArgumentException If `$pk` is not scalar.
 	 */
 	public static function get( $pk ) {
+
+		if ( ! $pk ) {
+			return null;
+		}
+
+		if ( ! is_scalar( $pk ) ) {
+			throw new \InvalidArgumentException( 'Primary key must be scalar.' );
+		}
 
 		$data = static::get_data_from_pk( $pk );
 
@@ -584,7 +672,9 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Create a new object from a list of attributes.
+	 * Create a new object from a query builder.
+	 *
+	 * This is used to bypass guarding when retrieve model data from the database.
 	 *
 	 * @since 2.0
 	 *
@@ -663,21 +753,9 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Init an object.
-	 *
-	 * @since 1.0
-	 *
-	 * @param \stdClass $data
-	 */
-	protected function init( \stdClass $data ) {
-
-		$this->sync_original();
-		$this->fill( (array) $data );
-		$this->_exists = (bool) $this->get_pk();
-	}
-
-	/**
 	 * Get the table object for this model.
+	 *
+	 * This must be overwritten by sub-classes.
 	 *
 	 * @since 1.0
 	 *
@@ -691,7 +769,9 @@ abstract class Model implements Cacheable, \Serializable {
 	/**
 	 * Update a certain value.
 	 *
-	 * @since 1.0
+	 * @deprecated 2.0 This bypasses the attributes layer and as such is deprecated in 2.0.
+	 *
+	 * @since      1.0
 	 *
 	 * @param string $key   DB column to update.
 	 * @param mixed  $value New value.
@@ -716,7 +796,7 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Does this model exist yet.
+	 * Does this model exist in the database..
 	 *
 	 * @since 2.0
 	 *
@@ -729,9 +809,16 @@ abstract class Model implements Cacheable, \Serializable {
 	/**
 	 * Persist this model's changes to the database.
 	 *
+	 * This will save all savable attributes like WP_Post objects or Models,
+	 * and persist any loaded relations.
+	 *
+	 * The `saving` and `saved` events will be fired. If this model does not yet exist, the `creating` and `created`
+	 * events will fire as well. Otherwise, the `updating` and `updated` events will fire.
+	 *
 	 * @since 2.0
 	 *
-	 * @param array $options
+	 * @param array $options Configure how the saving should be performed.
+	 *                       Accepts 'exclude_relations' to allow for given relations to be excluded from persistence.
 	 *
 	 * @return bool
 	 *
@@ -791,7 +878,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @since 2.0
 	 *
-	 * @param array $exclude
+	 * @param array $exclude Relations to exclude from being saved.
 	 */
 	protected function save_loaded_relations( array $exclude = array() ) {
 		foreach ( $this->_relations as $relation => $values ) {
@@ -803,63 +890,6 @@ abstract class Model implements Cacheable, \Serializable {
 			$relation_controller = $this->get_relation( $relation );
 			$relation_controller->persist( $values );
 		}
-	}
-
-	/**
-	 * Save model as an update query.
-	 *
-	 * @since 2.0
-	 *
-	 * @return bool
-	 *
-	 * @throws Exception
-	 */
-	protected function do_save_as_update() {
-
-		$dirty = $this->get_dirty();
-
-		if ( ! $dirty ) {
-			return true;
-		}
-
-		if ( static::table() instanceof TimestampedTable ) {
-			$time = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
-
-			$this->set_attribute( static::table()->get_updated_at_column(), $time );
-			$dirty = $this->get_dirty();
-		}
-
-		$columns = static::table()->get_columns();
-
-		$previous = array();
-		$update   = array();
-
-		foreach ( $dirty as $column => $value ) {
-
-			if ( array_key_exists( $column, $this->_original ) ) {
-				$previous[ $column ] = $this->_original[ $column ];
-			}
-
-			$update[ $column ] = $columns[ $column ]->prepare_for_storage( $value );
-		}
-
-		$this->fire_model_event( 'updating', array(
-			'changed' => $dirty,
-			'from'    => $previous
-		) );
-
-		$result = static::make_query_object()->update( $this->get_pk(), $update );
-
-		if ( $result ) {
-			Cache::update( $this );
-
-			$this->fire_model_event( 'updated', array(
-				'changed' => $dirty,
-				'from'    => $previous
-			) );
-		}
-
-		return $result;
 	}
 
 	/**
@@ -925,6 +955,63 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
+	 * Save this model as an update query.
+	 *
+	 * @since 2.0
+	 *
+	 * @return bool
+	 *
+	 * @throws Exception
+	 */
+	protected function do_save_as_update() {
+
+		$dirty = $this->get_dirty();
+
+		if ( ! $dirty ) {
+			return true;
+		}
+
+		if ( static::table() instanceof TimestampedTable ) {
+			$time = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
+
+			$this->set_attribute( static::table()->get_updated_at_column(), $time );
+			$dirty = $this->get_dirty();
+		}
+
+		$columns = static::table()->get_columns();
+
+		$previous = array();
+		$update   = array();
+
+		foreach ( $dirty as $column => $value ) {
+
+			if ( array_key_exists( $column, $this->_original ) ) {
+				$previous[ $column ] = $this->_original[ $column ];
+			}
+
+			$update[ $column ] = $columns[ $column ]->prepare_for_storage( $value );
+		}
+
+		$this->fire_model_event( 'updating', array(
+			'changed' => $dirty,
+			'from'    => $previous
+		) );
+
+		$result = static::make_query_object()->update( $this->get_pk(), $update );
+
+		if ( $result ) {
+			Cache::update( $this );
+
+			$this->fire_model_event( 'updated', array(
+				'changed' => $dirty,
+				'from'    => $previous
+			) );
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Perform cleanup after a save has occurred.
 	 *
 	 * @since 2.0
@@ -943,7 +1030,9 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Delete this object.
+	 * Delete this object from the database.
+	 *
+	 * Will fire `deleting` and `deleted` events.
 	 *
 	 * @since 1.0
 	 *
@@ -1014,7 +1103,7 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Register a model event.
+	 * Register a model event listener.
 	 *
 	 * @since 2.0
 	 *
@@ -1119,7 +1208,7 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Initialize a new query.
+	 * Initialize a new query object with the configured eager loaded relations.
 	 *
 	 * @since 2.0
 	 *
@@ -1166,6 +1255,8 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @param string $name
 	 *
 	 * @return mixed|null
+	 *
+	 * @throws \OutOfBoundsException If no attribute exists with the given name.
 	 */
 	public function __get( $name ) {
 		return $this->get_attribute( $name );
@@ -1210,7 +1301,16 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * @inheritDoc
+	 * Magic method to register event listeners or create a new model.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $name
+	 * @param array  $arguments
+	 *
+	 * @return mixed
+	 *
+	 * @throws \BadMethodCallException If invalid method name.
 	 */
 	public static function __callStatic( $name, $arguments ) {
 
@@ -1257,7 +1357,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @since 2.0
 	 *
-	 * @param EventDispatcher $dispatcher
+	 * @param EventDispatcher $dispatcher MUST be configured without a prefix.
 	 */
 	public static function set_event_dispatcher( EventDispatcher $dispatcher ) {
 		static::$_event_dispatcher = $dispatcher;
