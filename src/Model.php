@@ -170,18 +170,8 @@ abstract class Model implements Cacheable, \Serializable {
 			$value = call_user_func( array( $this, $this->get_mutator_method_for_attribute( $attribute ) ), $value );
 		}
 
-		$columns = static::table()->get_columns();
-		$column  = $columns[ $attribute ];
-
-		$prepared = $column->prepare_for_storage( $value );
-
-		if ( ! $prepared && $column instanceof Savable ) { // this is a yet to be saved model of some kind
-			$this->set_raw_attribute( $attribute, $value );
-			$this->_attribute_value_cache[ $attribute ] = $value;
-		} else {
-			$this->set_raw_attribute( $attribute, $prepared );
-			$this->_attribute_value_cache[ $attribute ] = $column->convert_raw_to_value( $prepared );
-		}
+		unset( $this->_attribute_value_cache[ $attribute ] );
+		$this->set_raw_attribute( $attribute, $value );
 
 		return $this;
 	}
@@ -835,17 +825,22 @@ abstract class Model implements Cacheable, \Serializable {
 		if ( static::table() instanceof TimestampedTable ) {
 			$time = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
 
-			$this->set_attribute( static::table()->get_updated_at_column(), $time->format( 'Y-m-d H:i:s' ) );
+			$this->set_attribute( static::table()->get_updated_at_column(), $time );
 			$dirty = $this->get_dirty();
 		}
 
+		$columns = static::table()->get_columns();
+
 		$previous = array();
+		$update   = array();
 
 		foreach ( $dirty as $column => $value ) {
 
 			if ( array_key_exists( $column, $this->_original ) ) {
 				$previous[ $column ] = $this->_original[ $column ];
 			}
+
+			$update[ $column ] = $columns[ $column ]->prepare_for_storage( $value );
 		}
 
 		$this->fire_model_event( 'updating', array(
@@ -853,7 +848,7 @@ abstract class Model implements Cacheable, \Serializable {
 			'from'    => $previous
 		) );
 
-		$result = static::make_query_object()->update( $this->get_pk(), $dirty );
+		$result = static::make_query_object()->update( $this->get_pk(), $update );
 
 		if ( $result ) {
 			Cache::update( $this );
@@ -881,13 +876,20 @@ abstract class Model implements Cacheable, \Serializable {
 		if ( static::table() instanceof TimestampedTable ) {
 			$time = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
 
-			$this->set_attribute( static::table()->get_created_at_column(), $time->format( 'Y-m-d H:i:s' ) );
-			$this->set_attribute( static::table()->get_updated_at_column(), $time->format( 'Y-m-d H:i:s' ) );
+			$this->set_attribute( static::table()->get_created_at_column(), $time );
+			$this->set_attribute( static::table()->get_updated_at_column(), $time );
 		}
 
 		$this->fire_model_event( 'creating' );
 
-		$insert_id = static::make_query_object()->insert( $this->get_raw_attributes() );
+		$columns = static::table()->get_columns();
+		$insert  = array();
+
+		foreach ( $this->get_raw_attributes() as $attribute => $value ) {
+			$insert[ $attribute ] = $columns[ $attribute ]->prepare_for_storage( $value );
+		}
+
+		$insert_id = static::make_query_object()->insert( $insert );
 
 		if ( $insert_id ) {
 			$this->set_raw_attribute( static::get_table()->get_primary_key(), $insert_id );

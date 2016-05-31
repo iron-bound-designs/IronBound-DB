@@ -59,6 +59,11 @@ class ForeignModel extends SimpleForeign implements Savable, DeleteConstrainable
 	 * @inheritDoc
 	 */
 	public function convert_raw_to_value( $raw, \stdClass $row = null ) {
+		
+		if ( empty( $raw ) ) {
+			return null;
+		}
+		
 		return call_user_func( array( $this->model_class, 'get' ), $raw );
 	}
 

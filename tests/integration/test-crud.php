@@ -309,6 +309,24 @@ class Test_Crud extends \WP_UnitTestCase {
 		$this->assertEquals( 'My New Book', $model->model->title );
 	}
 
+	public function test_foreign_model_automatically_updated_after_assignment() {
+
+		$model = ModelWithAllForeign::create( array(
+			'model' => Book::create( array(
+				'title' => 'Title 1'
+			) )
+		) );
+
+		$book        = $model->model;
+		$book->title = 'Title 2';
+
+		$model->model = $book;
+		$model->save();
+
+		$this->assertEquals( 'Title 2', $model->model->title );
+		$this->assertEquals( 'Title 2', ModelWithAllForeign::get( $model->get_pk() )->model->title );
+	}
+
 	public function test_created_at_and_updated_at_columns_set() {
 
 		$author = Author::create( array(
@@ -328,7 +346,7 @@ class Test_Crud extends \WP_UnitTestCase {
 
 		$author->bio = 'My Bio';
 		$author->save();
-		
+
 		$this->assertEquals( time(), $author->updated_at->getTimestamp(), '', 1 );
 	}
 

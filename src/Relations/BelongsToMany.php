@@ -86,6 +86,10 @@ class BelongsToMany extends Relation {
 
 		$class = $this->related_model;
 
+		if ( $this->parent->get_raw_attribute( $this->attribute ) instanceof $class ) {
+			return $class;
+		}
+
 		return $class::get( $this->parent->get_raw_attribute( $this->attribute ) );
 	}
 
