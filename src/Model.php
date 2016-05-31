@@ -696,27 +696,6 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Convert an array of raw data to their corresponding values.
-	 *
-	 * @since 2.0
-	 *
-	 * @param array $data
-	 *
-	 * @return array
-	 */
-	protected static function convert_raw_data_to_values( $data ) {
-
-		$columns = static::get_table()->get_columns();
-		$mapped  = array();
-
-		foreach ( (array) $data as $column => $value ) {
-			$mapped[ $column ] = $columns[ $column ]->convert_raw_to_value( $value, $data );
-		}
-
-		return $mapped;
-	}
-
-	/**
 	 * Get data for a primary key.
 	 *
 	 * @since 1.0
