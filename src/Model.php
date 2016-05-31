@@ -70,6 +70,13 @@ abstract class Model implements Cacheable, \Serializable {
 	/// Instance Configuration
 
 	/**
+	 * Raw attribute data.
+	 *
+	 * @var array
+	 */
+	private $_attributes = array();
+
+	/**
 	 * Whitelist of attributes that are automatically filled.
 	 *
 	 * @var array
@@ -82,13 +89,6 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @var array
 	 */
 	protected $_guarded = array();
-
-	/**
-	 * Raw attribute data.
-	 *
-	 * @var array
-	 */
-	protected $_attributes = array();
 
 	/**
 	 * Original state of the model.
@@ -155,27 +155,6 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
-	 * Set the attribute data for this model, ignoring guarding.
-	 *
-	 * @since 2.0
-	 *
-	 * @param array $attributes
-	 * @param bool  $sync
-	 *
-	 * @return $this
-	 */
-	public function set_raw_attributes( array $attributes = array(), $sync = false ) {
-
-		$this->_attributes = $attributes;
-
-		if ( $sync ) {
-			$this->sync_original();
-		}
-
-		return $this;
-	}
-
-	/**
 	 * Set an attribute.
 	 *
 	 * @since 2.0
@@ -197,11 +176,52 @@ abstract class Model implements Cacheable, \Serializable {
 		$prepared = $column->prepare_for_storage( $value );
 
 		if ( ! $prepared && $column instanceof Savable ) { // this is a yet to be saved model of some kind
-			$this->_attributes[ $attribute ]            = $value;
+			$this->set_raw_attribute( $attribute, $value );
 			$this->_attribute_value_cache[ $attribute ] = $value;
 		} else {
-			$this->_attributes[ $attribute ]            = $prepared;
+			$this->set_raw_attribute( $attribute, $prepared );
 			$this->_attribute_value_cache[ $attribute ] = $column->convert_raw_to_value( $prepared );
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Set the raw attribute value.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $attribute
+	 * @param mixed  $value
+	 *
+	 * @return $this
+	 */
+	public function set_raw_attribute( $attribute, $value ) {
+
+		$attributes = $this->get_raw_attributes();
+
+		$attributes[ $attribute ] = $value;
+		$this->set_raw_attributes( $attributes );
+
+		return $this;
+	}
+
+	/**
+	 * Set the attribute data for this model, ignoring guarding.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $attributes
+	 * @param bool  $sync
+	 *
+	 * @return $this
+	 */
+	public function set_raw_attributes( array $attributes = array(), $sync = false ) {
+
+		$this->_attributes = $attributes;
+
+		if ( $sync ) {
+			$this->sync_original();
 		}
 
 		return $this;
@@ -218,7 +238,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function get_attribute( $attribute ) {
 
-		if ( array_key_exists( $attribute, $this->_attributes ) ) {
+		if ( array_key_exists( $attribute, $this->get_raw_attributes() ) ) {
 			return $this->get_attribute_value( $attribute );
 		}
 
@@ -239,7 +259,10 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return mixed
 	 */
 	public function get_raw_attribute( $attribute ) {
-		return $this->_attributes[ $attribute ];
+
+		$attributes = $this->get_raw_attributes();
+
+		return $attributes[ $attribute ];
 	}
 
 	/**
@@ -286,8 +309,8 @@ abstract class Model implements Cacheable, \Serializable {
 
 		if ( array_key_exists( $attribute, $this->_attribute_value_cache ) ) {
 			return $this->_attribute_value_cache[ $attribute ];
-		} elseif ( array_key_exists( $attribute, $this->_attributes ) ) {
-			$value = $this->_attributes[ $attribute ];
+		} else {
+			$value = $this->get_raw_attribute( $attribute );
 
 			// only update the attribute value cache if we have a raw value from the db
 			if ( is_scalar( $value ) ) {
@@ -298,8 +321,6 @@ abstract class Model implements Cacheable, \Serializable {
 			}
 
 			return $value;
-		} else {
-			return null;
 		}
 	}
 
@@ -448,7 +469,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return $this
 	 */
 	public function sync_original() {
-		$this->_original = $this->_attributes;
+		$this->_original = $this->get_raw_attributes();
 
 		return $this;
 	}
@@ -463,7 +484,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return $this
 	 */
 	public function sync_original_attribute( $attribute ) {
-		$this->_original[ $attribute ] = $this->_attributes[ $attribute ];
+		$this->_original[ $attribute ] = $this->get_raw_attribute( $attribute );
 
 		return $this;
 	}
@@ -509,7 +530,7 @@ abstract class Model implements Cacheable, \Serializable {
 	public function get_dirty() {
 		$dirty = array();
 
-		foreach ( $this->_attributes as $key => $value ) {
+		foreach ( $this->get_raw_attributes() as $key => $value ) {
 			if ( ! array_key_exists( $key, $this->_original ) ) {
 				$dirty[ $key ] = $value;
 			} elseif ( $value !== $this->_original[ $key ] && ! $this->original_is_numerically_equivalent( $key ) ) {
@@ -531,7 +552,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	protected function original_is_numerically_equivalent( $key ) {
 
-		$current = $this->_attributes[ $key ];
+		$current = $this->get_raw_attribute( $key );
 
 		$original = $this->_original[ $key ];
 
@@ -760,7 +781,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$columns = static::get_table()->get_columns();
 
-		foreach ( $this->_attributes as $attribute => $value ) {
+		foreach ( $this->get_raw_attributes() as $attribute => $value ) {
 
 			$column = $columns[ $attribute ];
 
@@ -769,7 +790,7 @@ abstract class Model implements Cacheable, \Serializable {
 			if ( $column instanceof Savable && is_object( $value ) ) {
 				$saved = $column->save( $value );
 
-				$this->_attributes[ $attribute ]            = $column->get_pk( $saved );
+				$this->set_raw_attribute( $attribute, $column->get_pk( $saved ) );
 				$this->_attribute_value_cache[ $attribute ] = $saved;
 			}
 		}
@@ -866,17 +887,17 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$this->fire_model_event( 'creating' );
 
-		$insert_id = static::make_query_object()->insert( $this->_attributes );
+		$insert_id = static::make_query_object()->insert( $this->get_raw_attributes() );
 
 		if ( $insert_id ) {
-			$this->set_attribute( static::get_table()->get_primary_key(), $insert_id );
+			$this->set_raw_attribute( static::get_table()->get_primary_key(), $insert_id );
 		}
 
 		$default_columns_to_fill = array();
 
 		foreach ( static::get_table()->get_columns() as $name => $column ) {
 
-			if ( ! array_key_exists( $name, $this->_attributes ) ) {
+			if ( ! array_key_exists( $name, $this->get_raw_attributes() ) ) {
 				$default_columns_to_fill[] = $name;
 			}
 		}
@@ -1024,7 +1045,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function get_data_to_cache() {
 
-		$data = $this->_attributes;
+		$data = $this->get_raw_attributes();
 
 		$columns = static::get_table()->get_columns();
 
