@@ -53,7 +53,7 @@ final class Manager {
 			throw new \InvalidArgumentException( '$model_class must subclass Model.' );
 		}
 
-		self::$tables[ $table->get_slug() ] = array(
+		static::$tables[ $table->get_slug() ] = array(
 			'table' => $table,
 			'query' => $complex_query_class,
 			'model' => $model_class
@@ -68,7 +68,7 @@ final class Manager {
 		$wpdb->{$name}  = $table->get_table_name( $wpdb );
 		$wpdb->tables[] = $name;
 
-		self::fire_plugin_event( $table, 'registered' );
+		static::fire_plugin_event( $table, 'registered' );
 	}
 
 	/**
@@ -82,8 +82,8 @@ final class Manager {
 	 */
 	public static function get( $slug ) {
 
-		if ( isset( self::$tables[ $slug ] ) ) {
-			return self::$tables[ $slug ]['table'];
+		if ( isset( static::$tables[ $slug ] ) ) {
+			return static::$tables[ $slug ]['table'];
 		} else {
 			return null;
 		}
@@ -101,7 +101,7 @@ final class Manager {
 	 */
 	public static function make_simple_query_object( $slug, \wpdb $wpdb = null ) {
 
-		$table = self::get( $slug );
+		$table = static::get( $slug );
 		$wpdb  = $wpdb ?: $GLOBALS['wpdb'];
 
 		if ( $table ) {
@@ -123,13 +123,13 @@ final class Manager {
 	 */
 	public static function make_complex_query_object( $slug, array $args = array() ) {
 
-		$table = self::get( $slug );
+		$table = static::get( $slug );
 
-		if ( empty( $table ) || empty( self::$tables[ $slug ]['query'] ) ) {
+		if ( empty( $table ) || empty( static::$tables[ $slug ]['query'] ) ) {
 			return null;
 		}
 
-		$class = self::$tables[ $slug ]['query'];
+		$class = static::$tables[ $slug ]['query'];
 
 		$query = new $class( $args );
 
@@ -149,8 +149,8 @@ final class Manager {
 
 		$slug = $slug instanceof Table ? $slug->get_slug() : $slug;
 
-		if ( isset( self::$tables[ $slug ] ) ) {
-			return self::$tables[ $slug ]['model'];
+		if ( isset( static::$tables[ $slug ] ) ) {
+			return static::$tables[ $slug ]['model'];
 		} else {
 			return null;
 		}
@@ -180,7 +180,7 @@ final class Manager {
 
 		if ( $installed === 0 ) {
 			$wpdb->query( $table->get_creation_sql( $wpdb ) );
-			self::fire_plugin_event( $table, 'installed' );
+			static::fire_plugin_event( $table, 'installed' );
 		} else {
 
 			$update = $installed + 1;
@@ -192,13 +192,13 @@ final class Manager {
 
 					$table->{$method}( $wpdb, $installed );
 
-					self::fire_plugin_event( $table, 'updated_schema', array( $update, $installed ) );
+					static::fire_plugin_event( $table, 'updated_schema', array( $update, $installed ) );
 				}
 
 				$update += 1;
 			}
 
-			self::fire_plugin_event( $table, 'updated' );
+			static::fire_plugin_event( $table, 'updated' );
 		}
 
 		update_option( $table->get_table_name( $wpdb ) . '_version', $table->get_version() );
@@ -235,7 +235,7 @@ final class Manager {
 	 * @param Plugin $plugin
 	 */
 	public static function register_plugin( Plugin $plugin ) {
-		self::$plugins[] = $plugin;
+		static::$plugins[] = $plugin;
 	}
 
 	/**
@@ -249,7 +249,7 @@ final class Manager {
 	 */
 	protected static function fire_plugin_event( Table $table, $event, $args = array() ) {
 
-		foreach ( self::$plugins as $plugin ) {
+		foreach ( static::$plugins as $plugin ) {
 			if ( $plugin->accepts( $table ) ) {
 				if ( method_exists( $plugin, $event ) ) {
 					$args = array( $table ) + $args;
