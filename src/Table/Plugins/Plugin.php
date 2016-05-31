@@ -14,6 +14,7 @@ use IronBound\DB\Table\Table;
 
 /**
  * Interface Plugin
+ *
  * @package IronBound\DB\Table\Plugins
  */
 interface Plugin {
@@ -55,4 +56,15 @@ interface Plugin {
 	 * @param Table $table
 	 */
 	//public function updated( Table $table );
+
+	/**
+	 * Is called whenever a table's schema is updated.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Table $table
+	 * @param int   $to   Table version updated to.
+	 * @param int   $from Table version update from.
+	 */
+	//public function updated_schema( Table $table, $to );
 }

@@ -14,6 +14,7 @@ use IronBound\DB\Manager;
 
 /**
  * Class Test_Manager
+ *
  * @package IronBound\DB\Tests
  */
 class Test_Manager extends \WP_UnitTestCase {
@@ -70,4 +71,50 @@ class Test_Manager extends \WP_UnitTestCase {
 
 		$this->assertFalse( Manager::is_table_installed( $table, $wpdb ) );
 	}
+
+	public function test_maybe_install_table_uses_creation_sql_if_new_table() {
+
+		/** @var \PHPUnit_Framework_MockObject_MockObject $wpdb */
+		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
+		$wpdb->expects( $this->once() )->method( 'query' )->with( "CREATE TABLE `table_name`" )->willReturn( true );
+
+		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )
+		              ->setMethods( array( 'get_table_name', 'get_version', 'get_creation_sql' ) )
+		              ->getMockForAbstractClass();
+		$table->method( 'get_table_name' )->with( $wpdb )->willReturn( 'table_name' );
+		$table->method( 'get_version' )->willReturn( 1 );
+		$table->method( 'get_creation_sql' )->with( $wpdb )->willReturn( "CREATE TABLE `table_name`" );
+
+		Manager::maybe_install_table( $table, $wpdb );
+	}
+
+	public function test_maybe_install_table_calls_upgrade_schema_methods_if_existing_table() {
+
+		/** @var \PHPUnit_Framework_MockObject_MockObject $wpdb */
+		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
+		$wpdb->expects( $this->never() )->method( 'query' );
+
+		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )
+		              ->setMethods( array(
+			              'get_table_name',
+			              'get_version',
+			              'get_creation_sql',
+			              'v1_schema_update',
+			              'v2_schema_update',
+			              'v4_schema_update',
+		              ) )
+		              ->getMockForAbstractClass();
+		$table->method( 'get_table_name' )->with( $wpdb )->willReturn( 'table_name' );
+		$table->method( 'get_version' )->willReturn( 4 );
+		$table->method( 'get_creation_sql' )->with( $wpdb )->willReturn( "CREATE TABLE `table_name`" );
+
+		$table->expects( $this->never() )->method( 'v1_schema_update' );
+		$table->expects( $this->once() )->method( 'v2_schema_update' )->with( $wpdb, 1 );
+		$table->expects( $this->once() )->method( 'v4_schema_update' )->with( $wpdb, 1 );
+
+		update_option( $table->get_table_name( $wpdb ) . '_version', 1 );
+
+		Manager::maybe_install_table( $table, $wpdb );
+	}
+
 }

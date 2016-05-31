@@ -172,25 +172,38 @@ final class Manager {
 
 		$wpdb = $wpdb ?: $GLOBALS['wpdb'];
 
-		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-
 		$installed = (int) get_option( $table->get_table_name( $wpdb ) . '_version', 0 );
 
-		if ( $installed < $table->get_version() ) {
-			dbDelta( $table->get_creation_sql( $wpdb ) );
-
-			update_option( $table->get_table_name( $wpdb ) . '_version', $table->get_version() );
-
-			if ( $installed === 0 ) {
-				self::fire_plugin_event( $table, 'installed' );
-			} else {
-				self::fire_plugin_event( $table, 'updated' );
-			}
-
-			return true;
+		if ( $installed >= $table->get_version() ) {
+			return false;
 		}
 
-		return false;
+		if ( $installed === 0 ) {
+			$wpdb->query( $table->get_creation_sql( $wpdb ) );
+			self::fire_plugin_event( $table, 'installed' );
+		} else {
+
+			$update = $installed + 1;
+
+			while ( $update <= $table->get_version() ) {
+
+				if ( method_exists( $table, "v{$update}_schema_update" ) ) {
+					$method = "v{$update}_schema_update";
+
+					$table->{$method}( $wpdb, $installed );
+
+					self::fire_plugin_event( $table, 'updated_schema', array( $update, $installed ) );
+				}
+
+				$update += 1;
+			}
+
+			self::fire_plugin_event( $table, 'updated' );
+		}
+
+		update_option( $table->get_table_name( $wpdb ) . '_version', $table->get_version() );
+
+		return true;
 	}
 
 	/**
@@ -232,13 +245,15 @@ final class Manager {
 	 *
 	 * @param Table  $table
 	 * @param string $event Name of the method on the plugin object. Either 'registered', 'installed', or 'updated'.
+	 * @param array  $args  Additional arguments to pass to the plugin handler.
 	 */
-	protected static function fire_plugin_event( Table $table, $event ) {
+	protected static function fire_plugin_event( Table $table, $event, $args = array() ) {
 
 		foreach ( self::$plugins as $plugin ) {
 			if ( $plugin->accepts( $table ) ) {
 				if ( method_exists( $plugin, $event ) ) {
-					call_user_func( array( $plugin, $event ), $table );
+					$args = array( $table ) + $args;
+					call_user_func_array( array( $plugin, $event ), $args );
 				}
 			}
 		}
