@@ -17,6 +17,7 @@ use IronBound\DB\Saver\Saver;
 
 /**
  * Class BelongsToMany
+ *
  * @package IronBound\DB\Relations
  */
 class BelongsToMany extends Relation {
@@ -98,13 +99,26 @@ class BelongsToMany extends Relation {
 	 */
 	public function eager_load( array $models, $callback = null ) {
 
+		/** @var Model[] $map */
 		$map = array();
 		$pks = array();
 
 		foreach ( $models as $model ) {
-			$pks[] = $model->get_raw_attribute( $this->attribute );
 
-			$map[ $model->get_raw_attribute( $this->attribute ) ] = $model;
+			$pk = $model->get_raw_attribute( $this->attribute );
+
+			// while freshly hydrated models will never have objects as the raw attribute value
+			// this is a public API method so let's add safe guards just in case.
+			if ( is_object( $pk ) ) {
+				$pk = $this->saver->get_pk( $pk );
+			}
+
+			if ( ! $pk ) {
+				continue;
+			}
+
+			$pks[]      = $pk;
+			$map[ $pk ] = $model;
 		}
 
 		$query = $this->make_query_object( $this->related_model );
@@ -114,7 +128,9 @@ class BelongsToMany extends Relation {
 
 		foreach ( $related_models as $related_model ) {
 			if ( isset( $map[ $this->saver->get_pk( $related_model ) ] ) ) {
-				$map[ $this->saver->get_pk( $related_model ) ]->set_attribute( $this->attribute, $related_model );
+				$mapped = $map[ $this->saver->get_pk( $related_model ) ];
+				$mapped->set_raw_attribute( $this->attribute, $related_model );
+				$mapped->sync_original_attribute( $this->attribute );
 			}
 		}
 

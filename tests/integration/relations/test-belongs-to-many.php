@@ -62,18 +62,20 @@ class Test_Belongs_To_Many extends \WP_UnitTestCase {
 		$this->assertEquals( $a1->get_pk(), $b1->author->get_pk() );
 
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+		$this->assertFalse( $b1->is_dirty() );
 
 		/** @var Book $b2 */
 		$b2 = $books->get_model( $b2->get_pk() );
 		$this->assertEquals( $a2->get_pk(), $b2->author->get_pk() );
 
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+		$this->assertFalse( $b2->is_dirty() );
 	}
 
 	public function test_eager_load_posts() {
 
 		$a1 = Author::create( array(
-			'name'   => 'Author 1',
+			'name'    => 'Author 1',
 			'picture' => new \WP_Post( (object) array(
 				'post_type'  => 'attachment',
 				'post_title' => 'Picture 1'
@@ -81,7 +83,7 @@ class Test_Belongs_To_Many extends \WP_UnitTestCase {
 		) );
 
 		$a2 = Author::create( array(
-			'name'   => 'Author 2',
+			'name'    => 'Author 2',
 			'picture' => new \WP_Post( (object) array(
 				'post_type'  => 'attachment',
 				'post_title' => 'Picture 2'

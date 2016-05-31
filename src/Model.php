@@ -244,7 +244,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @return $this
 	 */
-	protected function set_raw_attribute( $attribute, $value ) {
+	public function set_raw_attribute( $attribute, $value ) {
 
 		$attributes = $this->get_raw_attributes();
 
