@@ -66,11 +66,13 @@ class BelongsToMany extends Relation {
 	 */
 	protected function make_query_object( $model_class = false ) {
 
-		if ( $model_class && $this->related_model ) {
-			return call_user_func( array( $this->related_model, 'query' ) );
-		} else {
-			return new FluentQuery( call_user_func( array( $this->related_model, 'table' ) ) );
+		$query = call_user_func( array( $this->related_model, 'query' ) );
+
+		if ( ! $model_class ) {
+			$query->set_model_class( null );
 		}
+
+		return $query;
 	}
 
 	/**
@@ -121,7 +123,7 @@ class BelongsToMany extends Relation {
 			$map[ $pk ] = $model;
 		}
 
-		$query = $this->make_query_object( $this->related_model );
+		$query = $this->make_query_object( true );
 		$query->where( $this->related_primary_key_column, true, $pks );
 
 		$related_models = $query->results( $this->saver );

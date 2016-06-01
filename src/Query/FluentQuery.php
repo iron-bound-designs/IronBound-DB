@@ -35,6 +35,7 @@ use IronBound\DB\Table\Table;
 
 /**
  * Class FluentQuery
+ *
  * @package IronBound\DB\Query
  */
 class FluentQuery {
@@ -273,7 +274,8 @@ class FluentQuery {
 	 * @param string|array|Where $column
 	 * @param string|bool        $equality
 	 * @param mixed              $value
-	 * @param Closure|null       $callback Called with $this as the first parameter. Setup for nesting on the new where tag.
+	 * @param Closure|null       $callback Called with $this as the first parameter. Setup for nesting on the new where
+	 *                                     tag.
 	 * @param string             $boolean
 	 *
 	 * @return $this
@@ -400,7 +402,8 @@ class FluentQuery {
 	 * @since 2.0
 	 *
 	 * @param array|\WP_Meta_Query $query
-	 * @param MetaTable|null       $table     Table metadata is stored in. If not specified, will be retrieved from the model.
+	 * @param MetaTable|null       $table     Table metadata is stored in. If not specified, will be retrieved from the
+	 *                                        model.
 	 * @param string               $meta_type Type of metadata. Will be determined from the model if not given.
 	 *
 	 * @return $this
@@ -1167,6 +1170,10 @@ class FluentQuery {
 
 		if ( ! isset( $columns[ $column ] ) ) {
 			throw new InvalidColumnException( "Invalid database column '$column'." );
+		}
+
+		if ( is_null( $value ) ) {
+			return null;
 		}
 
 		if ( empty( $value ) ) {

@@ -12,6 +12,7 @@ namespace IronBound\DB\Query\Tag;
 
 /**
  * Class Where
+ *
  * @package IronBound\DB\Query\Tag
  */
 class Where extends Generic {
@@ -157,6 +158,14 @@ class Where extends Generic {
 			} else {
 				$query .= "NOT IN ($values)";
 			}
+		} elseif ( $this->value === null ) {
+
+			if ( $this->operator === true || $this->operator === '=' ) {
+				$query .= "IS NULL";
+			} else {
+				$query .= "IS NOT NULL";
+			}
+
 		} else {
 
 			if ( is_bool( $this->operator ) ) {

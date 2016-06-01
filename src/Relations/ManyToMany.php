@@ -21,6 +21,7 @@ use IronBound\WPEvents\GenericEvent;
 
 /**
  * Class ManyToMany
+ *
  * @package IronBound\DB\Relations
  */
 class ManyToMany extends Relation {
@@ -85,11 +86,13 @@ class ManyToMany extends Relation {
 	 */
 	protected function make_query_object( $model_class = false ) {
 
-		if ( $model_class && $this->related_model ) {
-			return call_user_func( array( $this->related_model, 'query' ) );
-		} else {
-			return new FluentQuery( call_user_func( array( $this->related_model, 'table' ) ) );
+		$query = call_user_func( array( $this->related_model, 'query' ) );
+
+		if ( ! $model_class ) {
+			$query->set_model_class( null );
 		}
+
+		return $query;
 	}
 
 	/**

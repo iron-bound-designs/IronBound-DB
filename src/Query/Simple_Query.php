@@ -400,6 +400,10 @@ class Simple_Query {
 			throw new InvalidColumnException( "Invalid database column '$column'." );
 		}
 
+		if ( is_null( $value ) ) {
+			return null;
+		}
+
 		if ( empty( $value ) ) {
 			return '';
 		}

@@ -10,10 +10,12 @@
 
 namespace IronBound\DB;
 
+use Closure;
 use IronBound\Cache\Cacheable;
 use IronBound\Cache\Cache;
 use IronBound\DB\Collections\Collection;
 use IronBound\DB\Query\FluentQuery;
+use IronBound\DB\Query\Scope;
 use IronBound\DB\Relations\Relation;
 use IronBound\DB\Table\Column\Contracts\Savable;
 use IronBound\DB\Table\Table;
@@ -66,6 +68,13 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @var array
 	 */
 	protected static $_eager_load = array();
+
+	/**
+	 * Array of global query scopes for this model. Keyed by their string identifier.
+	 *
+	 * @var array
+	 */
+	protected static $_scopes = array();
 
 	/// Instance Configuration
 
@@ -1187,6 +1196,102 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
+	 * Register a global query scope.
+	 *
+	 * Global query scopes are automatically applied whenever the query() method is called.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Scope|string $scope_or_identifier Either a Scope object or an identifier for an accompanying closure.
+	 * @param Closure|null $closure             When not using a Scope object, an implementation for the scope.
+	 */
+	public static function register_global_scope( $scope_or_identifier, Closure $closure = null ) {
+
+		if ( $scope_or_identifier instanceof Scope ) {
+			self::$_scopes[ get_called_class() ][ get_class( $scope_or_identifier ) ] = $scope_or_identifier;
+		} elseif ( is_string( $scope_or_identifier ) && $closure ) {
+			self::$_scopes[ get_called_class() ][ $scope_or_identifier ] = $closure;
+		} else {
+			throw new \InvalidArgumentException();
+		}
+	}
+
+	/**
+	 * Unregister a global scope.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $identifier
+	 */
+	public static function unregister_global_scope( $identifier ) {
+		unset( static::$_scopes[ get_called_class() ][ $identifier ] );
+	}
+
+	/**
+	 * Get all registered global scopes for this Model.
+	 *
+	 * @since 2.0
+	 *
+	 * @return Scope[]|Closure[]
+	 */
+	public static function get_global_scopes() {
+		return isset( self::$_scopes[ get_called_class() ] ) ? self::$_scopes[ get_called_class() ] : array();
+	}
+
+	/**
+	 * Create a new query builder without any scopes.
+	 *
+	 * @since 2.0
+	 *
+	 * @return FluentQuery
+	 */
+	public static function query_with_no_global_scopes() {
+		return FluentQuery::from_model( get_called_class() )->with( static::$_eager_load );
+	}
+
+	/**
+	 * Create a new query builder without certain global scopes applied.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $scopes
+	 *
+	 * @return FluentQuery
+	 */
+	public static function without_global_scopes( array $scopes ) {
+
+		$query = static::query_with_no_global_scopes();
+
+		foreach ( static::get_global_scopes() as $id => $scope ) {
+
+			if ( in_array( $id, $scopes ) ) {
+				continue;
+			}
+
+			if ( $scope instanceof Scope ) {
+				$scope->apply( $query );
+			} else {
+				$scope( $query );
+			}
+		}
+
+		return $query;
+	}
+
+	/**
+	 * Create a new query builder without a given scope.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $scope
+	 *
+	 * @return FluentQuery
+	 */
+	public static function without_global_scope( $scope ) {
+		return static::without_global_scopes( array( $scope ) );
+	}
+
+	/**
 	 * Initialize a new query object with the configured eager loaded relations.
 	 *
 	 * @since 2.0
@@ -1194,7 +1299,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return FluentQuery
 	 */
 	public static function query() {
-		return FluentQuery::from_model( get_called_class() )->with( static::$_eager_load );
+		return static::without_global_scopes( array() );
 	}
 
 	/**
