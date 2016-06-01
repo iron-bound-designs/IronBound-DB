@@ -33,7 +33,7 @@ class HasMany extends HasOneOrMany {
 
 		$class::saved( function ( GenericEvent $event ) use ( $self, $results ) {
 
-			if ( $event->get_subject()->get_attribute( $this->foreign_key )->get_pk() === $this->parent->get_pk() ) {
+			if ( $event->get_subject()->get_attribute( $self->foreign_key )->get_pk() === $self->parent->get_pk() ) {
 				if ( ! $results->contains( $event->get_subject() ) ) {
 					$results->add( $event->get_subject() );
 				}
