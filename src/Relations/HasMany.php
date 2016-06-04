@@ -28,12 +28,13 @@ class HasMany extends HasOneOrMany {
 
 		$class = $this->related_model;
 
-		$self    = $this;
-		$results = $this->results;
+		$foreign_key = $this->foreign_key;
+		$self        = $this;
+		$results     = $this->results;
 
-		$class::saved( function ( GenericEvent $event ) use ( $self, $results ) {
+		$class::saved( function ( GenericEvent $event ) use ( $self, $results, $foreign_key ) {
 
-			if ( $event->get_subject()->get_attribute( $self->foreign_key )->get_pk() === $self->parent->get_pk() ) {
+			if ( $event->get_subject()->get_attribute( $foreign_key )->get_pk() === $self->parent->get_pk() ) {
 				if ( ! $results->contains( $event->get_subject() ) ) {
 					$results->add( $event->get_subject() );
 				}
