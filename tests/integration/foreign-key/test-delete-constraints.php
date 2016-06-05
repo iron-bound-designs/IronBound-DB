@@ -35,16 +35,16 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 		Model::set_event_dispatcher( new EventDispatcher() );
 
-		Manager::register( new Authors(), '', get_class( new Author() ) );
+		Manager::register( new Authors(), '', 'IronBound\DB\Tests\Stub\Models\Author' );
 		Manager::register( new BaseMetaTable( new Books() ) );
-		
+
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
 		Manager::maybe_install_table( Manager::get( 'books-meta' ) );
 	}
 
 	public function test_cascade_model() {
 
-		Manager::register( new Books( DeleteConstrained::CASCADE ), '', get_class( new Book() ) );
+		Manager::register( new Books( DeleteConstrained::CASCADE ), '', 'IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
 
 		$author = Author::create( array(
@@ -70,7 +70,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 	 */
 	public function test_restrict_model() {
 
-		Manager::register( new Books( DeleteConstrained::RESTRICT ), '', get_class( new Book() ) );
+		Manager::register( new Books( DeleteConstrained::RESTRICT ), '', 'IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
 
 		$author = Author::create( array(
@@ -87,7 +87,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 	public function test_set_default_model() {
 
-		Manager::register( new Books( DeleteConstrained::SET_DEFAULT ), '', get_class( new Book() ) );
+		Manager::register( new Books( DeleteConstrained::SET_DEFAULT ), '', 'IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
 
 		$a1 = Author::create( array(
@@ -114,7 +114,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 	public function test_cascade_post() {
 
-		Manager::register( new TableWithForeignPost(), '', get_class( new ModelWithForeignPost() ) );
+		Manager::register( new TableWithForeignPost(), '', 'IronBound\DB\Tests\Stub\Models\ModelWithForeignPost' );
 		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );
 
 		$p1 = self::factory()->post->create_and_get( array(
@@ -148,7 +148,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 	 */
 	public function test_restrict_post() {
 
-		Manager::register( new TableWithForeignPost( DeleteConstrained::RESTRICT ), '', get_class( new ModelWithForeignPost() ) );
+		Manager::register( new TableWithForeignPost( DeleteConstrained::RESTRICT ), '', 'IronBound\DB\Tests\Stub\Models\ModelWithForeignPost' );
 		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );
 
 		$post = self::factory()->post->create_and_get( array(
@@ -165,7 +165,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 	public function test_set_default_post() {
 
-		Manager::register( new TableWithForeignPost( DeleteConstrained::SET_DEFAULT ), '', get_class( new ModelWithForeignPost() ) );
+		Manager::register( new TableWithForeignPost( DeleteConstrained::SET_DEFAULT ), '', 'IronBound\DB\Tests\Stub\Models\ModelWithForeignPost' );
 		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );
 
 		$p1 = self::factory()->post->create_and_get( array(
@@ -192,7 +192,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 	public function test_cascade_comment() {
 
-		Manager::register( new TableWithAllForeign(), '', get_class( new ModelWithAllForeign() ) );
+		Manager::register( new TableWithAllForeign(), '', 'IronBound\DB\Tests\Stub\Models\ModelWithAllForeign' );
 		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
 
 		$c1 = self::factory()->comment->create_and_get( array(
@@ -220,7 +220,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 	 */
 	public function test_restrict_comment() {
 
-		Manager::register( new TableWithAllForeign( DeleteConstrained::RESTRICT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::register( new TableWithAllForeign( DeleteConstrained::RESTRICT ), '', 'IronBound\DB\Tests\Stub\Models\ModelWithAllForeign' );
 		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
 
 		$comment = self::factory()->comment->create_and_get( array(
@@ -236,7 +236,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 	public function test_set_default_comment() {
 
-		Manager::register( new TableWithAllForeign( DeleteConstrained::SET_DEFAULT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::register( new TableWithAllForeign( DeleteConstrained::SET_DEFAULT ), '', 'IronBound\DB\Tests\Stub\Models\ModelWithAllForeign' );
 		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
 
 		$c1 = self::factory()->comment->create_and_get( array(
@@ -261,7 +261,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 	public function test_cascade_user() {
 
-		Manager::register( new TableWithAllForeign(), '', get_class( new ModelWithAllForeign() ) );
+		Manager::register( new TableWithAllForeign(), '', 'IronBound\DB\Tests\Stub\Models\ModelWithAllForeign' );
 		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
 
 		$u1 = self::factory()->user->create_and_get();
@@ -285,7 +285,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 	 */
 	public function test_restrict_user() {
 
-		Manager::register( new TableWithAllForeign( DeleteConstrained::RESTRICT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::register( new TableWithAllForeign( DeleteConstrained::RESTRICT ), '', 'IronBound\DB\Tests\Stub\Models\ModelWithAllForeign' );
 		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
 
 		$user = self::factory()->user->create_and_get();
@@ -299,7 +299,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 	public function test_set_default_user() {
 
-		Manager::register( new TableWithAllForeign( DeleteConstrained::SET_DEFAULT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::register( new TableWithAllForeign( DeleteConstrained::SET_DEFAULT ), '', 'IronBound\DB\Tests\Stub\Models\ModelWithAllForeign' );
 		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
 
 		$u1 = self::factory()->user->create_and_get();
@@ -320,7 +320,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 	public function test_cascade_term() {
 
-		Manager::register( new TableWithAllForeign(), '', get_class( new ModelWithAllForeign() ) );
+		Manager::register( new TableWithAllForeign(), '', 'IronBound\DB\Tests\Stub\Models\ModelWithAllForeign' );
 		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
 
 		$t1 = self::factory()->term->create_and_get();
@@ -344,7 +344,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 	 */
 	public function test_restrict_term() {
 
-		Manager::register( new TableWithAllForeign( DeleteConstrained::RESTRICT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::register( new TableWithAllForeign( DeleteConstrained::RESTRICT ), '', 'IronBound\DB\Tests\Stub\Models\ModelWithAllForeign' );
 		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
 
 		$term = self::factory()->term->create_and_get();
@@ -358,7 +358,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 	public function test_set_default_term() {
 
-		Manager::register( new TableWithAllForeign( DeleteConstrained::SET_DEFAULT ), '', get_class( new ModelWithAllForeign() ) );
+		Manager::register( new TableWithAllForeign( DeleteConstrained::SET_DEFAULT ), '', 'IronBound\DB\Tests\Stub\Models\ModelWithAllForeign' );
 		Manager::maybe_install_table( Manager::get( 'with-all-foreign' ) );
 
 		$t1 = self::factory()->term->create_and_get();

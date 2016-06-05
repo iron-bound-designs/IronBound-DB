@@ -31,11 +31,11 @@ class Test_Nested extends \WP_UnitTestCase {
 	function setUp() {
 		parent::setUp();
 
-		Manager::register( new Authors(), '', get_class( new Author() ) );
-		Manager::register( new Reviews(), '', get_class( new Review() ) );
-		Manager::register( new Books(), '', get_class( new Book() ) );
+		Manager::register( new Authors(), '', 'IronBound\DB\Tests\Stub\Models\Author' );
+		Manager::register( new Reviews(), '', 'IronBound\DB\Tests\Stub\Models\Review' );
+		Manager::register( new Books(), '', 'IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::register( new BaseMetaTable( new Books() ) );
-		Manager::register( new Libraries(), '', get_class( new Library() ) );
+		Manager::register( new Libraries(), '', 'IronBound\DB\Tests\Stub\Models\Library' );
 		Manager::register( new ModelAssociationTable( new Books(), new Libraries() ) );
 
 		Manager::maybe_install_table( Manager::get( 'authors' ) );

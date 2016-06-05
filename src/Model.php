@@ -52,6 +52,11 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	protected static $_event_dispatcher;
 
+	/**
+	 * @var array
+	 */
+	protected static $_booted = array();
+
 	/// Model Configuration
 
 	/**
@@ -156,9 +161,65 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	protected function init( \stdClass $data ) {
 
+		static::boot_if_not_booted();
+
 		$this->sync_original();
 		$this->fill( (array) $data );
-		$this->_exists = $this->get_raw_attributes() && (bool) $this->get_pk();
+		$this->_exists = (bool) $this->get_pk();
+	}
+
+	/**
+	 * Boot this model if it has not been previously booted.
+	 *
+	 * Fires two model events, 'booting' and 'booted'.
+	 *
+	 * @since 2.0
+	 */
+	protected static function boot_if_not_booted() {
+
+		if ( isset( static::$_booted[ get_called_class() ] ) ) {
+			return;
+		}
+
+		static::$_booted[ get_called_class() ] = true;
+
+		$instance = new static();
+
+		$instance->fire_model_event( 'booting' );
+		static::boot();
+		$instance->fire_model_event( 'booted' );
+	}
+
+	/**
+	 * Boot this model.
+	 *
+	 * This should perform any one time initialization code.
+	 *
+	 * @since 2.0
+	 */
+	protected static function boot() {
+		static::boot_traits();
+	}
+
+	/**
+	 * Boot any traits this model uses.
+	 *
+	 * This looks for and executes static methods named 'boot_TraitName'.
+	 *
+	 * @since 2.0
+	 */
+	protected static function boot_traits() {
+
+		$class = get_called_class();
+
+		// this method will return an empty array on PHP < 5.4
+		$uses = class_uses_recursive( get_called_class() );
+
+		foreach ( $uses as $trait ) {
+			if ( method_exists( $class, $method = 'boot_' . class_basename( $trait ) ) ) {
+				forward_static_call( array( $class, $method ) );
+			}
+		}
 	}
 
 	/**
@@ -391,7 +452,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 			// only update the attribute value cache if we have a raw value from the db
 			if ( is_scalar( $value ) ) {
-				$columns = static::get_table()->get_columns();
+				$columns = static::table()->get_columns();
 				$value   = $columns[ $attribute ]->convert_raw_to_value( $value );
 
 				$this->_attribute_value_cache[ $attribute ] = $value;
@@ -768,7 +829,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	protected function update( $key, $value ) {
 
-		$columns = static::get_table()->get_columns();
+		$columns = static::table()->get_columns();
 
 		$data = array(
 			$key => $columns[ $key ]->prepare_for_storage( $value )
@@ -844,7 +905,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	protected function save_savable_attributes() {
 
-		$columns = static::get_table()->get_columns();
+		$columns = static::table()->get_columns();
 
 		foreach ( $this->get_raw_attributes() as $attribute => $value ) {
 
@@ -910,12 +971,12 @@ abstract class Model implements Cacheable, \Serializable {
 		$insert_id = static::make_query_object()->insert( $insert );
 
 		if ( $insert_id ) {
-			$this->set_raw_attribute( static::get_table()->get_primary_key(), $insert_id );
+			$this->set_raw_attribute( static::table()->get_primary_key(), $insert_id );
 		}
 
 		$default_columns_to_fill = array();
 
-		foreach ( static::get_table()->get_columns() as $name => $column ) {
+		foreach ( static::table()->get_columns() as $name => $column ) {
 
 			if ( ! array_key_exists( $name, $this->get_raw_attributes() ) ) {
 				$default_columns_to_fill[] = $name;
@@ -1066,7 +1127,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return Query\Simple_Query|null
 	 */
 	protected static function make_query_object() {
-		return static::$_db_manager->make_simple_query_object( static::get_table()->get_slug() );
+		return static::$_db_manager->make_simple_query_object( static::table()->get_slug() );
 	}
 
 	/**
@@ -1085,7 +1146,7 @@ abstract class Model implements Cacheable, \Serializable {
 			return;
 		}
 
-		$event = static::get_table()->get_slug() . ".$event";
+		$event = static::table()->get_slug() . ".$event";
 
 		static::$_event_dispatcher->dispatch( $event, new GenericEvent( $this, $arguments ) );
 	}
@@ -1103,7 +1164,7 @@ abstract class Model implements Cacheable, \Serializable {
 	public static function register_model_event( $event, $callback, $priority = 10, $accepted_args = 3 ) {
 
 		if ( isset( static::$_event_dispatcher ) ) {
-			$event = static::get_table()->get_slug() . ".$event";
+			$event = static::table()->get_slug() . ".$event";
 
 			static::$_event_dispatcher->add_listener( $event, $callback, $priority, $accepted_args );
 		}
@@ -1126,7 +1187,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$data = $this->get_raw_attributes();
 
-		$columns = static::get_table()->get_columns();
+		$columns = static::table()->get_columns();
 
 		foreach ( $data as $column => $value ) {
 			$data[ $column ] = $columns[ $column ]->prepare_for_storage( $value );
@@ -1146,7 +1207,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return string
 	 */
 	public static function get_cache_group() {
-		return static::get_table()->get_slug();
+		return static::table()->get_slug();
 	}
 
 	/**
@@ -1192,7 +1253,12 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return Table
 	 */
 	public static function table() {
-		return static::get_table();
+
+		if ( ! $table = static::get_table() ) {
+			throw new \UnexpectedValueException( sprintf( '%s::get_table() returned null.', get_called_class() ) );
+		}
+
+		return $table;
 	}
 
 	/**
@@ -1246,6 +1312,9 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return FluentQuery
 	 */
 	public static function query_with_no_global_scopes() {
+
+		static::boot_if_not_booted();
+
 		return FluentQuery::from_model( get_called_class() )->with( static::$_eager_load );
 	}
 
