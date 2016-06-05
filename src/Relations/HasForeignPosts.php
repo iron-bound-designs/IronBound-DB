@@ -1,6 +1,6 @@
 <?php
 /**
- * BelongsToManyPosts class.
+ * HasForeign class.
  *
  * @author    Iron Bound Designs
  * @since     2.0
@@ -16,10 +16,10 @@ use IronBound\DB\Saver\PostSaver;
 use IronBound\DB\WP\Posts;
 
 /**
- * Class BelongsToManyPosts
+ * Class HasForeign
  * @package IronBound\DB\Relations
  */
-class BelongsToManyPosts extends BelongsToMany {
+class HasForeignPosts extends HasForeign {
 	
 	/**
 	 * @var bool

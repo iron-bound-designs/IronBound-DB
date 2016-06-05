@@ -12,7 +12,7 @@ namespace IronBound\DB\Tests\Stub\Models;
 
 use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
-use IronBound\DB\Relations\BelongsToManyPosts;
+use IronBound\DB\Relations\HasForeignPosts;
 use IronBound\DB\Relations\HasMany;
 use IronBound\DB\Relations\HasOne;
 
@@ -50,7 +50,7 @@ class Author extends Model {
 	}
 
 	protected function _picture_relation() {
-		return new BelongsToManyPosts( 'picture', $this );
+		return new HasForeignPosts( 'picture', $this );
 	}
 
 	protected function _session_relation() {

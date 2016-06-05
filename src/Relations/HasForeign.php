@@ -1,6 +1,6 @@
 <?php
 /**
- * BelongsToMany class definition.
+ * HasForeign class definition.
  *
  * @author    Iron Bound Designs
  * @since     2.0
@@ -16,11 +16,11 @@ use IronBound\DB\Saver\ModelSaver;
 use IronBound\DB\Saver\Saver;
 
 /**
- * Class BelongsToMany
+ * Class HasForeign
  *
  * @package IronBound\DB\Relations
  */
-class BelongsToMany extends Relation {
+class HasForeign extends Relation {
 
 	/**
 	 * @var Saver
