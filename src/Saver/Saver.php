@@ -44,13 +44,24 @@ abstract class Saver {
 	public abstract function get_pk( $value );
 
 	/**
+	 * Get a model by its primary key.
+	 * 
+	 * @since 2.0
+	 * 
+	 * @param string|int $pk
+	 *
+	 * @return object
+	 */
+	public abstract function get_model( $pk );
+
+	/**
 	 * Make a model from its given attributes
 	 *
 	 * @since 2.0
 	 *
 	 * @param array $attributes
 	 *
-	 * @return mixed
+	 * @return object
 	 */
 	public abstract function make_model( $attributes );
 

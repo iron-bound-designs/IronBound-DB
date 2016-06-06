@@ -75,6 +75,13 @@ abstract class Model implements Cacheable, \Serializable {
 	protected static $_eager_load = array();
 
 	/**
+	 * Cache of all relation attribute names.
+	 *
+	 * @var array
+	 */
+	protected static $_relation_attribute_cache = array();
+
+	/**
 	 * Array of global query scopes for this model. Keyed by their string identifier.
 	 *
 	 * @var array
@@ -292,6 +299,12 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function set_attribute( $attribute, $value ) {
 
+		if ( ! array_key_exists( $attribute, static::table()->get_columns() ) ) {
+			throw new \OutOfBoundsException(
+				sprintf( "Requested attribute '%s' does not exist for '%s'.", $attribute, get_class( $this ) )
+			);
+		}
+		
 		if ( method_exists( $this, $this->get_mutator_method_for_attribute( $attribute ) ) ) {
 			$value = call_user_func( array( $this, $this->get_mutator_method_for_attribute( $attribute ) ), $value );
 		}
@@ -502,6 +515,40 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	protected function has_relation( $attribute ) {
 		return method_exists( $this, "_{$attribute}_relation" );
+	}
+
+	/**
+	 * Get all relations this model has.
+	 *
+	 * Will be cached on subsequent runs.
+	 *
+	 * @since 2.0
+	 *
+	 * @return array
+	 */
+	public function get_all_relations() {
+
+		if ( isset( static::$_relation_attribute_cache[ get_class( $this ) ] ) ) {
+			return static::$_relation_attribute_cache[ get_class( $this ) ];
+		}
+
+		$relations = array();
+		$methods   = get_class_methods( $this );
+
+		foreach ( $methods as $method ) {
+			preg_match( '/^_(\S+)_relation$/', $method, $matches );
+
+			if ( empty( $matches[1] ) ) {
+				continue;
+			}
+
+			$relations[] = $matches[1];
+			$matches     = null;
+		}
+
+		static::$_relation_attribute_cache[ get_class( $this ) ] = $relations;
+
+		return $relations;
 	}
 
 	/**
@@ -990,7 +1037,7 @@ abstract class Model implements Cacheable, \Serializable {
 			);
 
 			foreach ( $default_values as $column => $value ) {
-				$this->set_attribute( $column, $value );
+				$this->set_raw_attribute( $column, $value );
 			}
 		}
 
@@ -1091,7 +1138,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$this->fire_model_event( 'deleting' );
 
-		foreach ( $this->_relations as $relation => $values ) {
+		foreach ( $this->get_all_relations() as $relation ) {
 			$this->get_relation( $relation )->on_delete( $this );
 		}
 

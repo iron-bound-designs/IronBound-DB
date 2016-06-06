@@ -13,6 +13,7 @@ namespace IronBound\DB\Relations;
 use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
+use IronBound\WPEvents\GenericEvent;
 
 /**
  * Class HasOne
@@ -24,8 +25,35 @@ class HasOne extends HasOneOrMany {
 	/**
 	 * @inheritDoc
 	 */
-	protected function register_events() {
-		// no-op
+	protected function register_cache_events() {
+		parent::register_cache_events();
+
+		$class = $this->related_model;
+
+		$foreign_key = $this->foreign_key;
+		$parent      = $this->parent;
+		$self        = $this;
+		$cache_group = $this->get_cache_group();
+
+		$class::saved( function ( GenericEvent $event ) use ( $self, $foreign_key, $parent, $cache_group ) {
+
+			/** @var Model $model */
+			$model = $event->get_subject();
+
+			if ( $model->get_attribute( $foreign_key )->get_pk() === $parent->get_pk() ) {
+				wp_cache_set( $parent->get_pk(), $model->get_pk(), $cache_group );
+			}
+
+		} );
+
+		$class::updated( function ( GenericEvent $event ) use ( $self, $foreign_key, $parent, $cache_group ) {
+
+			$from = $event->get_argument( 'from' );
+
+			if ( isset( $from[ $foreign_key ] ) && $from[ $foreign_key ] === $parent->get_pk() ) {
+				wp_cache_delete( $parent->get_pk(), $cache_group );
+			}
+		} );
 	}
 
 	/**
@@ -58,6 +86,6 @@ class HasOne extends HasOneOrMany {
 	 * @inheritDoc
 	 */
 	public function persist( $values ) {
-		$values->save();
+		$values->set_attribute( $this->foreign_key, $this->parent->get_pk() )->save();
 	}
 }

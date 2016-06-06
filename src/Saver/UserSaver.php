@@ -54,6 +54,20 @@ class UserSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
+	public function get_model( $pk ) {
+		switch ( $this->key ) {
+			case 'id':
+			case 'login':
+			case 'slug':
+				return get_user_by( $this->key, $pk );
+			default:
+				throw new \UnexpectedValueException( 'Unexpected key type.' );
+		}
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function make_model( $attributes ) {
 		return new \WP_User( (object) $attributes );
 	}

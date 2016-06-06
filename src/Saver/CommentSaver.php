@@ -26,6 +26,13 @@ class CommentSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
+	public function get_model( $pk ) {
+		return get_comment( $pk );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function make_model( $attributes ) {
 		return new \WP_Comment( (object) $attributes );
 	}

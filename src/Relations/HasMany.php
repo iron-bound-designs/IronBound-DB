@@ -24,14 +24,13 @@ class HasMany extends HasOneOrMany {
 	/**
 	 * @inheritdoc
 	 */
-	protected function register_events() {
+	protected function register_events( Collection $results ) {
 
 		$class = $this->related_model;
 
 		$foreign_key = $this->foreign_key;
 		$parent      = $this->parent;
 		$self        = $this;
-		$results     = $this->results;
 
 		$class::saved( function ( GenericEvent $event ) use ( $self, $results, $foreign_key, $parent ) {
 
@@ -53,12 +52,68 @@ class HasMany extends HasOneOrMany {
 	/**
 	 * @inheritDoc
 	 */
+	protected function register_cache_events() {
+		parent::register_cache_events();
+
+		$class = $this->related_model;
+
+		$foreign_key = $this->foreign_key;
+		$parent      = $this->parent;
+		$self        = $this;
+		$cache_group = $this->get_cache_group();
+
+		$class::saved( function ( GenericEvent $event ) use ( $self, $foreign_key, $parent, $cache_group ) {
+
+			/** @var Model $model */
+			$model = $event->get_subject();
+
+			if ( $model->get_attribute( $foreign_key )->get_pk() === $parent->get_pk() ) {
+				$ids   = wp_cache_get( $parent->get_pk(), $cache_group );
+				$ids[] = $model->get_pk();
+				wp_cache_set( $parent->get_pk(), $ids, $cache_group );
+			}
+
+		} );
+
+		$class::updated( function ( GenericEvent $event ) use ( $self, $foreign_key, $parent, $cache_group ) {
+
+			/** @var Model $model */
+			$model = $event->get_subject();
+			$from  = $event->get_argument( 'from' );
+
+			if ( isset( $from[ $foreign_key ] ) && $from[ $foreign_key ] === $parent->get_pk() ) {
+				$ids = wp_cache_get( $parent->get_pk(), $cache_group );
+
+				$i = array_search( $model->get_pk(), $ids );
+
+				if ( $i !== false ) {
+					unset( $ids[ $i ] );
+					wp_cache_set( $parent->get_pk(), $ids, $cache_group );
+				}
+			}
+		} );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	protected function fetch_results() {
 
 		$results = parent::fetch_results();
 		$results->keep_memory();
 
 		return $results;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function load_collection_from_cache( array $cached, Model $for ) {
+
+		$collection = parent::load_collection_from_cache( $cached, $for );
+		$collection->keep_memory();
+
+		return $collection;
 	}
 
 	/**

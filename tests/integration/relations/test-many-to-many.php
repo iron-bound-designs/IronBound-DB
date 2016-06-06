@@ -256,6 +256,101 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 		$this->assertEquals( $a2->get_pk(), $actors->containsKey( $a2->get_pk() ) );
 	}
 
+	public function test_caching() {
+
+		$a1 = Actor::create( array(
+			'name' => 'John Doe',
+		) );
+		$a2 = Actor::create( array(
+			'name' => 'Jane Doe'
+		) );
+
+		$m1 = Movie::create( array(
+			'title' => 'Movie 1'
+		) );
+		$m2 = Movie::create( array(
+			'title' => 'Movie 2'
+		) );
+
+		$a1->movies->add( $m1 );
+		$a1->save();
+
+		$a2->movies->add( $m2 );
+		$a2->save();
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$a1 = Actor::get( $a1->get_pk() );
+		$a2 = Actor::get( $a2->get_pk() );
+
+		$this->assertNotNull( $a1->movies->get_model( $m1->get_pk() ) );
+		$this->assertNotNull( $a2->movies->get_model( $m2->get_pk() ) );
+
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+	}
+
+	public function test_cache_updated_when_model_added_to_relation() {
+
+		$actor = Actor::create( array(
+			'name' => 'John Doe'
+		) );
+
+		$m1 = Movie::create( array(
+			'title' => 'Movie 1'
+		) );
+		$m2 = Movie::create( array(
+			'title' => 'Movie 2'
+		) );
+
+		$actor->movies->add( $m1 );
+		$actor->save();
+
+		$actor = Actor::get( $actor->get_pk() );
+		$this->assertNotNull( $actor->movies->get_model( $m1->get_pk() ) );
+
+		$actor->movies->add( $m2 );
+		$actor->save();
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$actor = Actor::get( $actor->get_pk() );
+		$this->assertNotNull( $actor->movies->get_model( $m1->get_pk() ) );
+		$this->assertNotNull( $actor->movies->get_model( $m2->get_pk() ) );
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+	}
+
+	public function test_cache_updated_when_model_removed_from_relation() {
+
+		$actor = Actor::create( array(
+			'name' => 'John Doe'
+		) );
+
+		$m1 = Movie::create( array(
+			'title' => 'Movie 1'
+		) );
+		$m2 = Movie::create( array(
+			'title' => 'Movie 2'
+		) );
+
+		$actor->movies->add( $m1 );
+		$actor->movies->add( $m2 );
+		$actor->save();
+
+		$actor = Actor::get( $actor->get_pk() );
+		$this->assertNotNull( $actor->movies->get_model( $m1->get_pk() ) );
+		$this->assertNotNull( $actor->movies->get_model( $m2->get_pk() ) );
+
+		$actor->movies->remove_model( $m2->get_pk() );
+		$actor->save();
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$actor = Actor::get( $actor->get_pk() );
+		$this->assertNotNull( $actor->movies->get_model( $m1->get_pk() ) );
+		$this->assertNull( $actor->movies->get_model( $m2->get_pk() ) );
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+	}
+
 	public function test_many_to_many_posts() {
 
 		$gallery = Gallery::create( array(
@@ -364,6 +459,106 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 	}
 
 	public function test_many_to_many_posts_caching() {
+
+		$a1 = self::factory()->post->create_and_get( array(
+			'post_type'  => 'attachment',
+			'post_title' => 'Piece 1'
+		) );
+		$a2 = self::factory()->post->create_and_get( array(
+			'post_type'  => 'attachment',
+			'post_title' => 'Piece 2'
+		) );
+
+		$g1 = Gallery::create( array(
+			'title' => 'Gallery 1'
+		) );
+		$g2 = Gallery::create( array(
+			'title' => 'Gallery 2'
+		) );
+
+		$g1->art->add( $a1 );
+		$g1->save();
+
+		$g2->art->add( $a2 );
+		$g2->save();
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$g1 = Gallery::get( $g1->get_pk() );
+		$g2 = Gallery::get( $g2->get_pk() );
+
+		$this->assertNotNull( $g1->art->get_model( $a1->ID ) );
+		$this->assertNotNull( $g2->art->get_model( $a2->ID ) );
+
+		// +2 for update_post_caches(). One for each post
+		$this->assertEquals( $num_queries + 2, $GLOBALS['wpdb']->num_queries );
+	}
+
+	public function test_many_to_many_posts_cache_updated_when_model_added_to_relation() {
+
+		$a1 = self::factory()->post->create_and_get( array(
+			'post_type'  => 'attachment',
+			'post_title' => 'Piece 1'
+		) );
+		$a2 = self::factory()->post->create_and_get( array(
+			'post_type'  => 'attachment',
+			'post_title' => 'Piece 2'
+		) );
+
+		$gallery = Gallery::create( array(
+			'title' => 'Gallery 1'
+		) );
+
+		$gallery->art->add( $a1 );
+		$gallery->save();
+
+		$gallery = Gallery::get( $gallery->get_pk() );
+		$gallery->art->add( $a2 );
+		$gallery->save();
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$gallery = Gallery::get( $gallery->get_pk() );
+		$this->assertNotNull( $gallery->art->get_model( $a1->ID ) );
+		$this->assertNotNull( $gallery->art->get_model( $a2->ID ) );
+
+		// +1 for update_post_caches().
+		$this->assertEquals( $num_queries + 1, $GLOBALS['wpdb']->num_queries );
+	}
+
+	public function test_many_to_many_posts_cache_updated_when_model_removed_from_relation() {
+
+		$a1 = self::factory()->post->create_and_get( array(
+			'post_type'  => 'attachment',
+			'post_title' => 'Piece 1'
+		) );
+		$a2 = self::factory()->post->create_and_get( array(
+			'post_type'  => 'attachment',
+			'post_title' => 'Piece 2'
+		) );
+
+		$gallery = Gallery::create( array(
+			'title' => 'Gallery 1'
+		) );
+
+		$gallery->art->add( $a1 );
+		$gallery->art->add( $a2 );
+		$gallery->save();
+
+		$gallery = Gallery::get( $gallery->get_pk() );
+		$gallery->art->remove_model( $a2->ID );
+		$gallery->save();
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$gallery = Gallery::get( $gallery->get_pk() );
+		$this->assertNotNull( $gallery->art->get_model( $a1->ID ) );
+		$this->assertNull( $gallery->art->get_model( $a2->ID ) );
+
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+	}
+
+	public function test_many_to_many_posts_wp_post_caching() {
 
 		$art = self::factory()->post->create_and_get( array(
 			'post_type'  => 'attachment',

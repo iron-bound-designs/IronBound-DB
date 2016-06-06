@@ -26,6 +26,13 @@ class TermSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
+	public function get_model( $pk ) {
+		return get_term( $pk );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function make_model( $attributes ) {
 		return new \WP_Term( (object) $attributes );
 	}

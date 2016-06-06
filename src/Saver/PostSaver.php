@@ -15,12 +15,19 @@ namespace IronBound\DB\Saver;
  * @package IronBound\DB\Value
  */
 class PostSaver extends Saver {
-	
+
 	/**
 	 * @inheritDoc
 	 */
 	public function get_pk( $value ) {
 		return $value->ID;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_model( $pk ) {
+		return get_post( $pk );
 	}
 
 	/**

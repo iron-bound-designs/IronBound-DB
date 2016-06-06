@@ -23,11 +23,6 @@ use IronBound\DB\Saver\Saver;
 class HasForeign extends Relation {
 
 	/**
-	 * @var Saver
-	 */
-	protected $saver;
-
-	/**
 	 * @var string
 	 */
 	protected $related_primary_key_column;
@@ -42,17 +37,19 @@ class HasForeign extends Relation {
 	public function __construct( $attribute, Model $parent, $related ) {
 
 		if ( $related instanceof Saver ) {
-			$this->saver = $related;
+			$saver = $related;
 			$related     = '';
 		} else {
-			$this->saver = new ModelSaver( $related );
+			$saver = new ModelSaver( $related );
 		}
 
 		if ( $related ) {
 			$this->related_primary_key_column = $related::table()->get_primary_key();
 		}
 
-		parent::__construct( $related, $parent, $attribute );
+		parent::__construct( $related, $parent, $attribute, $saver );
+
+		$this->cache( false );
 	}
 
 	/**
@@ -73,13 +70,6 @@ class HasForeign extends Relation {
 		}
 
 		return $query;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	protected function register_events() {
-		// this is Single model result, so we don't keep it in sync with another collection
 	}
 
 	/**

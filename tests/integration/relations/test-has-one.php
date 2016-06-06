@@ -30,8 +30,8 @@ class TestHasOne extends \WP_UnitTestCase {
 	function setUp() {
 		parent::setUp();
 
-		Manager::register( new Authors() );
-		Manager::register( new Books(), '', get_class( new Book() ) );
+		Manager::register( new Authors(), '', 'IronBound\DB\Tests\Stub\Models\Author' );
+		Manager::register( new Books(), '', 'IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::register( new BaseMetaTable( new Books() ) );
 		Manager::register( new AuthorSessions() );
 
@@ -60,6 +60,22 @@ class TestHasOne extends \WP_UnitTestCase {
 
 		$this->assertArrayHasKey( 'sample', $session->data );
 		$this->assertEquals( 'data', $session->data['sample'] );
+	}
+
+	public function test_foreign_attribute_automatically_assigned() {
+
+		$author = Author::create( array(
+			'name' => 'John'
+		) );
+
+		$author->set_relation_value( 'session', AuthorSession::create( array(
+			'data' => array( 'test' => 1 )
+		) ) );
+		$author->save();
+
+		$author = Author::get( $author->get_pk() );
+		$this->assertNotNull( $author->session );
+		$this->assertEquals( array( 'test' => 1 ), $author->session->data );
 	}
 
 	public function test_eager_load() {
@@ -93,6 +109,65 @@ class TestHasOne extends \WP_UnitTestCase {
 		/** @var Author $a2 */
 		$a2 = $authors->get_model( $a2->get_pk() );
 		$this->assertEquals( 2, $a2->session->get_value( 'test' ) );
+
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+	}
+
+	public function test_caching() {
+
+		$a1 = Author::create( array(
+			'name' => 'John'
+		) );
+		$s1 = AuthorSession::create( array(
+			'author' => $a1,
+			'data'   => array( 'test' => 1 )
+		) );
+
+		$a2 = Author::create( array(
+			'name' => 'Jane'
+		) );
+		$s2 = AuthorSession::create( array(
+			'author' => $a2,
+			'data'   => array( 'test' => 2 )
+		) );
+
+		// load the relation
+		$a1->session;
+		$a2->session;
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$a1 = Author::get( $a1->get_pk() );
+		$a2 = Author::get( $a2->get_pk() );
+
+		$this->assertEquals( $a1->session->get_pk(), $s1->get_pk() );
+		$this->assertEquals( $a2->session->get_pk(), $s2->get_pk() );
+
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+	}
+
+	public function test_cache_updated_when_model_updated() {
+
+		$author = Author::create( array(
+			'name' => 'John'
+		) );
+
+		$s1 = AuthorSession::create( array(
+			'author' => $author,
+			'data'   => array( 'test' => 1 )
+		) );
+
+		$this->assertEquals( $s1->get_pk(), $author->session->get_pk() );
+
+		$s2 = AuthorSession::create( array(
+			'author' => $author,
+			'data'   => array( 'test' => 2 )
+		) );
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$author = Author::get( $author->get_pk() );
+		$this->assertEquals( $s2->get_pk(), $author->session->get_pk() );
 
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
 	}

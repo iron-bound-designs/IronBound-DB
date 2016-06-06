@@ -10,6 +10,7 @@
 
 namespace IronBound\DB\Relations;
 
+use IronBound\DB\Collections\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Table\Association\PostAssociationTable;
@@ -92,8 +93,15 @@ class ManyToManyPosts extends ManyToMany {
 	/**
 	 * @inheritDoc
 	 */
-	protected function register_events() {
+	protected function register_events( Collection $results ) {
 		// no-op there is no corresponding model to keep synced
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function register_cache_events() {
+		// no-op
 	}
 
 	/**
@@ -106,12 +114,5 @@ class ManyToManyPosts extends ManyToMany {
 		update_post_caches( $posts, 'any', $this->update_term_cache, $this->update_meta_cache );
 
 		return $loaded;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	protected function make_model_from_attributes( $attributes ) {
-		return new \WP_Post( (object) $attributes );
 	}
 }

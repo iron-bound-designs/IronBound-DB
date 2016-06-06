@@ -227,9 +227,9 @@ class Collection implements DoctrineCollection, Selectable {
 
 	/**
 	 * Save all items in the collection.
-	 * 
+	 *
 	 * @since 2.0
-	 * 
+	 *
 	 * @param array $options
 	 */
 	public function save( array $options = array() ) {
@@ -237,6 +237,17 @@ class Collection implements DoctrineCollection, Selectable {
 		foreach ( $this->elements as $element ) {
 			$this->saver->save( $element, $options );
 		}
+	}
+
+	/**
+	 * Get the saver backing this collection.
+	 *
+	 * @since 2.0
+	 *
+	 * @return Saver
+	 */
+	public function get_saver() {
+		return $this->saver;
 	}
 
 	/**
@@ -452,7 +463,7 @@ class Collection implements DoctrineCollection, Selectable {
 	 * @inheritDoc
 	 */
 	public function filter( Closure $p ) {
-		return new static( array_filter( $this->elements, $p ) );
+		return new static( array_filter( $this->elements, $p ), $this->keep_memory, $this->saver );
 	}
 
 	/**
@@ -472,7 +483,7 @@ class Collection implements DoctrineCollection, Selectable {
 	 * @inheritDoc
 	 */
 	public function map( Closure $func ) {
-		return new static( array_map( $func, $this->elements ) );
+		return new static( array_map( $func, $this->elements ), $this->keep_memory, $this->saver );
 	}
 
 	/**
@@ -489,7 +500,10 @@ class Collection implements DoctrineCollection, Selectable {
 			}
 		}
 
-		return array( new static( $matches ), new static( $noMatches ) );
+		return array(
+			new static( $matches, $this->keep_memory, $this->saver ),
+			new static( $noMatches, $this->keep_memory, $this->saver )
+		);
 	}
 
 	/**
@@ -592,7 +606,7 @@ class Collection implements DoctrineCollection, Selectable {
 			$filtered = array_slice( $filtered, (int) $offset, $length );
 		}
 
-		return new static( $filtered );
+		return new static( $filtered, $this->keep_memory, $this->saver );
 	}
 }
 

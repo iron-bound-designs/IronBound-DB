@@ -29,7 +29,7 @@ class Test_HasMany extends \WP_UnitTestCase {
 		parent::setUp();
 
 		Manager::register( new Authors() );
-		Manager::register( new Books(), '', get_class( new Book() ) );
+		Manager::register( new Books(), '', 'IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::register( new BaseMetaTable( new Books() ) );
 
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
@@ -228,5 +228,107 @@ class Test_HasMany extends \WP_UnitTestCase {
 			return $model->title === 'R+L=J';
 		} ) );
 		$this->assertTrue( $books->contains( $b2 ) );
+	}
+
+	public function test_caching() {
+
+		$a1 = Author::create( array(
+			'name' => 'James Smith'
+		) );
+		Book::create( array(
+			'title'  => 'Book 1',
+			'author' => $a1
+		) );
+		Book::create( array(
+			'title'  => 'Book 2',
+			'author' => $a1
+		) );
+
+		$a1_books = $a1->books;
+
+		$a2 = Author::create( array(
+			'name' => 'Amy Smith'
+		) );
+		Book::create( array(
+			'title'  => 'Book 3',
+			'author' => $a2
+		) );
+		Book::create( array(
+			'title'  => 'Book 4',
+			'author' => $a2
+		) );
+
+		$a2_books = $a2->books;
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$a1 = Author::get( $a1->get_pk() );
+		$this->assertEquals( $a1_books->toArray(), $a1->books->toArray() );
+
+		$a2 = Author::get( $a2->get_pk() );
+		$this->assertEquals( $a2_books->toArray(), $a2->books->toArray() );
+
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+	}
+
+	public function test_cache_updated_when_model_added_to_relation() {
+
+		$author = Author::create( array(
+			'name' => 'John Doe'
+		) );
+
+		$b1 = Book::create( array(
+			'title'  => 'Book 1',
+			'author' => $author
+		) );
+
+		$author->books;
+
+		$b2 = Book::create( array(
+			'title'  => 'Book 2',
+			'author' => $author
+		) );
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$this->assertEquals( 2, $author->books->count() );
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+		$this->assertNotNull( $author->books->get_model( $b1->get_pk() ) );
+		$this->assertNotNull( $author->books->get_model( $b2->get_pk() ) );
+	}
+
+	public function test_cache_updated_when_model_removed_from_relation() {
+
+		$a1 = Author::create( array(
+			'name' => 'John Doe'
+		) );
+		$a2 = Author::create( array(
+			'name' => 'Jane Doe'
+		) );
+
+		$b1 = Book::create( array(
+			'title'  => 'Book 1',
+			'author' => $a1
+		) );
+		$b2 = Book::create( array(
+			'title'  => 'Book 2',
+			'author' => $a2
+		) );
+
+		$this->assertNotNull( $a1->books->get_model( $b1->get_pk() ) );
+		$this->assertNotNull( $a2->books->get_model( $b2->get_pk() ) );
+
+		$b2->author = $a1;
+		$b2->save();
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$a1 = Author::get( $a1->get_pk() );
+		$a2 = Author::get( $a2->get_pk() );
+
+		$this->assertEquals( 2, $a1->books->count() );
+		$this->assertEquals( 0, $a2->books->count() );
+
+		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
 	}
 }

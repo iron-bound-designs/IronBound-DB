@@ -19,7 +19,9 @@ use IronBound\DB\Tests\Stub\Models\Book;
 use IronBound\DB\Tests\Stub\Models\ModelWithAllForeign;
 use IronBound\DB\Tests\Stub\Models\ModelWithForeignPost;
 use IronBound\DB\Tests\Stub\Tables\Authors;
+use IronBound\DB\Tests\Stub\Tables\AuthorSessions;
 use IronBound\DB\Tests\Stub\Tables\Books;
+use IronBound\DB\Tests\Stub\Tables\Reviews;
 use IronBound\DB\Tests\Stub\Tables\TableWithAllForeign;
 use IronBound\DB\Tests\Stub\Tables\TableWithForeignPost;
 use IronBound\WPEvents\EventDispatcher;
@@ -36,16 +38,24 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 		Model::set_event_dispatcher( new EventDispatcher() );
 
 		Manager::register( new Authors(), '', 'IronBound\DB\Tests\Stub\Models\Author' );
+		Manager::register( new AuthorSessions(), '', 'IronBound\DB\Tests\Stub\Models\AuthorSession' );
 		Manager::register( new BaseMetaTable( new Books() ) );
+		Manager::register( new Reviews(), '', 'IronBound\DB\Tests\Stub\Models\Review' );
 
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
+		Manager::maybe_install_table( Manager::get( 'author-sessions' ) );
 		Manager::maybe_install_table( Manager::get( 'books-meta' ) );
+
+		if ( Manager::get( 'books' ) ) {
+			Manager::maybe_install_table( Manager::get( 'reviews' ) );
+		}
 	}
 
 	public function test_cascade_model() {
 
 		Manager::register( new Books( DeleteConstrained::CASCADE ), '', 'IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
+		Manager::maybe_install_table( Manager::get( 'reviews' ) );
 
 		$author = Author::create( array(
 			'name' => 'John Smith'
@@ -72,6 +82,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 		Manager::register( new Books( DeleteConstrained::RESTRICT ), '', 'IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
+		Manager::maybe_install_table( Manager::get( 'reviews' ) );
 
 		$author = Author::create( array(
 			'name' => 'John Smith'
@@ -89,6 +100,7 @@ class Test_Delete_Constraints extends \WP_UnitTestCase {
 
 		Manager::register( new Books( DeleteConstrained::SET_DEFAULT ), '', 'IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
+		Manager::maybe_install_table( Manager::get( 'reviews' ) );
 
 		$a1 = Author::create( array(
 			'name' => 'John Smith'

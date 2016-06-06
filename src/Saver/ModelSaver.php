@@ -51,6 +51,13 @@ class ModelSaver extends Saver {
 	/**
 	 * @inheritDoc
 	 */
+	public function get_model( $pk ) {
+		return call_user_func( array( $this->model_class, 'get' ), $pk );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function make_model( $attributes ) {
 		return call_user_func( array( $this->model_class, 'from_query' ), $attributes );
 	}
