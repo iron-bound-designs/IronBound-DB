@@ -304,7 +304,7 @@ abstract class Model implements Cacheable, \Serializable {
 				sprintf( "Requested attribute '%s' does not exist for '%s'.", $attribute, get_class( $this ) )
 			);
 		}
-		
+
 		if ( method_exists( $this, $this->get_mutator_method_for_attribute( $attribute ) ) ) {
 			$value = call_user_func( array( $this, $this->get_mutator_method_for_attribute( $attribute ) ), $value );
 		}
@@ -1445,6 +1445,24 @@ abstract class Model implements Cacheable, \Serializable {
 		call_user_func_array( array( $query, 'with' ), func_get_args() );
 
 		return $query;
+	}
+
+	/**
+	 * Convert the model to an array.
+	 * 
+	 * @since 2.0
+	 * 
+	 * @return array
+	 */
+	public function to_array() {
+
+		$attributes = array();
+
+		foreach ( static::table()->get_columns() as $attribute => $column ) {
+			$attributes[ $attribute ] = $this->get_attribute( $attribute );
+		}
+
+		return $attributes;
 	}
 
 	/**

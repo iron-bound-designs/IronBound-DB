@@ -66,11 +66,29 @@ abstract class HasOneOrMany extends Relation {
 	 */
 	protected function fetch_results_for_eager_load( array $models, $callback = null ) {
 
-		$relation_model = $this->related_model;
+		$cached = array();
+
+		if ( $callback === null ) {
+			foreach ( $models as $pk => $model ) {
+				$result = $this->load_from_cache( $model );
+
+				if ( $result ) {
+					$cached[ $pk ] = $result instanceof Collection ? $result->toArray() : array( $result );
+				}
+			}
+
+			if ( count( $cached ) === count( $models ) ) {
+				return new Collection( $this->flatten( $cached ), false, $this->saver );
+			}
+		}
 
 		/** @var FluentQuery $query */
-		$query = $relation_model::query();
-		$query->where( $this->foreign_key, true, array_keys( $models ) );
+		$query = call_user_func( array( $this->related_model, 'query' ) );
+
+		$pks = array_keys( $models );
+		$pks = array_diff( $pks, array_keys( $cached ) );
+
+		$query->where( $this->foreign_key, true, $pks );
 
 		$this->apply_scopes_for_eager_load( $query );
 
@@ -78,7 +96,34 @@ abstract class HasOneOrMany extends Relation {
 			$callback( $query );
 		}
 
-		return $query->results();
+		$results = $query->results()->toArray();
+		$cached  = $this->flatten( $cached );
+
+		return new Collection( array_merge( $results, $cached ), false, $this->saver );
+	}
+
+	/**
+	 * Recursively flatten an array.
+	 * 
+	 * @since 2.0
+	 * 
+	 * @param array $array
+	 *
+	 * @return array
+	 */
+	private function flatten( $array ) {
+		if ( ! is_array( $array ) ) {
+			// nothing to do if it's not an array
+			return array( $array );
+		}
+
+		$result = array();
+		foreach ( $array as $value ) {
+			// explode the sub-array, and add the parts
+			$result = array_merge( $result, $this->flatten( $value ) );
+		}
+
+		return $result;
 	}
 
 	/**

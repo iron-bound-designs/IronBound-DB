@@ -137,7 +137,6 @@ abstract class Relation {
 		}
 
 		if ( $this->keep_synced && $results instanceof Collection ) {
-			$this->results = $results;
 			$this->register_events( $results );
 		}
 

@@ -652,8 +652,7 @@ class FluentQuery {
 	 */
 	public function with( $relations, $callback = null ) {
 
-		$default = function () {
-		};
+		$default = null;
 
 		if ( is_string( $relations ) ) {
 			$relations = func_get_args();

@@ -331,4 +331,86 @@ class Test_HasMany extends \WP_UnitTestCase {
 
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
 	}
+
+	public function test_caching_on_eager_load() {
+
+		$a1 = Author::create( array(
+			'name' => 'John Doe'
+		) );
+		$a2 = Author::create( array(
+			'name' => 'Jane Doe'
+		) );
+
+		$b1 = Book::create( array(
+			'title'  => 'Book 1',
+			'author' => $a1
+		) );
+		$b2 = Book::create( array(
+			'title'  => 'Book 2',
+			'author' => $a2
+		) );
+
+		// initialize and cache relations
+		$a1->books;
+		$a2->books;
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+
+		$authors = Author::with( 'books' )->results();
+
+		/** @var Author $author */
+		foreach ( $authors as $author ) {
+			$author->books;
+		}
+
+		$this->assertEquals( $num_queries + 1, $GLOBALS['wpdb']->num_queries );
+	}
+
+	public function test_partial_caching_on_eager_load() {
+
+		$a1 = Author::create( array(
+			'name' => 'John Doe'
+		) );
+		$a2 = Author::create( array(
+			'name' => 'Jane Doe'
+		) );
+
+		$b1 = Book::create( array(
+			'title'  => 'Book 1',
+			'author' => $a1
+		) );
+		$b2 = Book::create( array(
+			'title'  => 'Book 2',
+			'author' => $a2
+		) );
+
+		// initialize and cache relations
+		$a1->books;
+
+		$num_queries = $GLOBALS['wpdb']->num_queries;
+		$queries     = array();
+
+		add_filter( 'query', function ( $query ) use ( &$queries ) {
+			$queries[] = $query;
+
+			return $query;
+		} );
+
+		$authors = Author::with( 'books' )->results();
+
+		/** @var Author $author */
+		foreach ( $authors as $author ) {
+			$author->books;
+		}
+
+		$this->assertEquals( $num_queries + 3, $GLOBALS['wpdb']->num_queries );
+		$this->assertNotContains( "'{$a1->get_pk()}'", $queries[1] );
+		$this->assertEquals( 2, $authors->count() );
+
+		$this->assertNotNull( $authors->get_model( $a1->get_pk() ) );
+		$this->assertNotNull( $authors->get_model( $a2->get_pk() ) );
+
+		$this->assertNotNull( $authors->get_model( $a1->get_pk() )->books->get_model( $b1->get_pk() ) );
+		$this->assertNotNull( $authors->get_model( $a2->get_pk() )->books->get_model( $b2->get_pk() ) );
+	}
 }
