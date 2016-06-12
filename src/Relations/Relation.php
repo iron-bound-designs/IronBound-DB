@@ -297,7 +297,7 @@ abstract class Relation {
 	 *
 	 * @return string
 	 */
-	protected function get_cache_group() {
+	final protected function get_cache_group() {
 		return $this->parent->table()->get_slug() . '_' . $this->attribute . '_relation';
 	}
 

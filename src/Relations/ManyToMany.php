@@ -252,9 +252,46 @@ class ManyToMany extends Relation {
 	 * @param Model[]  $models
 	 * @param callable $callback
 	 *
-	 * @return Collection
+	 * @return DoctrineCollection
 	 */
 	protected function fetch_results_for_eager_load( array $models, $callback = null ) {
+
+		$cached = array();
+		$found  = array();
+
+		if ( $callback === null ) {
+			foreach ( $models as $pk => $model ) {
+				$result = $this->load_from_cache( $model );
+
+				$result = $result instanceof Collection ? $result->toArray() : (array) $result;
+
+				if ( ! $result ) {
+					continue;
+				}
+
+				$found[] = $pk;
+
+				foreach ( $result as $item ) {
+
+					if ( empty( $item ) ) {
+						continue;
+					}
+
+					$item_pk = $this->saver->get_pk( $item );
+
+					$item = $item->to_array();
+
+					$item[ $this->primary_column ] = $item_pk;
+					$item[ $this->other_column ]   = $pk;
+
+					$cached[] = $item;
+				}
+			}
+
+			if ( count( $found ) === count( $models ) ) {
+				return new ArrayCollection( $cached );
+			}
+		}
 
 		$other_column = $this->other_column;
 
@@ -262,16 +299,21 @@ class ManyToMany extends Relation {
 		$query->distinct();
 		$query->select_all( false );
 
+		$pks = array_keys( $models );
+		$pks = array_diff( $pks, $found );
+
 		$query->join( $this->association, $this->join_on, $this->primary_column, '=',
-			function ( FluentQuery $query ) use ( $other_column, $models ) {
-				$query->where( $other_column, true, array_keys( $models ) );
+			function ( FluentQuery $query ) use ( $other_column, $models, $pks ) {
+				$query->where( $other_column, true, $pks );
 			}, 'LEFT' );
 
 		if ( $callback ) {
 			$callback( $query );
 		}
 
-		return $query->results();
+		$results = $query->results()->toArray();
+
+		return new ArrayCollection( array_merge( $results, $cached ) );
 	}
 
 	/**
