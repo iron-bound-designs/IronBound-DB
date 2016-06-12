@@ -298,7 +298,7 @@ abstract class Relation {
 	 * @return string
 	 */
 	final protected function get_cache_group() {
-		return $this->parent->table()->get_slug() . '_' . $this->attribute . '_relation';
+		return "relation:{$this->parent->table()->get_slug()}/{$this->attribute}";
 	}
 
 	/**
@@ -320,7 +320,7 @@ abstract class Relation {
 	 * @param Collection $results
 	 */
 	protected function register_events( Collection $results ) {
-		
+
 	}
 
 	/**
