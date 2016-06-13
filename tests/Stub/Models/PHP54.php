@@ -19,9 +19,10 @@ use IronBound\DB\Model;
  * @property int    $id
  * @property string $name
  */
-class PHP54 extends Model implements Model\WithMeta {
+class PHP54 extends Model implements Model\WithMeta, Model\Trashable {
 
 	use Model\MetaSupport;
+	use Model\TrashSupport;
 
 	/**
 	 * @inheritDoc
