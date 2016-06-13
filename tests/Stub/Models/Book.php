@@ -10,7 +10,7 @@
 
 namespace IronBound\DB\Tests\Stub\Models;
 
-use IronBound\DB\Collections\Collection;
+use IronBound\DB\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Relations\HasForeign;
 use IronBound\DB\Relations\HasMany;
@@ -27,7 +27,7 @@ use IronBound\DB\Relations\HasOne;
  * @property Author     $author
  * @property Collection $reviews
  */
-class Book extends Model\ModelWithMeta {
+class Book extends \IronBound\DB\Extensions\Meta\ModelWithMeta {
 
 	/**
 	 * @inheritDoc

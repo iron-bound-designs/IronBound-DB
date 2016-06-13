@@ -8,7 +8,7 @@
  * @copyright Iron Bound Designs, 2016.
  */
 
-namespace IronBound\DB\Collections;
+namespace IronBound\DB;
 
 use Closure;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -16,7 +16,6 @@ use Doctrine\Common\Collections\Collection as DoctrineCollection;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Expr\ClosureExpressionVisitor;
 use Doctrine\Common\Collections\Selectable;
-use IronBound\DB\Model;
 use IronBound\DB\Saver\ModelSaver;
 use IronBound\DB\Saver\Saver;
 

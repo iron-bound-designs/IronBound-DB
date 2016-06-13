@@ -10,7 +10,7 @@
 
 namespace IronBound\DB\Relations;
 
-use IronBound\DB\Collections\Collection;
+use IronBound\DB\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Saver\ModelSaver;
 use IronBound\DB\Saver\Saver;

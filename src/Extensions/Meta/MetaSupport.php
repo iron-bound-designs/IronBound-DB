@@ -8,9 +8,7 @@
  * @copyright Iron Bound Designs, 2016.
  */
 
-namespace IronBound\DB\Model;
-
-use IronBound\DB\Table\Meta\MetaTable;
+namespace IronBound\DB\Extensions\Meta;
 
 /**
  * Trait MetaSupport

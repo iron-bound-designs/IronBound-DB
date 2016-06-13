@@ -8,7 +8,7 @@
  * @copyright Iron Bound Designs, 2016.
  */
 
-namespace IronBound\DB\Table\Meta;
+namespace IronBound\DB\Extensions\Meta;
 
 use IronBound\DB\Table\BaseTable;
 use IronBound\DB\Table\Column\IntegerBased;

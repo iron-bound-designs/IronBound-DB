@@ -11,7 +11,7 @@
 namespace IronBound\DB\Tests;
 
 use IronBound\DB\Manager;
-use IronBound\DB\Table\Meta\BaseMetaTable;
+use IronBound\DB\Extensions\Meta\BaseMetaTable;
 use IronBound\DB\Tests\Stub\Models\PHP54;
 use IronBound\DB\Tests\Stub\Tables\PHP54s;
 use IronBound\WPEvents\GenericEvent;

@@ -14,7 +14,7 @@ use IronBound\DB\Table\BaseTable;
 use IronBound\DB\Table\Column\DateTime;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\StringBased;
-use IronBound\DB\Table\Trash\TrashTable;
+use IronBound\DB\Extensions\Trash\TrashTable;
 
 /**
  * Class PHP54s

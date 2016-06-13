@@ -12,7 +12,7 @@ namespace IronBound\DB\Relations;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection as DoctrineCollection;
-use IronBound\DB\Collections\Collection;
+use IronBound\DB\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Query\Tag\Where;

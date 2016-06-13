@@ -13,7 +13,7 @@ namespace IronBound\DB;
 use Closure;
 use IronBound\Cache\Cacheable;
 use IronBound\Cache\Cache;
-use IronBound\DB\Collections\Collection;
+use IronBound\DB\Collection;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Query\Scope;
 use IronBound\DB\Relations\Relation;
@@ -1000,7 +1000,7 @@ abstract class Model implements Cacheable, \Serializable {
 	protected function do_save_as_insert() {
 
 		if ( static::table() instanceof TimestampedTable ) {
-			$time = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
+			$time = $this->fresh_timestamp();
 
 			$this->set_attribute( static::table()->get_created_at_column(), $time );
 			$this->set_attribute( static::table()->get_updated_at_column(), $time );
@@ -1068,9 +1068,7 @@ abstract class Model implements Cacheable, \Serializable {
 		}
 
 		if ( static::table() instanceof TimestampedTable ) {
-			$time = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
-
-			$this->set_attribute( static::table()->get_updated_at_column(), $time );
+			$this->set_attribute( static::table()->get_updated_at_column(), $this->fresh_timestamp() );
 			$dirty = $this->get_dirty();
 		}
 
@@ -1147,6 +1145,17 @@ abstract class Model implements Cacheable, \Serializable {
 		Cache::delete( $this );
 
 		$this->fire_model_event( 'deleted' );
+	}
+
+	/**
+	 * Create a fresh UTC timestamp.
+	 *
+	 * @since 2.0
+	 *
+	 * @return \DateTime
+	 */
+	protected function fresh_timestamp() {
+		return new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
 	}
 
 	/**
@@ -1449,9 +1458,9 @@ abstract class Model implements Cacheable, \Serializable {
 
 	/**
 	 * Convert the model to an array.
-	 * 
+	 *
 	 * @since 2.0
-	 * 
+	 *
 	 * @return array
 	 */
 	public function to_array() {

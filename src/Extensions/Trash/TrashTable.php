@@ -8,7 +8,7 @@
  * @copyright Iron Bound Designs, 2016.
  */
 
-namespace IronBound\DB\Table\Trash;
+namespace IronBound\DB\Extensions\Trash;
 
 use IronBound\DB\Table\Table;
 

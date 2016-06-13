@@ -8,7 +8,7 @@
  * @copyright Iron Bound Designs, 2016.
  */
 
-namespace IronBound\DB\Model;
+namespace IronBound\DB\Extensions\Trash;
 
 use IronBound\DB\Query\FluentQuery;
 

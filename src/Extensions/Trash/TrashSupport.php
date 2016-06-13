@@ -8,10 +8,10 @@
  * @copyright Iron Bound Designs, 2016.
  */
 
-namespace IronBound\DB\Model;
+namespace IronBound\DB\Extensions\Trash;
 
 use IronBound\DB\Query\FluentQuery;
-use IronBound\DB\Table\Trash\TrashTable;
+use IronBound\DB\Extensions\Trash\TrashTable;
 
 /**
  * Trait TrashSupport
@@ -38,7 +38,7 @@ trait TrashSupport {
 		}
 
 		static::register_global_scope( 'trash', function ( FluentQuery $query ) use ( $table ) {
-			$query->where( $table->get_deleted_at_column(), true, null );
+			$query->and_where( $table->get_deleted_at_column(), true, null );
 		} );
 	}
 
@@ -52,9 +52,10 @@ trait TrashSupport {
 		} else {
 
 			$this->fire_model_event( 'trashing' );
-			
+
 			$table = static::table();
-			$this->{$table->get_deleted_at_column()} = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
+
+			$this->{$table->get_deleted_at_column()} = $this->fresh_timestamp();
 
 			$this->fire_model_event( 'trashed' );
 
@@ -77,8 +78,8 @@ trait TrashSupport {
 	public function untrash() {
 
 		$this->fire_model_event( 'untrashing' );
-		
-		$table = static::table();
+
+		$table                                   = static::table();
 		$this->{$table->get_deleted_at_column()} = null;
 
 		$this->fire_model_event( 'untrashed' );
