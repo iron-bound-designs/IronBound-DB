@@ -34,7 +34,10 @@ class HasMany extends HasOneOrMany {
 
 		$class::saved( function ( GenericEvent $event ) use ( $self, $results, $foreign_key, $parent ) {
 
-			if ( $event->get_subject()->get_attribute( $foreign_key )->get_pk() === $parent->get_pk() ) {
+			/** @var Model $model */
+			$model = $event->get_subject();
+
+			if ( ( $foreign = $model->get_attribute( $foreign_key ) ) && $foreign->get_pk() === $parent->get_pk() ) {
 				if ( ! $results->contains( $event->get_subject() ) ) {
 					$results->add( $event->get_subject() );
 				}
@@ -67,7 +70,7 @@ class HasMany extends HasOneOrMany {
 			/** @var Model $model */
 			$model = $event->get_subject();
 
-			if ( $model->get_attribute( $foreign_key )->get_pk() === $parent->get_pk() ) {
+			if ( ( $foreign = $model->get_attribute( $foreign_key ) ) && $foreign->get_pk() === $parent->get_pk() ) {
 				$ids   = wp_cache_get( $parent->get_pk(), $cache_group );
 				$ids[] = $model->get_pk();
 				wp_cache_set( $parent->get_pk(), $ids, $cache_group );
@@ -81,7 +84,7 @@ class HasMany extends HasOneOrMany {
 			$model = $event->get_subject();
 			$from  = $event->get_argument( 'from' );
 
-			if ( isset( $from[ $foreign_key ] ) && $from[ $foreign_key ] === $parent->get_pk() ) {
+			if ( isset( $from[ $foreign_key ] ) && $from[ $foreign_key ] == $parent->get_pk() ) {
 				$ids = wp_cache_get( $parent->get_pk(), $cache_group );
 
 				$i = array_search( $model->get_pk(), $ids );
@@ -120,13 +123,17 @@ class HasMany extends HasOneOrMany {
 	 * @inheritDoc
 	 */
 	protected function wrap_eager_loaded_results( $results ) {
-		return new Collection( $results ?: array() );
+		return new Collection( $results ?: array(), true );
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function persist( $values ) {
+
+		foreach ( $values->get_removed() as $removed ) {
+			$removed->set_attribute( $this->foreign_key, null )->save();
+		}
 
 		/** @var Model $value */
 		foreach ( $values as $value ) {

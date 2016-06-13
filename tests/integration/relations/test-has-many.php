@@ -144,6 +144,30 @@ class Test_HasMany extends \WP_UnitTestCase {
 		$this->assertEquals( 19.95, Book::get( $b2->get_pk() )->price );
 	}
 
+	public function test_removing_from_collection() {
+
+		$author = Author::create( array( 'name' => 'John Smith' ) );
+
+		$b1 = Book::create( array(
+			'title'  => 'B1',
+			'author' => $author
+		) );
+		$b2 = Book::create( array(
+			'title'  => 'B2',
+			'author' => $author
+		) );
+
+		$author->books->remove_model( $b2->get_pk() );
+		$author->save();
+
+		$author = Author::get( $author->get_pk() );
+		$this->assertEquals( 1, $author->books->count() );
+		$this->assertNull( $author->books->get_model( $b2->get_pk() ) );
+
+		$b2 = Book::get( $b2->get_pk() );
+		$this->assertEmpty( $b2->author );
+	}
+
 	public function test_eager_loading() {
 
 		$author = Author::create( array( 'name' => 'John Smith' ) );
