@@ -26,10 +26,11 @@ class Limit extends Generic {
 	 */
 	public function __construct( $count, $offset = null ) {
 
-		$value = $count;
+		$value = intval( $count );
 
 		if ( $offset !== null ) {
-			$value = "$offset, $value";
+			$offset = intval( $offset );
+			$value  = "$offset, $value";
 		}
 
 		parent::__construct( "LIMIT", $value );
