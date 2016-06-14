@@ -1146,6 +1146,8 @@ abstract class Model implements Cacheable, \Serializable {
 
 		Cache::delete( $this );
 
+		$this->_exists = false;
+
 		$this->fire_model_event( 'deleted' );
 	}
 
