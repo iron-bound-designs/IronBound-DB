@@ -10,13 +10,16 @@
  * @copyright Iron Bound Designs, 2016.
  */
 
-namespace IronBound\DB\Model;
+namespace IronBound\DB\Extensions\Meta;
 
 use IronBound\DB\Model;
 
 /**
  * Class ModelWithMeta
  * @package IronBound\DB\Model
+ *          
+ * This class serves only to provide meta support for PHP 5.3 environments. In later PHP versions,
+ * it is recommended to use the MetaSupport trait.
  */
 abstract class ModelWithMeta extends Model implements WithMeta {
 

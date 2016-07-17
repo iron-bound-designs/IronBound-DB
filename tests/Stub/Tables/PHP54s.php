@@ -11,15 +11,17 @@
 namespace IronBound\DB\Tests\Stub\Tables;
 
 use IronBound\DB\Table\BaseTable;
+use IronBound\DB\Table\Column\DateTime;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\StringBased;
+use IronBound\DB\Extensions\Trash\TrashTable;
 
 /**
  * Class PHP54s
  * @package IronBound\DB\Tests\Stub\Tables
  */
-class PHP54s extends BaseTable {
-	
+class PHP54s extends BaseTable implements TrashTable {
+
 	/**
 	 * @inheritDoc
 	 */
@@ -39,8 +41,9 @@ class PHP54s extends BaseTable {
 	 */
 	public function get_columns() {
 		return array(
-			'id'   => new IntegerBased( 'BIGINT', 'id', array( 'unsigned', 'auto_increment' ), array( 20 ) ),
-			'name' => new StringBased( 'VARCHAR', 'name', array(), array( 255 ) )
+			'id'         => new IntegerBased( 'BIGINT', 'id', array( 'unsigned', 'auto_increment' ), array( 20 ) ),
+			'name'       => new StringBased( 'VARCHAR', 'name', array(), array( 255 ) ),
+			'deleted_at' => new DateTime( 'deleted_at' )
 		);
 	}
 
@@ -52,6 +55,13 @@ class PHP54s extends BaseTable {
 			'id'   => 0,
 			'name' => ''
 		);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_deleted_at_column() {
+		return 'deleted_at';
 	}
 
 	/**

@@ -12,7 +12,7 @@ namespace IronBound\DB\Tests\Relations;
 
 use IronBound\DB\Manager;
 use IronBound\DB\Model;
-use IronBound\DB\Table\Meta\BaseMetaTable;
+use IronBound\DB\Extensions\Meta\BaseMetaTable;
 use IronBound\DB\Tests\Stub\Models\Author;
 use IronBound\DB\Tests\Stub\Models\Book;
 use IronBound\DB\Tests\Stub\Tables\Authors;
@@ -142,6 +142,30 @@ class Test_HasMany extends \WP_UnitTestCase {
 
 		$this->assertEquals( 24.95, Book::get( $b1->get_pk() )->price );
 		$this->assertEquals( 19.95, Book::get( $b2->get_pk() )->price );
+	}
+
+	public function test_removing_from_collection() {
+
+		$author = Author::create( array( 'name' => 'John Smith' ) );
+
+		$b1 = Book::create( array(
+			'title'  => 'B1',
+			'author' => $author
+		) );
+		$b2 = Book::create( array(
+			'title'  => 'B2',
+			'author' => $author
+		) );
+
+		$author->books->remove_model( $b2->get_pk() );
+		$author->save();
+
+		$author = Author::get( $author->get_pk() );
+		$this->assertEquals( 1, $author->books->count() );
+		$this->assertNull( $author->books->get_model( $b2->get_pk() ) );
+
+		$b2 = Book::get( $b2->get_pk() );
+		$this->assertEmpty( $b2->author );
 	}
 
 	public function test_eager_loading() {

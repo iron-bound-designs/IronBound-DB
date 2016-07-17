@@ -13,7 +13,7 @@ namespace IronBound\DB\Query;
 use Closure;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection as DoctrineCollection;
-use IronBound\DB\Collections\Collection;
+use IronBound\DB\Collection;
 use IronBound\DB\Exception\InvalidColumnException;
 use IronBound\DB\Exception\ModelNotFoundException;
 use IronBound\DB\Model;
@@ -30,7 +30,7 @@ use IronBound\DB\Query\Tag\Where_Date;
 use IronBound\DB\Query\Tag\Where_Raw;
 use IronBound\DB\Saver\ModelSaver;
 use IronBound\DB\Saver\Saver;
-use IronBound\DB\Table\Meta\MetaTable;
+use IronBound\DB\Extensions\Meta\MetaTable;
 use IronBound\DB\Table\Table;
 
 /**
@@ -306,11 +306,7 @@ class FluentQuery {
 
 			$where = new Where( $column, $equality, $value );
 		}
-
-		if ( is_null( $this->where ) ) {
-			$this->where = $where;
-		}
-
+		
 		if ( $callback ) {
 			$_where      = $this->where;
 			$this->where = $where;
@@ -319,6 +315,8 @@ class FluentQuery {
 		}
 
 		if ( ! $boolean ) {
+			$this->where = $where;
+		} elseif ( is_null( $this->where ) ) {
 			$this->where = $where;
 		} else {
 			$boolean = 'q' . ucfirst( $boolean );

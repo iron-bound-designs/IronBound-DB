@@ -10,7 +10,7 @@
 
 namespace IronBound\DB\Relations;
 
-use IronBound\DB\Collections\Collection;
+use IronBound\DB\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Saver\ModelSaver;
 use IronBound\DB\Saver\Saver;
@@ -297,8 +297,8 @@ abstract class Relation {
 	 *
 	 * @return string
 	 */
-	protected function get_cache_group() {
-		return $this->parent->table()->get_slug() . '_' . $this->attribute . '_relation';
+	final protected function get_cache_group() {
+		return "relation:{$this->parent->table()->get_slug()}/{$this->attribute}";
 	}
 
 	/**
@@ -320,7 +320,7 @@ abstract class Relation {
 	 * @param Collection $results
 	 */
 	protected function register_events( Collection $results ) {
-		
+
 	}
 
 	/**

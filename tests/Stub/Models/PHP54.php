@@ -10,6 +10,10 @@
 
 namespace IronBound\DB\Tests\Stub\Models;
 
+use IronBound\DB\Extensions\Meta\MetaSupport;
+use IronBound\DB\Extensions\Meta\WithMeta;
+use IronBound\DB\Extensions\Trash\Trashable;
+use IronBound\DB\Extensions\Trash\TrashSupport;
 use IronBound\DB\Model;
 
 /**
@@ -19,9 +23,10 @@ use IronBound\DB\Model;
  * @property int    $id
  * @property string $name
  */
-class PHP54 extends Model implements Model\WithMeta {
+class PHP54 extends Model implements WithMeta, Trashable {
 
-	use Model\MetaSupport;
+	use MetaSupport;
+	use TrashSupport;
 
 	/**
 	 * @inheritDoc

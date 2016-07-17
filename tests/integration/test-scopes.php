@@ -12,7 +12,7 @@ namespace IronBound\DB\Tests;
 
 use IronBound\DB\Manager;
 use IronBound\DB\Query\FluentQuery;
-use IronBound\DB\Table\Meta\BaseMetaTable;
+use IronBound\DB\Extensions\Meta\BaseMetaTable;
 use IronBound\DB\Tests\Stub\Models\Author;
 use IronBound\DB\Tests\Stub\Models\Book;
 use IronBound\DB\Tests\Stub\PublishedScope;
