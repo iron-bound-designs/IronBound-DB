@@ -11,6 +11,7 @@
 namespace IronBound\DB\Tests\Stub\Models;
 
 use IronBound\DB\Model;
+use IronBound\DB\Relations\HasForeign;
 use IronBound\DB\Relations\HasForeignComment;
 use IronBound\DB\Relations\HasForeignPost;
 use IronBound\DB\Relations\HasForeignTerm;
@@ -51,6 +52,10 @@ class ModelWithAllForeign extends Model {
 
 	protected function _term_relation() {
 		return new HasForeignTerm( 'term', $this );
+	}
+
+	protected function _model_relation() {
+		return new HasForeign( 'model', $this, 'IronBound\DB\Tests\Stub\Models\Book' );
 	}
 
 	/**

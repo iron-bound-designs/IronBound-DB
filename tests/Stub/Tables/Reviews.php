@@ -49,7 +49,7 @@ class Reviews extends BaseTable {
 			'content'   => new StringBased( 'TEXT', 'content' ),
 			'stars'     => new DecimalBased( 'TINYINT', 'stars', array( 'unsigned' ) ),
 			'published' => new DateTime( 'published' ),
-			'book'      => new ForeignModel( 'book', 'IronBound\DB\Tests\Stub\Models\Book', Manager::get( 'books' ), new ModelSaver() )
+			'book'      => new ForeignModel( 'book', 'IronBound\DB\Tests\Stub\Models\Book', Manager::get( 'books' ) )
 		);
 	}
 

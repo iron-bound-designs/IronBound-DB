@@ -58,7 +58,7 @@ class TableWithForeignPost extends BaseTable implements DeleteConstrained {
 	public function get_columns() {
 		return array(
 			'id'        => new IntegerBased( 'BIGINT', 'id', array( 'unsigned', 'auto_increment' ), array( 20 ) ),
-			'post'      => new ForeignPost( 'post', new PostSaver() ),
+			'post'      => new ForeignPost( 'post' ),
 			'price'     => new DecimalBased( 'DECIMAL', 'price', array( 'unsigned' ), array( 10, 2 ) ),
 			'published' => new DateTime( 'published' )
 		);

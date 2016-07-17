@@ -46,7 +46,7 @@ class Movies extends BaseTable {
 			'id'           => new IntegerBased( 'BIGINT', 'id', array( 'unsigned', 'auto_increment' ), array( 20 ) ),
 			'title'        => new StringBased( 'VARCHAR', 'title', array(), array( 191 ) ),
 			'release_date' => new DateTime( 'release_date' ),
-			'poster'       => new ForeignPost( 'poster', new PostSaver() ),
+			'poster'       => new ForeignPost( 'poster' ),
 			'description'  => new StringBased( 'LONGTEXT', 'description' ),
 			'earnings'     => new DecimalBased( 'DECIMAL', 'earnings', array(), array( 10, 2 ) )
 		);

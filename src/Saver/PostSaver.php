@@ -12,6 +12,7 @@ namespace IronBound\DB\Saver;
 
 /**
  * Class PostSaver
+ *
  * @package IronBound\DB\Value
  */
 class PostSaver extends Saver {
@@ -43,7 +44,9 @@ class PostSaver extends Saver {
 	public function save( $value, array $options = array() ) {
 
 		if ( ! $value instanceof \WP_Post ) {
-			throw new \InvalidArgumentException( 'ForeignPost can only save WP_Post objects.' );
+			throw new \InvalidArgumentException( sprintf(
+				'ForeignPost can only save WP_Post objects, %s given.', is_object( $value ) ? get_class( $value ) : gettype( $value )
+			) );
 		}
 
 		if ( ! $value->ID ) {

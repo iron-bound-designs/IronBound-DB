@@ -131,7 +131,7 @@ class PostAssociationTable extends BaseAssociationTable {
 	public function get_columns() {
 		return array(
 			$this->get_col_a() => new SimpleForeign( $this->get_col_a(), $this->model_table ),
-			$this->get_col_b() => new ForeignPost( $this->get_col_b(), new PostSaver() )
+			$this->get_col_b() => new ForeignPost( $this->get_col_b() )
 		);
 	}
 

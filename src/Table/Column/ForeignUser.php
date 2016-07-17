@@ -18,14 +18,10 @@ use IronBound\DB\WP\Users;
 
 /**
  * Class ForeignUser
+ *
  * @package IronBound\DB\Table\Column
  */
-class ForeignUser extends BaseColumn implements Savable, Foreign, DeleteConstrainable {
-
-	/**
-	 * @var UserSaver
-	 */
-	protected $saver;
+class ForeignUser extends BaseColumn implements Foreign, DeleteConstrainable {
 
 	/**
 	 * @var string
@@ -35,19 +31,17 @@ class ForeignUser extends BaseColumn implements Savable, Foreign, DeleteConstrai
 	/**
 	 * ForeignUser constructor.
 	 *
-	 * @param string    $name Column name.
-	 * @param UserSaver $saver
-	 * @param string    $key  User table key. id | login | slug
+	 * @param string $name Column name.
+	 * @param string $key  User table key. id | login | slug
 	 */
-	public function __construct( $name, UserSaver $saver, $key = 'id' ) {
+	public function __construct( $name, $key = 'id' ) {
 		parent::__construct( $name );
 
 		if ( ! in_array( $key, array( 'id', 'login', 'slug' ) ) ) {
 			throw new \InvalidArgumentException( "Invalid key '$key'." );
 		}
 
-		$this->saver = $saver;
-		$this->key   = $key;
+		$this->key = $key;
 	}
 
 	/**
@@ -144,29 +138,16 @@ class ForeignUser extends BaseColumn implements Savable, Foreign, DeleteConstrai
 	/**
 	 * @inheritDoc
 	 */
-	public function save( $value ) {
-		return $this->saver->save( $value );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function get_pk( $value ) {
-		return $this->saver->get_pk( $value );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
 	public function register_delete_callback( $callback ) {
 
-		$saver = $this->saver;
+		$self = $this;
 
-		add_action( 'delete_user', function ( $id, $reassign ) use ( $callback, $saver ) {
+		add_action( 'delete_user', function ( $id, $reassign ) use ( $callback, $self ) {
 
 			$user = get_user_by( 'id', $id );
+			$pk   = $self->prepare_for_storage( $user );
 
-			$callback( $saver->get_pk( $user ), $user, $reassign );
+			$callback( $pk, $user, $reassign );
 
 		}, 10, 2 );
 	}

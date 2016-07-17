@@ -64,7 +64,7 @@ class Books extends BaseTable implements DeleteConstrained {
 			'title'     => new StringBased( 'TEXT', 'title' ),
 			'price'     => new DecimalBased( 'DECIMAL', 'price', array( 'unsigned' ), array( 10, 2 ) ),
 			'published' => new DateTime( 'published' ),
-			'author'    => new ForeignModel( 'author', get_class( new Author() ), Manager::get( 'authors' ), new ModelSaver() )
+			'author'    => new ForeignModel( 'author', get_class( new Author() ), Manager::get( 'authors' ) )
 		);
 	}
 

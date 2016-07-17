@@ -17,6 +17,7 @@ use IronBound\DB\WP\Posts;
 
 /**
  * Class HasForeignPost
+ *
  * @package IronBound\DB\Relations
  */
 class HasForeignPost extends HasForeign {
@@ -85,7 +86,12 @@ class HasForeignPost extends HasForeign {
 	 * @inheritDoc
 	 */
 	public function get_results() {
-		$post  = parent::get_results();
+		$post = parent::get_results();
+
+		if ( ! $post ) {
+			return $post;
+		}
+
 		$posts = array( $post );
 
 		update_post_caches( $posts, 'any', $this->update_term_cache, $this->update_meta_cache );

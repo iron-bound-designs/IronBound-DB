@@ -20,23 +20,15 @@ use IronBound\DB\WP\Posts;
  * Class ForeignPost
  * @package IronBound\DB\Table\Column
  */
-class ForeignPost extends BaseColumn implements Savable, Foreign, DeleteConstrainable {
-
-	/**
-	 * @var Saver
-	 */
-	protected $saver;
+class ForeignPost extends BaseColumn implements Foreign, DeleteConstrainable {
 
 	/**
 	 * ForeignPost constructor.
 	 *
 	 * @param string $name Column name.
-	 * @param Saver  $value
 	 */
-	public function __construct( $name, Saver $value ) {
+	public function __construct( $name ) {
 		parent::__construct( $name );
-
-		$this->saver = $value;
 	}
 
 	/**
@@ -84,20 +76,6 @@ class ForeignPost extends BaseColumn implements Savable, Foreign, DeleteConstrai
 		}
 
 		return absint( $value );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function save( $value ) {
-		return $this->saver->save( $value );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function get_pk( $value ) {
-		return $this->saver->get_pk( $value );
 	}
 
 	/**

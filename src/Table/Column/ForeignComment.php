@@ -20,23 +20,15 @@ use IronBound\DB\WP\Comments;
  * Class ForeignComment
  * @package IronBound\DB\Table\Column
  */
-class ForeignComment extends BaseColumn implements Savable, Foreign, DeleteConstrainable {
-
-	/**
-	 * @var CommentSaver
-	 */
-	protected $saver;
+class ForeignComment extends BaseColumn implements Foreign, DeleteConstrainable {
 
 	/**
 	 * ForeignComment constructor.
 	 *
-	 * @param string       $name Column name.
-	 * @param CommentSaver $saver
+	 * @param string $name Column name.
 	 */
-	public function __construct( $name, CommentSaver $saver ) {
+	public function __construct( $name ) {
 		parent::__construct( $name );
-
-		$this->saver = $saver;
 	}
 
 	/**
@@ -84,20 +76,6 @@ class ForeignComment extends BaseColumn implements Savable, Foreign, DeleteConst
 		}
 
 		return absint( $value );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function save( $value ) {
-		return $this->saver->save( $value );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function get_pk( $value ) {
-		return $this->saver->get_pk( $value );
 	}
 
 	/**

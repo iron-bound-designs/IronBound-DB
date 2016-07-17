@@ -46,7 +46,7 @@ class Actors extends BaseTable {
 			'name'       => new StringBased( 'VARCHAR', 'name', array(), array( 60 ) ),
 			'birth_date' => new DateTime( 'birth_date' ),
 			'bio'        => new StringBased( 'LONGTEXT', 'bio' ),
-			'picture'    => new ForeignPost( 'picture', new PostSaver() )
+			'picture'    => new ForeignPost( 'picture' )
 		);
 	}
 

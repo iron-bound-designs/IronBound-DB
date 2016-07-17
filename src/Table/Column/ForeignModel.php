@@ -21,7 +21,7 @@ use IronBound\WPEvents\GenericEvent;
  * Class ForeignModel
  * @package IronBound\DB\Table\Column
  */
-class ForeignModel extends SimpleForeign implements Savable, DeleteConstrainable {
+class ForeignModel extends SimpleForeign implements DeleteConstrainable {
 
 	/**
 	 * @var Table
@@ -34,25 +34,16 @@ class ForeignModel extends SimpleForeign implements Savable, DeleteConstrainable
 	protected $model_class;
 
 	/**
-	 * @var ModelSaver
-	 */
-	private $saver;
-
-	/**
 	 * ForeignModel constructor.
 	 *
-	 * @param string     $name          Column name.
-	 * @param string     $model_class   FQCN for the model.
-	 * @param Table      $foreign_table Table the foreign key resides in.
-	 * @param ModelSaver $saver
+	 * @param string $name          Column name.
+	 * @param string $model_class   FQCN for the model.
+	 * @param Table  $foreign_table Table the foreign key resides in.
 	 */
-	public function __construct( $name, $model_class, Table $foreign_table, ModelSaver $saver ) {
+	public function __construct( $name, $model_class, Table $foreign_table ) {
 		parent::__construct( $name, $foreign_table, $foreign_table->get_primary_key() );
 
 		$this->model_class = $model_class;
-		$this->saver       = $saver;
-
-		$this->saver->set_model_class( $model_class );
 	}
 
 	/**
@@ -77,20 +68,6 @@ class ForeignModel extends SimpleForeign implements Savable, DeleteConstrainable
 		}
 
 		return $this->get_column()->prepare_for_storage( $value );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function save( $value ) {
-		return $this->saver->save( $value );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function get_pk( $value ) {
-		return $this->saver->get_pk( $value );
 	}
 
 	/**

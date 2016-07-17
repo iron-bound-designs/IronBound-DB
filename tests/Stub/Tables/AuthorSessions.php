@@ -44,7 +44,7 @@ class AuthorSessions extends BaseTable {
 		return array(
 			'id'     => new IntegerBased( 'BIGINT', 'id', array( 'unsigned', 'auto_increment' ), array( 20 ) ),
 			'data'   => new StringBased( 'LONGTEXT', 'data' ),
-			'author' => new ForeignModel( 'author', get_class( new Author() ), Manager::get( 'authors' ), new ModelSaver() )
+			'author' => new ForeignModel( 'author', get_class( new Author() ), Manager::get( 'authors' ) )
 		);
 	}
 

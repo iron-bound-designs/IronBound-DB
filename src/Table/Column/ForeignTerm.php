@@ -20,23 +20,15 @@ use IronBound\DB\WP\Terms;
  * Class ForeignTerm
  * @package IronBound\DB\Table\Column
  */
-class ForeignTerm extends BaseColumn implements Savable, Foreign, DeleteConstrainable {
-
-	/**
-	 * @var TermSaver
-	 */
-	protected $saver;
+class ForeignTerm extends BaseColumn implements Foreign, DeleteConstrainable {
 
 	/**
 	 * ForeignTerm constructor.
 	 *
-	 * @param string    $name Column name.
-	 * @param TermSaver $saver
+	 * @param string $name Column name.
 	 */
-	public function __construct( $name, TermSaver $saver ) {
+	public function __construct( $name ) {
 		parent::__construct( $name );
-
-		$this->saver = $saver;
 	}
 
 	/**
@@ -90,20 +82,6 @@ class ForeignTerm extends BaseColumn implements Savable, Foreign, DeleteConstrai
 		}
 
 		return absint( $value );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function save( $value ) {
-		return $this->saver->save( $value );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function get_pk( $value ) {
-		return $this->saver->get_pk( $value );
 	}
 
 	/**

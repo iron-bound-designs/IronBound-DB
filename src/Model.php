@@ -300,10 +300,14 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function set_attribute( $attribute, $value ) {
 
-		if ( $this->has_relation( $attribute ) && is_object( $value ) ) {
-			$this->set_relation_value( $attribute, $value );
+		if ( $this->has_relation( $attribute ) ) {
+			if ( is_object( $value ) ) {
+				$this->set_relation_value( $attribute, $value );
 
-			return $this;
+				return $this;
+			}
+
+			unset( $this->_relations[ $attribute ] );
 		} elseif ( ! array_key_exists( $attribute, static::table()->get_columns() ) ) {
 			throw new \OutOfBoundsException(
 				sprintf( "Requested attribute '%s' does not exist for '%s'.", $attribute, get_class( $this ) )
@@ -933,14 +937,13 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$options = wp_parse_args( $options, array(
 			'exclude_relations' => array_filter( $this->get_all_relations(), function ( $attribute ) use ( $columns ) {
-				return in_array( $attribute, $columns );
+				return array_key_exists( $attribute, $columns );
 			} )
 		) );
 
 		$this->fire_model_event( 'saving' );
 
 		$this->save_has_foreign_relations();
-		$this->save_savable_attributes();
 
 		if ( $this->exists() ) {
 			$saved = $this->do_save_as_update();
@@ -948,11 +951,7 @@ abstract class Model implements Cacheable, \Serializable {
 			$saved = $this->do_save_as_insert();
 		}
 
-		if ( isset( $options['exclude_relations'] ) ) {
-			$this->save_loaded_relations( (array) $options['exclude_relations'] );
-		} else {
-			$this->save_loaded_relations();
-		}
+		$this->save_loaded_relations( $options['exclude_relations'] );
 
 		if ( $saved ) {
 			$this->finish_save();
@@ -974,37 +973,13 @@ abstract class Model implements Cacheable, \Serializable {
 		foreach ( $this->_relations as $attribute => $value ) {
 			$relation = $this->get_relation( $attribute );
 
-			if ( $relation instanceof HasForeign ) {
+			if ( $relation instanceof HasForeign && $value ) {
 
 				$value = $relation->get_saver()->save( $value );
 				$pk    = $relation->get_saver()->get_pk( $value );
 
 				$this->set_raw_attribute( $attribute, $pk );
 				$this->_relations[ $attribute ] = $value;
-			}
-		}
-	}
-
-	/**
-	 * Save all savable attributes.
-	 *
-	 * @since 2.0
-	 */
-	protected function save_savable_attributes() {
-
-		$columns = static::table()->get_columns();
-
-		foreach ( $this->get_raw_attributes() as $attribute => $value ) {
-
-			$column = $columns[ $attribute ];
-
-			$value = $this->get_attribute_from_array( $attribute );
-
-			if ( $column instanceof Savable && is_object( $value ) && ! $this->has_relation( $attribute ) ) {
-				$saved = $column->save( $value );
-
-				$this->set_raw_attribute( $attribute, $column->get_pk( $saved ) );
-				$this->_attribute_value_cache[ $attribute ] = $saved;
 			}
 		}
 	}

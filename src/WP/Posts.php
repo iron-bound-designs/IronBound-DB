@@ -49,7 +49,7 @@ class Posts extends BaseTable {
 		return array(
 			'ID'                    =>
 				new IntegerBased( 'BIGINT', 'ID', array( 'unsigned', 'NOT NULL', 'auto_increment' ), array( 20 ) ),
-			'post_author'           => new ForeignUser( 'post_author', new UserSaver() ),
+			'post_author'           => new ForeignUser( 'post_author' ),
 			'post_date'             => new DateTime( 'post_date' ),
 			'post_date_gmt'         => new DateTime( 'post_date_gmt' ),
 			'post_content'          => new StringBased( 'LONGTEXT', 'post_content', array( 'NOT NULL' ) ),
@@ -65,7 +65,7 @@ class Posts extends BaseTable {
 			'post_modified'         => new DateTime( 'post_modified' ),
 			'post_modified_gmt'     => new DateTime( 'post_modified_gmt' ),
 			'post_content_filtered' => new StringBased( 'LONGTEXT', 'post_content', array( 'NOT NULL' ) ),
-			'post_parent'           => new ForeignPost( 'post_parent', new PostSaver() ),
+			'post_parent'           => new ForeignPost( 'post_parent' ),
 			'guid'                  => new StringBased( 'VARCHAR', 'guid', array( 'NOT NULL' ), array( 255 ) ),
 			'menu_order'            => new IntegerBased( 'INT', 'menu_order', array( 'NOT NULL' ), array( 11 ) ),
 			'post_type'             => new StringBased( 'VARCHAR', 'post_type', array( 'NOT NULL' ), array( 20 ) ),
