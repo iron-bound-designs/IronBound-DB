@@ -28,7 +28,7 @@ class HasForeign extends Relation {
 	protected $related_primary_key_column;
 
 	/**
-	 * BelongsToMany constructor.
+	 * HasForeign constructor.
 	 *
 	 * @param string       $attribute
 	 * @param Model        $parent
@@ -37,8 +37,8 @@ class HasForeign extends Relation {
 	public function __construct( $attribute, Model $parent, $related ) {
 
 		if ( $related instanceof Saver ) {
-			$saver = $related;
-			$related     = '';
+			$saver   = $related;
+			$related = '';
 		} else {
 			$saver = new ModelSaver( $related );
 		}
@@ -50,6 +50,17 @@ class HasForeign extends Relation {
 		parent::__construct( $related, $parent, $attribute, $saver );
 
 		$this->cache( false );
+	}
+
+	/**
+	 * Get the Saver.
+	 *
+	 * @since 2.0
+	 *
+	 * @return Saver
+	 */
+	public function get_saver() {
+		return $this->saver;
 	}
 
 	/**
@@ -80,10 +91,27 @@ class HasForeign extends Relation {
 		$class = $this->related_model;
 
 		if ( $this->parent->get_raw_attribute( $this->attribute ) instanceof $class ) {
-			return $class;
+			return $this->parent->get_raw_attribute( $this->attribute );
 		}
 
-		return $class::get( $this->parent->get_raw_attribute( $this->attribute ) );
+		return $this->saver->get_model( $this->parent->get_raw_attribute( $this->attribute ) );
+	}
+
+	/**
+	 * Fetch results for an eager loading query.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $primary_keys
+	 *
+	 * @return \Doctrine\Common\Collections\Collection|\IronBound\DB\Collection
+	 */
+	protected function fetch_results_for_eager_load( $primary_keys ) {
+
+		$query = $this->make_query_object( true );
+		$query->where( $this->related_primary_key_column, true, $primary_keys );
+
+		return $query->results( $this->saver );
 	}
 
 	/**
@@ -113,10 +141,7 @@ class HasForeign extends Relation {
 			$map[ $pk ] = $model;
 		}
 
-		$query = $this->make_query_object( true );
-		$query->where( $this->related_primary_key_column, true, $pks );
-
-		$related_models = $query->results( $this->saver );
+		$related_models = $this->fetch_results_for_eager_load( $pks );
 
 		foreach ( $related_models as $related_model ) {
 			if ( isset( $map[ $this->saver->get_pk( $related_model ) ] ) ) {
@@ -133,6 +158,6 @@ class HasForeign extends Relation {
 	 * @inheritDoc
 	 */
 	public function persist( $values ) {
-		$values->save();
+		$this->saver->save( $values );
 	}
 }

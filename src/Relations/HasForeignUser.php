@@ -1,6 +1,6 @@
 <?php
 /**
- * HasForeign class.
+ * HasForeignUser class.
  *
  * @author    Iron Bound Designs
  * @since     2.0
@@ -13,29 +13,27 @@ namespace IronBound\DB\Relations;
 use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Saver\PostSaver;
+use IronBound\DB\Saver\UserSaver;
 use IronBound\DB\WP\Posts;
+use IronBound\DB\WP\Users;
 
 /**
- * Class HasForeign
+ * Class HasForeignUser
+ *
  * @package IronBound\DB\Relations
  */
-class HasForeignPosts extends HasForeign {
-	
-	/**
-	 * @var bool
-	 */
-	protected $update_meta_cache = true;
+class HasForeignUser extends HasForeign {
 
 	/**
 	 * @var bool
 	 */
-	protected $update_term_cache = true;
+	protected $update_meta_cache = false;
 
 	/**
 	 * @inheritDoc
 	 */
 	public function __construct( $attribute, Model $parent ) {
-		parent::__construct( $attribute, $parent, new PostSaver() );
+		parent::__construct( $attribute, $parent, new UserSaver() );
 
 		$this->related_primary_key_column = 'ID';
 	}
@@ -44,11 +42,13 @@ class HasForeignPosts extends HasForeign {
 	 * @inheritDoc
 	 */
 	protected function make_query_object( $model_class = false ) {
-		return new FluentQuery( new Posts() );
+		return new FluentQuery( new Users() );
 	}
-	
+
 	/**
-	 * Update the post meta cache when loading this relation.
+	 * Update the user meta cache when loading this relation.
+	 *
+	 * By default, the meta cache is NOT updated.
 	 *
 	 * @since 2.0
 	 *
@@ -63,29 +63,22 @@ class HasForeignPosts extends HasForeign {
 	}
 
 	/**
-	 * Update the term cache when loading this relation.
-	 *
-	 * @since 2.0
-	 *
-	 * @param bool $update
-	 *
-	 * @return $this
-	 */
-	public function update_term_cache( $update = true ) {
-		$this->update_term_cache = $update;
-
-		return $this;
-	}
-	
-	/**
 	 * @inheritDoc
 	 */
 	public function get_results() {
-		$post = parent::get_results();
+		$user = parent::get_results();
 
-		update_post_caches( $post, 'any', $this->update_term_cache, $this->update_meta_cache );
+		if ( ! $user ) {
+			return $user;
+		}
 
-		return $post;
+		update_user_caches( $user );
+
+		if ( $this->update_meta_cache ) {
+			update_meta_cache( 'user', $user->ID );
+		}
+
+		return $user;
 	}
 
 	/**
@@ -93,9 +86,17 @@ class HasForeignPosts extends HasForeign {
 	 */
 	public function eager_load( array $models, $callback = null ) {
 		$loaded = parent::eager_load( $models, $callback );
-		$posts  = $loaded->toArray();
+		$users  = $loaded->toArray();
+		$ids    = array();
 
-		update_post_caches( $posts, 'any', $this->update_term_cache, $this->update_meta_cache );
+		foreach ( $users as $user ) {
+			update_user_caches( $user );
+			$ids[] = $user->ID;
+		}
+
+		if ( $this->update_meta_cache ) {
+			update_meta_cache( 'user', $ids );
+		}
 
 		return $loaded;
 	}

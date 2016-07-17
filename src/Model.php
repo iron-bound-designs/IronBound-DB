@@ -16,6 +16,7 @@ use IronBound\Cache\Cache;
 use IronBound\DB\Collection;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Query\Scope;
+use IronBound\DB\Relations\HasForeign;
 use IronBound\DB\Relations\Relation;
 use IronBound\DB\Table\Column\Contracts\Savable;
 use IronBound\DB\Table\Table;
@@ -299,13 +300,15 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function set_attribute( $attribute, $value ) {
 
-		if ( ! array_key_exists( $attribute, static::table()->get_columns() ) ) {
+		if ( $this->has_relation( $attribute ) && is_object( $value ) ) {
+			$this->set_relation_value( $attribute, $value );
+
+			return $this;
+		} elseif ( ! array_key_exists( $attribute, static::table()->get_columns() ) ) {
 			throw new \OutOfBoundsException(
 				sprintf( "Requested attribute '%s' does not exist for '%s'.", $attribute, get_class( $this ) )
 			);
-		}
-
-		if ( method_exists( $this, $this->get_mutator_method_for_attribute( $attribute ) ) ) {
+		} elseif ( method_exists( $this, $this->get_mutator_method_for_attribute( $attribute ) ) ) {
 			$value = call_user_func( array( $this, $this->get_mutator_method_for_attribute( $attribute ) ), $value );
 		}
 
@@ -380,12 +383,12 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function get_attribute( $attribute ) {
 
-		if ( array_key_exists( $attribute, static::table()->get_columns() ) ) {
-			return $this->get_attribute_value( $attribute );
-		}
-
 		if ( $this->has_relation( $attribute ) ) {
 			return $this->get_relation_value( $attribute );
+		}
+
+		if ( array_key_exists( $attribute, static::table()->get_columns() ) ) {
+			return $this->get_attribute_value( $attribute );
 		}
 
 		throw new \OutOfBoundsException(
@@ -922,8 +925,21 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function save( array $options = array() ) {
 
+		if ( isset( $options['exclude_relations'] ) && ! is_array( $options['exclude_relations'] ) ) {
+			$options['exclude_relations'] = (array) $options['exclude_relations'];
+		}
+
+		$columns = static::table()->get_columns();
+
+		$options = wp_parse_args( $options, array(
+			'exclude_relations' => array_filter( $this->get_all_relations(), function ( $attribute ) use ( $columns ) {
+				return in_array( $attribute, $columns );
+			} )
+		) );
+
 		$this->fire_model_event( 'saving' );
 
+		$this->save_has_foreign_relations();
 		$this->save_savable_attributes();
 
 		if ( $this->exists() ) {
@@ -946,6 +962,30 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
+	 * Save the has foreign relations.
+	 *
+	 * These need to be saved early because otherwise they will be persisted to both
+	 * the attribute value cache, and the relation cache.
+	 *
+	 * @since 2.0
+	 */
+	protected function save_has_foreign_relations() {
+
+		foreach ( $this->_relations as $attribute => $value ) {
+			$relation = $this->get_relation( $attribute );
+
+			if ( $relation instanceof HasForeign ) {
+
+				$value = $relation->get_saver()->save( $value );
+				$pk    = $relation->get_saver()->get_pk( $value );
+
+				$this->set_raw_attribute( $attribute, $pk );
+				$this->_relations[ $attribute ] = $value;
+			}
+		}
+	}
+
+	/**
 	 * Save all savable attributes.
 	 *
 	 * @since 2.0
@@ -960,7 +1000,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 			$value = $this->get_attribute_from_array( $attribute );
 
-			if ( $column instanceof Savable && is_object( $value ) ) {
+			if ( $column instanceof Savable && is_object( $value ) && ! $this->has_relation( $attribute ) ) {
 				$saved = $column->save( $value );
 
 				$this->set_raw_attribute( $attribute, $column->get_pk( $saved ) );
@@ -1114,7 +1154,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$this->fire_model_event( 'saved' );
 
-		foreach ( $this->_relations as $relation ) {
+		foreach ( $this->_relations as $attribute => $relation ) {
 			if ( $relation instanceof Collection ) {
 				$relation->clear_memory();
 			}

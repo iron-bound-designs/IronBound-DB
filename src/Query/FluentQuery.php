@@ -294,6 +294,11 @@ class FluentQuery {
 		} else {
 
 			if ( is_array( $value ) ) {
+
+				if ( count( $value ) === 0 ) {
+					throw new \InvalidArgumentException( 'Must provide at least one value for IN query.' );
+				}
+
 				$self  = $this;
 				$value = array_map( function ( $value ) use ( $column, $self ) {
 					return $self->escape_value( $column, $value );
@@ -306,7 +311,7 @@ class FluentQuery {
 
 			$where = new Where( $column, $equality, $value );
 		}
-		
+
 		if ( $callback ) {
 			$_where      = $this->where;
 			$this->where = $where;

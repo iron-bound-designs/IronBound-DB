@@ -23,6 +23,7 @@ use IronBound\DB\Tests\Stub\Tables\TableWithForeignPost;
 
 /**
  * Class Test_Crud
+ *
  * @package IronBound\DB\Tests
  */
 class Test_Crud extends \WP_UnitTestCase {
@@ -30,10 +31,10 @@ class Test_Crud extends \WP_UnitTestCase {
 	public function setUp() {
 		parent::setUp();
 
-		Manager::register( new TableWithForeignPost(), '', get_class( new ModelWithForeignPost() ) );
+		Manager::register( new TableWithForeignPost(), '', 'IronBound\DB\Tests\Stub\Models\ModelWithForeignPost' );
 		Manager::register( new Authors() );
-		Manager::register( new Books(), '', get_class( new Book() ) );
-		Manager::register( new TableWithAllForeign(), '', get_class( new ModelWithAllForeign() ) );
+		Manager::register( new Books(), '', 'IronBound\DB\Tests\Stub\Models\Book' );
+		Manager::register( new TableWithAllForeign(), '', 'IronBound\DB\Tests\Stub\Models\ModelWithAllForeign' );
 		Manager::register( new BaseMetaTable( new Books() ) );
 
 		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );

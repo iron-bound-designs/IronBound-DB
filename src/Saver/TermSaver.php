@@ -12,6 +12,7 @@ namespace IronBound\DB\Saver;
 
 /**
  * Class TermSaver
+ *
  * @package IronBound\DB\Value
  */
 class TermSaver extends Saver {
@@ -27,7 +28,18 @@ class TermSaver extends Saver {
 	 * @inheritDoc
 	 */
 	public function get_model( $pk ) {
-		return get_term( $pk );
+
+		if ( ! $pk ) {
+			return null;
+		}
+
+		$term = get_term( $pk );
+
+		if ( is_wp_error( $term ) ) {
+			throw new \UnexpectedValueException( $term->get_error_message() );
+		}
+
+		return $term;
 	}
 
 	/**
@@ -96,6 +108,12 @@ class TermSaver extends Saver {
 			throw new \InvalidArgumentException( 'Error encountered while saving WP_Term: ' . $ids->get_error_message() );
 		}
 
-		return get_term( $ids['term_id'], $term->taxonomy );
+		$term = get_term( $ids['term_id'], $term->taxonomy );
+
+		if ( is_wp_error( $term ) ) {
+			throw new \UnexpectedValueException( $term->get_error_message() );
+		}
+
+		return $term;
 	}
 }

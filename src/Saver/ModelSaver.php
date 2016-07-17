@@ -12,6 +12,7 @@ namespace IronBound\DB\Saver;
 
 /**
  * Class ModelSaver
+ *
  * @package IronBound\DB\Saver
  */
 class ModelSaver extends Saver {
@@ -68,7 +69,10 @@ class ModelSaver extends Saver {
 	public function save( $value, array $options = array() ) {
 
 		if ( ! $value instanceof $this->model_class ) {
-			throw new \InvalidArgumentException( 'ForeignModel column can only save IronBound\DB\Model objects.' );
+			throw new \InvalidArgumentException( sprintf(
+				'ForeignModel column can only save %s objects, %s given.', $this->model_class,
+				is_object( $value ) ? get_class( $value ) : gettype( $value )
+			) );
 		}
 
 		$value->save( $options );
