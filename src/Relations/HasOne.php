@@ -87,5 +87,7 @@ class HasOne extends HasOneOrMany {
 	 */
 	public function persist( $values ) {
 		$values->set_attribute( $this->foreign_key, $this->parent->get_pk() )->save();
+
+		return $values;
 	}
 }

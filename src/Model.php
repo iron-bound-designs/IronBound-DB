@@ -975,8 +975,8 @@ abstract class Model implements Cacheable, \Serializable {
 
 			if ( $relation instanceof HasForeign && $value ) {
 
-				$value = $relation->get_saver()->save( $value );
-				$pk    = $relation->get_saver()->get_pk( $value );
+				$value = $relation->persist( $value );
+				$pk    = $relation->get_pk_for_value( $value );
 
 				$this->set_raw_attribute( $attribute, $pk );
 				$this->_relations[ $attribute ] = $value;

@@ -366,6 +366,8 @@ class ManyToMany extends Relation {
 		$added = $this->persist_do_save( $values );
 
 		$this->persist_added( new ArrayCollection( $values->get_added()->toArray() + $added ) );
+
+		return $values;
 	}
 
 	/**

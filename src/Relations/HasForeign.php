@@ -53,17 +53,6 @@ class HasForeign extends Relation {
 	}
 
 	/**
-	 * Get the Saver.
-	 *
-	 * @since 2.0
-	 *
-	 * @return Saver
-	 */
-	public function get_saver() {
-		return $this->saver;
-	}
-
-	/**
 	 * Make a FluentQuery object.
 	 *
 	 * @since 2.0
@@ -158,6 +147,19 @@ class HasForeign extends Relation {
 	 * @inheritDoc
 	 */
 	public function persist( $values ) {
-		$this->saver->save( $values );
+		return $this->saver->save( $values );
+	}
+
+	/**
+	 * Get the primary key for the related model.
+	 *
+	 * @since 2.0
+	 *
+	 * @param object $value
+	 *
+	 * @return int|string
+	 */
+	public function get_pk_for_value( $value ) {
+		return $this->saver->get_pk( $value );
 	}
 }
