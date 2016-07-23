@@ -139,5 +139,7 @@ class HasMany extends HasOneOrMany {
 		foreach ( $values as $value ) {
 			$value->set_attribute( $this->foreign_key, $this->parent->get_pk() )->save();
 		}
+
+		return $values;
 	}
 }

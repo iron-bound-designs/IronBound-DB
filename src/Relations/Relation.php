@@ -349,7 +349,9 @@ abstract class Relation {
 	 *
 	 * @since 2.0
 	 *
-	 * @param Collection|Model $values
+	 * @param Collection|Model|mixed $values
+	 *
+	 * @return Collection|Model|mixed Saved values.
 	 */
 	public abstract function persist( $values );
 
