@@ -13,12 +13,10 @@ namespace IronBound\DB;
 use Closure;
 use IronBound\Cache\Cacheable;
 use IronBound\Cache\Cache;
-use IronBound\DB\Collection;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Query\Scope;
 use IronBound\DB\Relations\HasForeign;
 use IronBound\DB\Relations\Relation;
-use IronBound\DB\Table\Column\Contracts\Savable;
 use IronBound\DB\Table\Table;
 use IronBound\DB\Table\TimestampedTable;
 use IronBound\WPEvents\EventDispatcher;
@@ -100,13 +98,6 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @var array
 	 */
 	private $_attributes = array();
-
-	/**
-	 * Cache of attribute values.
-	 *
-	 * @var array
-	 */
-	protected $_attribute_value_cache = array();
 
 	/**
 	 * A snapshot of the model's attributes when it is instantiated.
@@ -316,8 +307,8 @@ abstract class Model implements Cacheable, \Serializable {
 			$value = call_user_func( array( $this, $this->get_mutator_method_for_attribute( $attribute ) ), $value );
 		}
 
-		unset( $this->_attribute_value_cache[ $attribute ] );
-		$this->set_raw_attribute( $attribute, $value );
+		$columns = static::table()->get_columns();
+		$this->set_raw_attribute( $attribute, $columns[ $attribute ]->prepare_for_storage( $value ) );
 
 		return $this;
 	}
@@ -360,8 +351,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	public function set_raw_attributes( array $attributes = array(), $sync = false ) {
 
-		$this->_attribute_value_cache = array();
-		$this->_attributes            = $attributes;
+		$this->_attributes = $attributes;
 
 		if ( $sync ) {
 			$this->sync_original();
@@ -465,21 +455,10 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	protected function get_attribute_from_array( $attribute ) {
 
-		if ( array_key_exists( $attribute, $this->_attribute_value_cache ) ) {
-			return $this->_attribute_value_cache[ $attribute ];
-		} else {
-			$value = $this->get_raw_attribute( $attribute );
+		$raw     = $this->get_raw_attribute( $attribute );
+		$columns = static::table()->get_columns();
 
-			// only update the attribute value cache if we have a raw value from the db
-			if ( is_scalar( $value ) ) {
-				$columns = static::table()->get_columns();
-				$value   = $columns[ $attribute ]->convert_raw_to_value( $value );
-
-				$this->_attribute_value_cache[ $attribute ] = $value;
-			}
-
-			return $value;
-		}
+		return $columns[ $attribute ]->convert_raw_to_value( $raw );
 	}
 
 	/**

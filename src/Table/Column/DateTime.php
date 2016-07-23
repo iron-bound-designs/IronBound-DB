@@ -29,6 +29,11 @@ class DateTime extends BaseColumn {
 	 * @inheritDoc
 	 */
 	public function convert_raw_to_value( $raw, \stdClass $row = null ) {
+
+		if ( empty( $raw ) ) {
+			return null;
+		}
+
 		try {
 			return new \DateTime( $raw, new \DateTimeZone( 'UTC' ) );
 		}

@@ -29,8 +29,8 @@ class Test_Scopes extends \WP_UnitTestCase {
 	public function setUp() {
 		parent::setUp();
 
-		Manager::register( new Authors(), '', get_class( new Author() ) );
-		Manager::register( new Books(), '', get_class( new Book() ) );
+		Manager::register( new Authors(), '', 'IronBound\DB\Tests\Stub\Models\Author' );
+		Manager::register( new Books(), '', 'IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::register( new BaseMetaTable( new Books() ) );
 
 		Manager::maybe_install_table( Manager::get( 'books' ) );
