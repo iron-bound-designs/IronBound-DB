@@ -88,8 +88,8 @@ class SimpleForeign extends BaseColumn implements Foreign {
 	/**
 	 * @inheritDoc
 	 */
-	public function convert_raw_to_value( $raw, \stdClass $row = null ) {
-		return $this->get_column()->convert_raw_to_value( $raw, $row );
+	public function convert_raw_to_value( $raw ) {
+		return $this->get_column()->convert_raw_to_value( $raw );
 	}
 
 	/**

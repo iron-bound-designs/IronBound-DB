@@ -130,7 +130,7 @@ abstract class BaseColumn implements Column {
 	/**
 	 * @inheritdoc
 	 */
-	abstract public function convert_raw_to_value( $raw, \stdClass $row = null );
+	abstract public function convert_raw_to_value( $raw );
 
 	/**
 	 * @inheritdoc

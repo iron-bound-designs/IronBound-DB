@@ -47,7 +47,7 @@ class StringBased extends BaseColumn {
 	/**
 	 * @inheritDoc
 	 */
-	public function convert_raw_to_value( $raw, \stdClass $row = null ) {
+	public function convert_raw_to_value( $raw ) {
 		return $raw;
 	}
 

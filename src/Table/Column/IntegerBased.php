@@ -47,7 +47,7 @@ class IntegerBased extends BaseColumn {
 	/**
 	 * @inheritDoc
 	 */
-	public function convert_raw_to_value( $raw, \stdClass $row = null ) {
+	public function convert_raw_to_value( $raw ) {
 		return (int) $raw;
 	}
 
@@ -64,6 +64,6 @@ class IntegerBased extends BaseColumn {
 			throw new InvalidDataForColumnException( 'Non-scalar value encountered.', $this, $value );
 		}
 
-		return sprintf( "%d", $value );
+		return (int) $value;
 	}
 }

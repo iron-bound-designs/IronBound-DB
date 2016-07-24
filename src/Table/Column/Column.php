@@ -9,9 +9,11 @@
  */
 
 namespace IronBound\DB\Table\Column;
+use IronBound\DB\Exception\InvalidDataForColumnException;
 
 /**
  * Interface Column
+ *
  * @package IronBound\DB\Column
  */
 interface Column {
@@ -43,12 +45,13 @@ interface Column {
 	 *
 	 * @since 2.0
 	 *
-	 * @param string    $raw Raw value retrieved directly from the database.
-	 * @param \stdClass $row Entire row's data.
+	 * @param string $raw Raw value retrieved directly from the database.
 	 *
 	 * @return mixed
+	 *
+	 * @throws InvalidDataForColumnException
 	 */
-	public function convert_raw_to_value( $raw, \stdClass $row = null );
+	public function convert_raw_to_value( $raw );
 
 	/**
 	 * Prepare a value for storage and coerce it to be valid.
@@ -61,6 +64,8 @@ interface Column {
 	 *                     For example, both 2016-01-01 and a \DateTime object are valid.
 	 *
 	 * @return mixed Prepared.
+	 *
+	 * @throws InvalidDataForColumnException
 	 */
 	public function prepare_for_storage( $value );
 

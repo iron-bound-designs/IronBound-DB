@@ -38,7 +38,7 @@ class Time extends BaseColumn {
 	/**
 	 * @inheritDoc
 	 */
-	public function convert_raw_to_value( $raw, \stdClass $row = null ) {
+	public function convert_raw_to_value( $raw ) {
 
 		preg_match( self::PATTERN, $raw, $matches );
 
