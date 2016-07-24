@@ -48,7 +48,7 @@ class StringBased extends BaseColumn {
 	 * @inheritDoc
 	 */
 	public function convert_raw_to_value( $raw ) {
-		return $raw;
+		return (string) $raw;
 	}
 
 	/**
@@ -60,10 +60,10 @@ class StringBased extends BaseColumn {
 			return $value;
 		}
 
-		if ( ! is_string( $value ) ) {
-			throw new InvalidDataForColumnException( 'Non-string value encountered.', $this, $value );
+		if ( ! is_scalar( $value ) ) {
+			throw new InvalidDataForColumnException( 'Non-scalar value encountered.', $this, $value );
 		}
 
-		return $value;
+		return (string) $value;
 	}
 }

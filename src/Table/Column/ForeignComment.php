@@ -87,6 +87,4 @@ class ForeignComment extends BaseColumn implements Foreign, DeleteConstrainable 
 			$callback( $comment_id, get_comment( $comment_id ) );
 		} );
 	}
-
-
 }

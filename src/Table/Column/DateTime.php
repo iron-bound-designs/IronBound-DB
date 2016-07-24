@@ -14,6 +14,7 @@ use IronBound\DB\Exception\InvalidDataForColumnException;
 
 /**
  * Class DateTime
+ *
  * @package IronBound\DB\Table\Column
  */
 class DateTime extends BaseColumn {
@@ -34,10 +35,17 @@ class DateTime extends BaseColumn {
 			return null;
 		}
 
+		if ( $raw instanceof \DateTime || ( interface_exists( '\DateTimeInterface' ) && $raw instanceof \DateTimeInterface ) ) {
+
+			$date = clone $raw;
+			$date->setTimezone( new \DateTimeZone( 'UTC' ) );
+
+			return $date;
+		}
+
 		try {
 			return new \DateTime( $raw, new \DateTimeZone( 'UTC' ) );
-		}
-		catch ( \Exception $e ) {
+		} catch ( \Exception $e ) {
 			return null;
 		}
 	}
@@ -50,13 +58,15 @@ class DateTime extends BaseColumn {
 		if ( empty( $value ) ) {
 			return null;
 		} elseif ( is_numeric( $value ) ) {
-			$value = new \DateTime( "@$value" );
+			$value = new \DateTime( "@$value", new \DateTimeZone( 'UTC' ) );
 		} elseif ( is_string( $value ) ) {
-			$value = new \DateTime( $value );
+			$value = new \DateTime( $value, new \DateTimeZone( 'UTC' ) );
 		} elseif ( is_object( $value ) && ! $value instanceof \DateTime && ! $value instanceof \DateTimeInterface ) {
 			throw new InvalidDataForColumnException(
 				'Non \DateTime object encountered while preparing value.', $this, $value
 			);
+		} elseif ( is_object( $value ) ) {
+			$value->setTimezone( new \DateTimeZone( 'UTC' ) );
 		}
 
 		return $value->format( 'Y-m-d H:i:s' );

@@ -14,11 +14,12 @@ use IronBound\DB\Exception\InvalidDataForColumnException;
 
 /**
  * Class Time
+ *
  * @package IronBound\DB\Table\Column
  */
 class Time extends BaseColumn {
 
-	const PATTERN = '(-?)(\d+):(\d+):(\d+)(?:\.(\d+)|$)';
+	const PATTERN = '/(-?)(\d+):(\d+):(\d+)(?:\.(\d+)|$)/';
 
 	/**
 	 * Maximum number of hours sortable in mysql.
@@ -27,6 +28,28 @@ class Time extends BaseColumn {
 
 	const MAX_VALUE = '838:59:59';
 	const MIN_VALUE = '-838:59:59';
+
+	/**
+	 * @var bool
+	 */
+	private $fallback = false;
+
+	/**
+	 * Whether to fallback to the min or max value if the \DateInterval given is out of range.
+	 *
+	 * Defaults to false.
+	 *
+	 * @since 2.0
+	 *
+	 * @param bool $fallback
+	 *
+	 * @return $this
+	 */
+	public function fallback_to_value_on_overflow( $fallback = true ) {
+		$this->fallback = $fallback;
+
+		return $this;
+	}
 
 	/**
 	 * @inheritDoc
@@ -40,12 +63,20 @@ class Time extends BaseColumn {
 	 */
 	public function convert_raw_to_value( $raw ) {
 
-		preg_match( self::PATTERN, $raw, $matches );
+		if ( empty( $raw ) ) {
+			return null;
+		}
 
-		$invert  = $matches[0] === '-';
-		$hours   = $matches[1];
-		$minutes = $matches[2];
-		$seconds = $matches[3];
+		if ( ! preg_match( self::PATTERN, $raw, $matches ) ) {
+			throw new InvalidDataForColumnException(
+				'Regex pattern match failed while converting raw to value.', $this, $raw
+			);
+		}
+
+		$invert  = $matches[1] === '-';
+		$hours   = $matches[2];
+		$minutes = $matches[3];
+		$seconds = $matches[4];
 
 		$format = 'PT';
 
@@ -78,17 +109,21 @@ class Time extends BaseColumn {
 
 			if ( empty( $value ) ) {
 				return $value;
-			} elseif ( ! preg_match( self::PATTERN, $value ) ) {
+			} elseif ( ! preg_match( self::PATTERN, $value, $matches ) ) {
 				throw new InvalidDataForColumnException(
 					"Regex pattern match failed while preparing value.", $this, $value
 				);
 			} else {
-				return $value;
+				$invert  = $matches[1] === '-';
+				$hours   = $matches[2];
+				$minutes = $matches[3];
+				$seconds = $matches[4];
 			}
 		} elseif ( $value instanceof \DateInterval ) {
 
 			if ( $value->days ) {
 				$hours = 24 * $value->days;
+				$hours += $value->h;
 			} else {
 
 				if ( $value->y ) {
@@ -111,22 +146,35 @@ class Time extends BaseColumn {
 				}
 			}
 
-			if ( $hours > self::MAX_HOURS ) {
-				return $value->invert ? self::MIN_VALUE : self::MAX_VALUE;
-			}
-
 			$minutes = $value->i;
 			$seconds = $value->s;
+			$invert  = $value->invert;
 
-			$mysql = "{$hours}:{$minutes}:{$seconds}";
-
-			if ( $value->invert ) {
-				$mysql = "-{$mysql}";
-			}
-
-			return $mysql;
 		} else {
 			throw new InvalidDataForColumnException( 'Invalid data format encountered while preparing value.', $this, $value );
 		}
+
+		if ( $hours > self::MAX_HOURS ) {
+			if ( $this->fallback ) {
+				return $value->invert ? self::MIN_VALUE : self::MAX_VALUE;
+			} else {
+				throw new InvalidDataForColumnException( sprintf(
+					'Calculated hours is out of range. Given %d, max is %d.', $hours, self::MAX_HOURS
+				) );
+			}
+		}
+
+		$hours   = zeroise( $hours, 2 );
+		$minutes = zeroise( $minutes, 2 );
+		$seconds = zeroise( $seconds, 2 );
+
+		$mysql = "{$hours}:{$minutes}:{$seconds}";
+
+		if ( $invert ) {
+			$mysql = "-{$mysql}";
+		}
+
+		return $mysql;
+
 	}
 }
