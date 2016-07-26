@@ -12,16 +12,23 @@ namespace IronBound\DB\Tests\Stub\Models;
 
 use IronBound\DB\Collection;
 use IronBound\DB\Model;
+use IronBound\DB\Relations\ManyToManyComments;
 use IronBound\DB\Relations\ManyToManyPosts;
+use IronBound\DB\Relations\ManyToManyTerms;
+use IronBound\DB\Relations\ManyToManyUsers;
 
 /**
  * Class Gallery
+ *
  * @package IronBound\DB\Tests\Stub\Models
  *
  * @property int        $id
  * @property string     $title
  * @property string     $theme
  * @property Collection $art
+ * @property Collection $attendees
+ * @property Collection $comments
+ * @property Collection $terms
  */
 class Gallery extends Model {
 
@@ -35,6 +42,21 @@ class Gallery extends Model {
 	protected function _art_relation() {
 		/** @noinspection PhpParamsInspection */
 		return new ManyToManyPosts( $this, static::$_db_manager->get( 'galleries-posts' ), 'art' );
+	}
+
+	protected function _attendees_relation() {
+		/** @noinspection PhpParamsInspection */
+		return new ManyToManyUsers( $this, static::$_db_manager->get( 'galleries-users' ), 'attendees' );
+	}
+
+	protected function _comments_relation() {
+		/** @noinspection PhpParamsInspection */
+		return new ManyToManyComments( $this, static::$_db_manager->get( 'galleries-comments' ), 'comments' );
+	}
+
+	protected function _terms_relation() {
+		/** @noinspection PhpParamsInspection */
+		return new ManyToManyTerms( $this, static::$_db_manager->get( 'galleries-terms' ), 'terms' );
 	}
 
 	/**

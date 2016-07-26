@@ -12,8 +12,11 @@ namespace IronBound\DB\Tests\Relations;
 
 use IronBound\DB\Manager;
 use IronBound\DB\Model;
+use IronBound\DB\Table\Association\CommentAssociationTable;
 use IronBound\DB\Table\Association\ModelAssociationTable;
 use IronBound\DB\Table\Association\PostAssociationTable;
+use IronBound\DB\Table\Association\TermAssociationTable;
+use IronBound\DB\Table\Association\UserAssociationTable;
 use IronBound\DB\Tests\Stub\Models\Actor;
 use IronBound\DB\Tests\Stub\Models\Gallery;
 use IronBound\DB\Tests\Stub\Models\Movie;
@@ -24,6 +27,7 @@ use IronBound\WPEvents\EventDispatcher;
 
 /**
  * Class Test_ManyToMany
+ *
  * @package IronBound\DB\Tests\Relations
  */
 class Test_ManyToMany extends \WP_UnitTestCase {
@@ -40,10 +44,14 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 
 		Manager::register( new Galleries() );
 		Manager::register( new PostAssociationTable( new Galleries() ) );
+		Manager::register( new UserAssociationTable( new Galleries() ) );
+		Manager::register( new CommentAssociationTable( new Galleries() ) );
+		Manager::register( new TermAssociationTable( new Galleries() ) );
 		Manager::maybe_install_table( Manager::get( 'galleries' ) );
 		Manager::maybe_install_table( Manager::get( 'galleries-posts' ) );
-
-		Model::set_event_dispatcher( new EventDispatcher() );
+		Manager::maybe_install_table( Manager::get( 'galleries-users' ) );
+		Manager::maybe_install_table( Manager::get( 'galleries-comments' ) );
+		Manager::maybe_install_table( Manager::get( 'galleries-terms' ) );
 	}
 
 	public function test_many_to_many_adding() {
@@ -597,5 +605,140 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 
 		$this->assertEquals( 'Piece 1', get_post( $art->ID )->post_title );
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries, 'Post caches not updated during eager-load.' );
+	}
+
+	public function test_many_to_many_users() {
+
+		$gallery = Gallery::create( array(
+			'title' => 'Pablo Picasso'
+		) );
+
+		$gallery->attendees->add(
+			new \WP_User( (object) array(
+				'ID'         => 0,
+				'user_login' => 'User 1'
+			) )
+		);
+
+		$gallery->attendees->add(
+			new \WP_User( (object) array(
+				'ID'         => 0,
+				'user_login' => 'User 2'
+			) )
+		);
+
+		$gallery->attendees->add( self::factory()->user->create_and_get( array( 'user_login' => 'User 3' ) ) );
+
+		$gallery->save();
+
+		$gallery = Gallery::get( $gallery->get_pk() );
+
+		$this->assertEquals( 3, $gallery->attendees->count() );
+
+		$found = 0;
+
+		foreach ( $gallery->attendees as $user ) {
+			if ( in_array( $user->user_login, array( 'User 1', 'User 2', 'User 3' ) ) ) {
+				$found ++;
+			}
+
+			$this->assertNotEmpty( $user->ID, 'User ID not saved.' );
+		}
+
+		$this->assertEquals( 3, $found, 'Incorrect logins.' );
+	}
+
+	public function test_many_to_many_comments() {
+
+		$gallery = Gallery::create( array(
+			'title' => 'Pablo Picasso'
+		) );
+
+		$gallery->comments->add(
+			new \WP_Comment( (object) array(
+				'comment_content' => 'Comment 1',
+				'comment_post_ID' => self::factory()->post->create()
+			) )
+		);
+
+		$gallery->comments->add(
+			new \WP_Comment( (object) array(
+				'comment_content' => 'Comment 2',
+				'comment_post_ID' => self::factory()->post->create()
+			) )
+		);
+
+		$gallery->comments->add( self::factory()->comment->create_and_get( array(
+			'comment_content' => 'Comment 3',
+			'comment_post_ID' => self::factory()->post->create()
+		) ) );
+
+		$gallery->save();
+
+		$gallery = Gallery::get( $gallery->get_pk() );
+
+		$this->assertEquals( 3, $gallery->comments->count() );
+
+		$found = 0;
+
+		foreach ( $gallery->comments as $comment ) {
+			if ( in_array( $comment->comment_content, array( 'Comment 1', 'Comment 2', 'Comment 3' ) ) ) {
+				$found ++;
+			}
+
+			$this->assertNotEmpty( $comment->comment_ID, 'Comment ID not saved.' );
+		}
+
+		$this->assertEquals( 3, $found, 'Incorrect comments.' );
+	}
+
+	public function test_many_to_many_terms() {
+
+		$gallery = Gallery::create( array(
+			'title' => 'Pablo Picasso'
+		) );
+
+		$gallery->terms->add(
+			new \WP_Term( (object) array(
+				'name'        => 'Term 1',
+				'description' => 'Description 1',
+				'taxonomy'    => \WP_UnitTest_Factory_For_Term::DEFAULT_TAXONOMY
+			) )
+		);
+
+		$gallery->terms->add(
+			new \WP_Term( (object) array(
+				'name'        => 'Term 2',
+				'description' => 'Description 2',
+				'taxonomy'    => \WP_UnitTest_Factory_For_Term::DEFAULT_TAXONOMY
+			) )
+		);
+
+		$gallery->terms->add( self::factory()->term->create_and_get( array(
+			'name'        => 'Term 3',
+			'description' => 'Description 3'
+		) ) );
+
+		$gallery->save();
+
+		$gallery = Gallery::get( $gallery->get_pk() );
+
+		$this->assertEquals( 3, $gallery->terms->count() );
+
+		$found = 0;
+
+		foreach ( $gallery->terms as $term ) {
+			if ( in_array( $term->name, array( 'Term 1', 'Term 2', 'Term 3' ) ) ) {
+				$found ++;
+			}
+
+			if ( in_array( $term->description, array( 'Description 1', 'Description 2', 'Description 3' ) ) ) {
+				$found ++;
+			}
+
+			$this->assertNotEmpty( $term->term_id, 'Term ID not saved.' );
+		}
+
+		$this->assertEquals( 6, $found, 'Incorrect logins.' );
 	}
 }
