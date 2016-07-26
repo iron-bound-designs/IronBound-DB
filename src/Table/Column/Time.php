@@ -121,7 +121,7 @@ class Time extends BaseColumn {
 			}
 		} elseif ( $value instanceof \DateInterval ) {
 
-			if ( $value->days ) {
+			if ( $value->days && $value->days !== -99999 ) {
 				$hours = 24 * $value->days;
 				$hours += $value->h;
 			} else {
@@ -175,6 +175,5 @@ class Time extends BaseColumn {
 		}
 
 		return $mysql;
-
 	}
 }
