@@ -23,7 +23,7 @@ class Test_Collection extends \WP_UnitTestCase {
 	/**
 	 * @var Collection
 	 */
-	protected $collection;
+	public $collection;
 
 	function setUp() {
 
