@@ -65,7 +65,7 @@ class Test_CommentSaver extends \WP_UnitTestCase {
 
 	public function test_save_update() {
 
-		$object   = $this->factory()->comment->create_and_get();
+		$object   = $this->factory()->comment->create_and_get( array( 'comment_post_ID' => 1 ) );
 		$modified = get_comment( $object->comment_ID );
 
 		$modified->comment_content = 'New Comment Content';
