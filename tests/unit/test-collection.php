@@ -27,6 +27,8 @@ class Test_Collection extends \WP_UnitTestCase {
 
 	function setUp() {
 
+		parent::setUp();
+
 		$saver = $this->getMockBuilder( '\IronBound\DB\Saver\Saver' )
 		              ->setMethods( array( 'get_pk', 'save' ) )
 		              ->getMockForAbstractClass();
