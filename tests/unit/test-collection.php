@@ -442,10 +442,6 @@ class Test_Collection extends \WP_UnitTestCase {
 		$this->assertEquals( array( $m2, $m1 ), $this->collection->get_removed()->getValues() );
 	}
 
-	/**
-	 * @depends test_added
-	 * @depends test_removed
-	 */
 	public function test_clear_memory() {
 
 		$m1 = (object) array( 'pk' => 1, 'name' => 'John' );
@@ -462,10 +458,6 @@ class Test_Collection extends \WP_UnitTestCase {
 		$this->assertEquals( 0, $this->collection->get_removed()->count() );
 	}
 
-	/**
-	 * @depends test_added
-	 * @depends test_removed
-	 */
 	public function test_dont_remember() {
 
 		$self = $this;
