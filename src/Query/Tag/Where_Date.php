@@ -12,6 +12,7 @@ namespace IronBound\DB\Query\Tag;
 
 /**
  * Class Where_Date
+ *
  * @package IronBound\DB\Query\Tag
  */
 class Where_Date extends Where_Raw {
@@ -33,9 +34,8 @@ class Where_Date extends Where_Raw {
 
 		$sql = $this->date_query->get_sql();
 
-		$prefix = ' AND ( ';
-		$sql    = substr( $sql, strlen( $prefix ) );
-		$sql    = substr( $sql, 0, - 1 );
+		$sql = preg_replace( '/^\s+AND\s+\(\s+/', '', $sql );
+		$sql = preg_replace( '/\s*\)\s*$/', '', $sql );
 
 		parent::__construct( $sql );
 	}

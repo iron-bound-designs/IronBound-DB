@@ -295,7 +295,7 @@ class Collection implements DoctrineCollection, Selectable {
 	 * @inheritDoc
 	 */
 	public function isEmpty() {
-		return ! empty( $this->elements );
+		return $this->count() === 0;
 	}
 
 	/**
@@ -460,6 +460,8 @@ class Collection implements DoctrineCollection, Selectable {
 
 	/**
 	 * @inheritDoc
+	 *
+	 * @return static
 	 */
 	public function filter( Closure $p ) {
 		return new static( array_filter( $this->elements, $p ), $this->keep_memory, $this->saver );
@@ -480,6 +482,8 @@ class Collection implements DoctrineCollection, Selectable {
 
 	/**
 	 * @inheritDoc
+	 *
+	 * @return static
 	 */
 	public function map( Closure $func ) {
 		return new static( array_map( $func, $this->elements ), $this->keep_memory, $this->saver );
@@ -487,6 +491,8 @@ class Collection implements DoctrineCollection, Selectable {
 
 	/**
 	 * @inheritDoc
+	 *
+	 * @return static[]
 	 */
 	public function partition( Closure $p ) {
 		$matches = $noMatches = array();

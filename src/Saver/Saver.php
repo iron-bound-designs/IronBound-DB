@@ -12,7 +12,7 @@ namespace IronBound\DB\Saver;
 
 /**
  * Class SavableValue
- * @package IronBound\DB\Value
+ * @package IronBound\DB\Saver
  */
 abstract class Saver {
 

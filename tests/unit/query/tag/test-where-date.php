@@ -14,6 +14,7 @@ use IronBound\DB\Query\Tag\Where_Date;
 
 /**
  * Class Test_Where_Date
+ *
  * @package IronBound\DB\Query\Tag\Tests
  */
 class Test_Where_Date extends \WP_UnitTestCase {
@@ -27,6 +28,6 @@ class Test_Where_Date extends \WP_UnitTestCase {
 		$tag = new Where_Date( $date_query );
 
 		// this is a bit fragile because we are relying on the spacing from WordPress
-		$this->assertEquals( "WHERE \n  YEAR( table.column ) = 2016", trim( (string) $tag ) );
+		$this->assertEquals( "WHERE YEAR( table.column ) = 2016", trim( (string) $tag ) );
 	}
 }

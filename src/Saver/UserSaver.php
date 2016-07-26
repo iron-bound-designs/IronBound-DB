@@ -12,6 +12,7 @@ namespace IronBound\DB\Saver;
 
 /**
  * Class UserSaver
+ *
  * @package IronBound\DB\Value
  */
 class UserSaver extends Saver {
@@ -113,6 +114,11 @@ class UserSaver extends Saver {
 	protected function do_save( \WP_User $user ) {
 
 		if ( ! $user->exists() ) {
+
+			if ( empty( $user->user_pass ) ) {
+				$user->user_pass = wp_generate_password( 24 );
+			}
+
 			$id = wp_insert_user( wp_slash( $user->to_array() ) );
 		} else {
 			$id = wp_update_user( wp_slash( $user->to_array() ) );

@@ -282,6 +282,10 @@ class FluentQuery {
 	 */
 	public function where( $column, $equality = '', $value = '', Closure $callback = null, $boolean = null ) {
 
+		if ( $equality ) {
+			$this->assert_comparator( $equality );
+		}
+
 		if ( is_array( $column ) ) {
 
 			foreach ( $column as $col => $val ) {
@@ -457,7 +461,7 @@ class FluentQuery {
 		$this->meta_join = $sql['join'];
 
 		$where = $sql['where'];
-		$where = substr( $where, 5 );
+		$where = preg_replace( '/^\sAND\s/', '', $where );
 
 		if ( $this->where ) {
 			$this->where->qAnd( new Where_Raw( $where ) );
@@ -525,7 +529,7 @@ class FluentQuery {
 	 * @param Table       $table
 	 * @param string      $this_column
 	 * @param string      $other_column
-	 * @param bool|string $operator
+	 * @param bool|string $comparator
 	 * @param callable    $callback Called with a FluentQuery object. Can be used to build additional where queries
 	 *                              for the Join clause.
 	 * @param string      $type     Join type. Defaults to 'INNER'.
@@ -533,9 +537,11 @@ class FluentQuery {
 	 * @return $this
 	 * @throws InvalidColumnException
 	 */
-	public function join( Table $table, $this_column, $other_column, $operator = '=', $callback = null, $type = 'INNER' ) {
+	public function join( Table $table, $this_column, $other_column, $comparator = '=', $callback = null, $type = 'INNER' ) {
 
-		$other_alias = 't' . ( $this->alias_count + 1 );
+		$this->assert_comparator( $comparator );
+
+		$other_alias = 't' . ( ++ $this->alias_count );
 
 		$other_query              = new FluentQuery( $table, $this->wpdb );
 		$other_query->alias       = $other_alias;
@@ -544,7 +550,7 @@ class FluentQuery {
 		$from = new From( $table->get_table_name( $this->wpdb ), $other_alias );
 
 		$where = new Where_Raw(
-			"{$this->prepare_column( $this_column )} $operator {$other_query->prepare_column( $other_column )}"
+			"{$this->prepare_column( $this_column )} $comparator {$other_query->prepare_column( $other_column )}"
 		);
 
 		if ( $callback ) {
@@ -778,6 +784,8 @@ class FluentQuery {
 			$this->select->all( $this->alias );
 		}
 
+		$this->select->calc_found_rows( $this->calc_found_rows );
+
 		$builder->append( $this->select );
 		$builder->append( $this->from );
 
@@ -834,7 +842,7 @@ class FluentQuery {
 		}
 
 		$this->make_limit_tag();
-		$this->sql = $sql = $this->build_sql();
+		$this->sql = $sql = trim( $this->build_sql() );
 
 		$results = $this->wpdb->get_results( $sql, ARRAY_A );
 
@@ -1131,6 +1139,51 @@ class FluentQuery {
 	 */
 	public function _get_sql() {
 		return $this->sql;
+	}
+
+	/**
+	 * Assert the operator is valid.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string|bool $operator
+	 *
+	 * @throws \InvalidArgumentException
+	 */
+	protected function assert_comparator( $operator ) {
+		if ( is_bool( $operator ) ) {
+			return;
+		}
+
+		if ( in_array( $operator, array(
+			'=',
+			'!=',
+			'>',
+			'<',
+			'>=',
+			'<=',
+			'<=>',
+			'<>',
+			'LIKE',
+			'BETWEEN',
+			'COALESCE',
+			'GREATEST',
+			'IN',
+			'INTERVAL',
+			'IS',
+			'IS NOT',
+			'IS NOT NULL',
+			'IS NULL',
+			'ISNULL',
+			'LEAST',
+			'NOT BETWEEN',
+			'NOT IN',
+			'NOT LIKE'
+		), true ) ) {
+			return;
+		}
+
+		throw new \InvalidArgumentException( sprintf( 'Invalid SQL operator % s . ', $operator ) );
 	}
 
 	/**

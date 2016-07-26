@@ -10,8 +10,6 @@
 
 namespace IronBound\DB\Query;
 
-use IronBound\DB\Model;
-
 /**
  * Interface Scope
  *
