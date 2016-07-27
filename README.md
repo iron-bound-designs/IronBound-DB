@@ -9,7 +9,7 @@ IronBound DB is a straightforward, but powerful, ORM for WordPress. It facilitat
 Installs with composer.
 
 ````
-composer require ironbound/db
+composer require ironbound/db v2.0.0-beta
 ````
 
 ## Basic Usage
@@ -228,4 +228,4 @@ class Authors extends \IronBound\DB\Table\BaseTable implements \IronBound\DB\Tab
 }
 ```
 
-[Read about how to use it](https://ironbounddesigns.com/custom-tables-wordpress/).
+[Learn more about it](https://timothybjacobs.com/2016/07/27/ironbound-db-v2/).
