@@ -74,6 +74,17 @@ abstract class Model implements Cacheable, \Serializable {
 	protected static $_eager_load = array();
 
 	/**
+	 * Whether to cache this Model's attributes in `WP_Object_Cache`.
+	 *
+	 * It is recommended to keep this true for most use-cases.
+	 *
+	 * To disable it, add `protected static $_cache = false;` to your Model subclass.
+	 *
+	 * @var bool
+	 */
+	protected static $_cache = true;
+
+	/**
 	 * Cache of all relation attribute names.
 	 *
 	 * @var array
@@ -763,7 +774,7 @@ abstract class Model implements Cacheable, \Serializable {
 			$object->set_raw_attributes( (array) $data, true );
 			$object->_exists = true;
 
-			if ( ! static::is_data_cached( $pk ) ) {
+			if ( static::$_cache && ! static::is_data_cached( $pk ) ) {
 				Cache::update( $object );
 			}
 
@@ -794,7 +805,7 @@ abstract class Model implements Cacheable, \Serializable {
 		$instance->set_raw_attributes( $attributes, true );
 		$instance->_exists = (bool) $instance->get_pk();
 
-		if ( ! static::is_data_cached( $instance->get_pk() ) ) {
+		if ( static::$_cache && ! static::is_data_cached( $instance->get_pk() ) ) {
 			Cache::update( $instance );
 		}
 
@@ -812,7 +823,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 */
 	protected static function get_data_from_pk( $pk ) {
 
-		$data = Cache::get( $pk, static::get_cache_group() );
+		$data = static::$_cache ? Cache::get( $pk, static::get_cache_group() ) : null;
 
 		if ( ! $data ) {
 			$data = static::make_query_object()->get( $pk );
@@ -831,6 +842,10 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return bool
 	 */
 	protected static function is_data_cached( $pk ) {
+
+		if ( ! static::$_cache ) {
+			return false;
+		}
 
 		$data = Cache::get( $pk, static::get_cache_group() );
 
@@ -873,7 +888,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$res = static::make_query_object()->update( $this->get_pk(), $data );
 
-		if ( $res ) {
+		if ( $res && static::$_cache ) {
 			Cache::update( $this );
 		}
 
@@ -1040,7 +1055,9 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$this->_exists = true;
 
-		Cache::update( $this );
+		if ( static::$_cache ) {
+			Cache::update( $this );
+		}
 
 		$this->fire_model_event( 'created' );
 
@@ -1091,7 +1108,10 @@ abstract class Model implements Cacheable, \Serializable {
 		$result = static::make_query_object()->update( $this->get_pk(), $update );
 
 		if ( $result ) {
-			Cache::update( $this );
+
+			if ( static::$_cache ) {
+				Cache::update( $this );
+			}
 
 			$this->fire_model_event( 'updated', array(
 				'changed' => $dirty,
@@ -1139,7 +1159,9 @@ abstract class Model implements Cacheable, \Serializable {
 
 		static::make_query_object()->delete( $this->get_pk() );
 
-		Cache::delete( $this );
+		if ( static::$_cache ) {
+			Cache::delete( $this );
+		}
 
 		$this->_exists = false;
 
