@@ -51,6 +51,10 @@ after_success:
 git:
   depth: 3
 
+branches:
+  only:
+  - master
+
 notifications:
   slack:
     rooms:
