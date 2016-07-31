@@ -288,6 +288,8 @@ abstract class Model implements Cacheable, \Serializable {
 	 *                          `DateTime` object instead of a 'Y-m-d H:i:s' string.
 	 *
 	 * @return $this
+	 *
+	 * @throws \OutOfBoundsException If the requested attribute does not exist.
 	 */
 	public function set_attribute( $attribute, $value ) {
 
@@ -547,6 +549,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return Relation
 	 *
 	 * @throws \OutOfBoundsException If no relation exists by the given name.
+	 * @throws \UnexpectedValueException If relation method returns an invalid value.
 	 */
 	public function get_relation( $attribute ) {
 
@@ -1322,6 +1325,8 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @param Scope|string $scope_or_identifier Either a Scope object or an identifier for an accompanying closure.
 	 * @param Closure|null $closure             When not using a Scope object, an implementation for the scope.
+	 *
+	 * @throws \InvalidArgumentException
 	 */
 	public static function register_global_scope( $scope_or_identifier, Closure $closure = null ) {
 
