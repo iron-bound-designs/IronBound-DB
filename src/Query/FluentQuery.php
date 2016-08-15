@@ -40,110 +40,74 @@ use IronBound\DB\Table\Table;
  */
 class FluentQuery {
 
-	/**
-	 * @var \wpdb
-	 */
+	/** @var \wpdb */
 	protected $wpdb;
 
-	/**
-	 * @var Table
-	 */
+	/** @var Table */
 	protected $table;
 
-	/**
-	 * @var string
-	 */
+	/** @var string */
 	protected $model;
 
-	/**
-	 * @var Select
-	 */
+	/** @var Select */
 	protected $select;
 
-	/**
-	 * @var From
-	 */
+	/** @var From */
 	protected $from;
 
-	/**
-	 * @var Join[]
-	 */
+	/** @var Join[] */
 	protected $joins = array();
 
-	/**
-	 * @var Where
-	 */
+	/** @var Where */
 	protected $where;
 
-	/**
-	 * @var Order
-	 */
+	/** @var Order */
 	protected $order;
 
-	/**
-	 * @var Group
-	 */
+	/** @var Group */
 	protected $group;
 
-	/**
-	 * @var Limit
-	 */
+	/** @var Limit */
 	protected $limit;
 
-	/**
-	 * @var Having
-	 */
+	/** @var Having */
 	protected $having;
 
-	/**
-	 * @var string
-	 */
+	/** @var string */
 	protected $meta_join;
 
-	/**
-	 * @var string
-	 */
+	/**@var string */
 	protected $meta_type;
 
-	/**
-	 * @var MetaTable
-	 */
+	/** @var MetaTable */
 	protected $meta_table;
 
-	/**
-	 * @var string
-	 */
+	/** @var string */
 	protected $alias = 't1';
 
-	/**
-	 * @var int
-	 */
+	/** @var int */
 	protected $alias_count = 1;
 
-	/**
-	 * @var int
-	 */
+	/** @var int */
 	protected $count;
 
-	/**
-	 * @var int
-	 */
+	/** @var int */
 	protected $offset;
 
-	/**
-	 * @var bool
-	 */
+	/** @var bool */
 	protected $calc_found_rows = false;
 
-	/**
-	 * @var bool
-	 */
+	/** @var bool */
 	protected $prime_meta_cache = true;
 
-	/**
-	 * @var string
-	 */
+	/** @var string */
 	protected $sql;
+
+	/** @var Collection|ArrayCollection */
+	protected $results;
+
+	/** @var int|null */
+	protected $total;
 
 	/**
 	 * Map of relation attribute name to callback.
@@ -151,16 +115,6 @@ class FluentQuery {
 	 * @var array
 	 */
 	protected $relations = array();
-
-	/**
-	 * @var Collection|ArrayCollection
-	 */
-	protected $results;
-
-	/**
-	 * @var int|null
-	 */
-	protected $total;
 
 	/**
 	 * FluentQuery constructor.
@@ -483,10 +437,12 @@ class FluentQuery {
 	 * @param string $direction
 	 *
 	 * @return $this
+	 *
+	 * @throws \IronBound\DB\Exception\InvalidColumnException
 	 */
 	public function order_by( $column, $direction = null ) {
 
-		$column = "{$this->alias}.{$column}";
+		$column = $this->prepare_column( $column );
 
 		if ( is_null( $this->order ) ) {
 			$this->order = new Order( $column, $direction );
@@ -507,10 +463,12 @@ class FluentQuery {
 	 * @param string $column
 	 *
 	 * @return $this
+	 *
+	 * @throws \IronBound\DB\Exception\InvalidColumnException
 	 */
 	public function group_by( $column ) {
 
-		$column = "{$this->alias}.{$column}";
+		$column = $this->prepare_column( $column );
 
 		if ( is_null( $this->group ) ) {
 			$this->group = new Group( $column );
@@ -890,6 +848,23 @@ class FluentQuery {
 		}
 
 		return $collection;
+	}
+
+	/**
+	 * Retrieve the total number of records matching the result set using SQL_CALC_FOUND_ROWS().
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return int
+	 *
+	 * @throws \UnexpectedValueException Thrown if found rows calculation was not set.
+	 */
+	public function total() {
+		if ( $this->total === null ) {
+			throw new \UnexpectedValueException( 'FluentQuery not performed with SQL_CALC_FOUND_ROWS() flag enabled.' );
+		} else {
+			return $this->total;
+		}
 	}
 
 	/**

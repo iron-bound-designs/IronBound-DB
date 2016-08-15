@@ -826,7 +826,8 @@ abstract class Model implements Cacheable, \Serializable {
 		$data = static::$_cache ? Cache::get( $pk, static::get_cache_group() ) : null;
 
 		if ( ! $data ) {
-			$data = static::make_query_object()->get( $pk );
+			$query = new FluentQuery( static::table() );
+			$data  = $query->where( static::table()->get_primary_key(), '=', $pk )->first();
 		}
 
 		return $data ? (object) $data : null;
@@ -1044,9 +1045,9 @@ abstract class Model implements Cacheable, \Serializable {
 
 		if ( $default_columns_to_fill ) {
 
-			$default_values = (array) static::make_query_object()->get(
-				$this->get_pk(), $default_columns_to_fill
-			);
+			$query          = new FluentQuery( static::table() );
+			$default_values = $query->where( static::table()->get_primary_key(), '=', $this->get_pk() )
+			                        ->select( $default_columns_to_fill )->first();
 
 			foreach ( $default_values as $column => $value ) {
 				$this->set_raw_attribute( $column, $value );
