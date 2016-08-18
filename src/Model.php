@@ -1537,7 +1537,11 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return bool
 	 */
 	public function __isset( $name ) {
-		return $this->get_attribute( $name ) !== null;
+		try {
+			return $this->get_attribute( $name ) !== null;
+		} catch ( \OutOfBoundsException $e ) {
+			return false;
+		}
 	}
 
 	/**
