@@ -31,7 +31,7 @@ class Test_Fluent_Query extends \WP_UnitTestCase {
 		parent::setUp();
 
 		Manager::register( new Authors() );
-		Manager::register( new Books(), '', get_class( new Book() ) );
+		Manager::register( new Books(), '', '\IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::register( new BaseMetaTable( new Books() ) );
 		
 		Manager::maybe_install_table( Manager::get( 'authors' ) );

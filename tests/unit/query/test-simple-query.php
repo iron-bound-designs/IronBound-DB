@@ -34,7 +34,7 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'column' => new StringBased( 'VARCHAR', 'column' )
 		) );
 
-		$sql = "SELECT * FROM wp_table WHERE ID = '1'";
+		$sql = "SELECT * FROM wp_table WHERE `ID` = '1'";
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'get_row' )->with( $sql );
@@ -55,7 +55,7 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'column' => new StringBased( 'VARCHAR', 'column' )
 		) );
 
-		$sql = "SELECT * FROM wp_table WHERE column = 'value'";
+		$sql = "SELECT * FROM wp_table WHERE `column` = 'value'";
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'get_row' )->with( $sql );
@@ -76,7 +76,7 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'column' => new StringBased( 'VARCHAR', 'column' )
 		) );
 
-		$sql = "SELECT ID FROM wp_table WHERE column = 'value'";
+		$sql = "SELECT `ID` FROM wp_table WHERE `column` = 'value'";
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'get_row' )->with( $sql );
@@ -98,7 +98,7 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'colB' => new StringBased( 'VARCHAR', 'colB' )
 		) );
 
-		$sql = "SELECT ID, colA FROM wp_table WHERE colB = 'value'";
+		$sql = "SELECT `ID`, `colA` FROM wp_table WHERE `colB` = 'value'";
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'get_row' )->with( $sql );
@@ -163,7 +163,7 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'column' => new StringBased( 'VARCHAR', 'column' )
 		) );
 
-		$sql = "SELECT column FROM wp_table WHERE ID = '1'";
+		$sql = "SELECT `column` FROM wp_table WHERE `ID` = '1'";
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'get_var' )->with( $sql );
@@ -185,7 +185,7 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'colB' => new StringBased( 'VARCHAR', 'colB' )
 		) );
 
-		$sql = "SELECT colA FROM wp_table WHERE colB = 'value'";
+		$sql = "SELECT `colA` FROM wp_table WHERE `colB` = 'value'";
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'get_var' )->with( $sql );
@@ -250,7 +250,7 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 			'colB' => new StringBased( 'VARCHAR', 'colB' )
 		) );
 
-		$sql = "SELECT COUNT(*) FROM wp_table WHERE colA = 'bob' AND (colB = 'sally')";
+		$sql = "SELECT COUNT(*) FROM wp_table WHERE `colA` = 'bob' AND (`colB` = 'sally')";
 
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'get_var' )->with( $sql );

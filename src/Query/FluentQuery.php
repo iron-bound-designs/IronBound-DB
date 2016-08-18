@@ -1179,7 +1179,7 @@ class FluentQuery {
 			throw new InvalidColumnException( "Invalid database column '$column'." );
 		}
 
-		return "{$this->alias}.{$column}";
+		return "{$this->alias}.`{$column}`";
 	}
 
 	/**

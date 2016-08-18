@@ -45,7 +45,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_select_variadic() {
 
-		$sql = 'SELECT t1.ID, t1.post_author FROM wp_posts t1';
+		$sql = 'SELECT t1.`ID`, t1.`post_author` FROM wp_posts t1';
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->select( 'ID', 'post_author' );
@@ -63,7 +63,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_select_also() {
 
-		$sql = 'SELECT t1.ID, t1.post_author FROM wp_posts t1';
+		$sql = 'SELECT t1.`ID`, t1.`post_author` FROM wp_posts t1';
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->select( 'ID' );
@@ -90,7 +90,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_distinct() {
 
-		$sql = 'SELECT DISTINCT t1.ID, t1.post_author FROM wp_posts t1';
+		$sql = 'SELECT DISTINCT t1.`ID`, t1.`post_author` FROM wp_posts t1';
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->select( 'ID', 'post_author' );
@@ -100,7 +100,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_where_simple() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.ID = '5'";
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`ID` = '5'";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->where( 'ID', true, 5 );
@@ -109,7 +109,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_where_multiple_columns_as_array() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.ID = '5' AND (t1.post_type = 'page')";
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`ID` = '5' AND (t1.`post_type` = 'page')";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->where( array( 'ID' => 5, 'post_type' => 'page' ) );
@@ -118,7 +118,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_where_array_in() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.post_type IN ('page', 'post')";
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`post_type` IN ('page', 'post')";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->where( 'post_type', '=', array( 'page', 'post' ) );
@@ -127,7 +127,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_where_array_not_in() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.post_type IN ('page', 'post')";
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`post_type` IN ('page', 'post')";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->where( 'post_type', '!=', array( 'page', 'post' ) );
@@ -136,7 +136,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_where_different_operator() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.ID > '5'";
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`ID` > '5'";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->where( 'ID', '>', 5 );
@@ -145,7 +145,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_where_nested() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.ID = '5' OR (t1.post_type = 'page')";
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`ID` = '5' OR (t1.`post_type` = 'page')";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->where( 'ID', '=', 5, function ( FluentQuery $query ) {
@@ -165,7 +165,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_order_by_asc() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 ORDER BY t1.post_date ASC";
+		$sql = "SELECT t1.* FROM wp_posts t1 ORDER BY t1.`post_date` ASC";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->order_by( 'post_date', Order::ASC );
@@ -174,7 +174,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_order_by_desc() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 ORDER BY t1.post_date DESC";
+		$sql = "SELECT t1.* FROM wp_posts t1 ORDER BY t1.`post_date` DESC";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->order_by( 'post_date', Order::DESC );
@@ -183,7 +183,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_order_by_multiple() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 ORDER BY t1.post_date DESC, t1.post_title ASC";
+		$sql = "SELECT t1.* FROM wp_posts t1 ORDER BY t1.`post_date` DESC, t1.`post_title` ASC";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->order_by( 'post_date', Order::DESC );
@@ -193,7 +193,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_group_by() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 GROUP BY t1.post_date";
+		$sql = "SELECT t1.* FROM wp_posts t1 GROUP BY t1.`post_date`";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->group_by( 'post_date' );
@@ -202,7 +202,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 	public function test_group_by_multiple() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 GROUP BY t1.post_date, t1.post_title";
+		$sql = "SELECT t1.* FROM wp_posts t1 GROUP BY t1.`post_date`, t1.`post_title`";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->group_by( 'post_date' );
@@ -241,8 +241,8 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 	public function test_multiple_joins() {
 
 		// This is a nonsensical query, but I just want to make sure that more than one join works.
-		$expected = 'SELECT t1.* FROM wp_posts t1 JOIN wp_users t2 ON (t1.post_author = t2.ID AND (t2.user_url != \'\')) ' .
-		            'LEFT JOIN wp_comments t3 ON (t1.post_date_gmt <= t3.comment_date_gmt)';
+		$expected = 'SELECT t1.* FROM wp_posts t1 JOIN wp_users t2 ON (t1.`post_author` = t2.`ID` AND (t2.`user_url` != \'\')) ' .
+		            'LEFT JOIN wp_comments t3 ON (t1.`post_date_gmt` <= t3.`comment_date_gmt`)';
 
 		$wpdb = $this->get_wpdb( $expected );
 

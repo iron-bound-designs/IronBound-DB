@@ -115,9 +115,9 @@ class Simple_Query {
 			throw new InvalidColumnException( "Invalid column." );
 		}
 
-		$builder->append( new Select( $column ) );
+		$builder->append( new Select( "`$column`" ) );
 		$builder->append( new From( $this->table->get_table_name( $this->wpdb ) ) );
-		$builder->append( new Where( $where, true, $this->escape_value( $where, $value ) ) );
+		$builder->append( new Where( "`$where`", true, $this->escape_value( $where, $value ) ) );
 
 		return $this->wpdb->get_var( trim( $builder->build() ) );
 	}
@@ -165,7 +165,7 @@ class Simple_Query {
 					throw new InvalidColumnException( "Invalid column." );
 				}
 
-				$select->also( $col );
+				$select->also( "`$col`" );
 			}
 		} elseif ( $columns == Select::ALL ) {
 			$select = new Select( $columns );
@@ -174,12 +174,12 @@ class Simple_Query {
 				throw new InvalidColumnException( "Invalid column" );
 			}
 
-			$select = new Select( $columns );
+			$select = new Select( "`$columns`" );
 		}
 
 		$builder->append( $select );
 		$builder->append( new From( $this->table->get_table_name( $this->wpdb ) ) );
-		$builder->append( new Where( $column, true, $this->escape_value( $column, $value ) ) );
+		$builder->append( new Where( "`$column`", true, $this->escape_value( $column, $value ) ) );
 
 		return $this->wpdb->{$method}( trim( $builder->build() ) );
 	}
@@ -207,9 +207,9 @@ class Simple_Query {
 
 			foreach ( $wheres as $column => $value ) {
 				if ( ! isset( $where ) ) {
-					$where = new Where( $column, true, $this->escape_value( $column, $value ) );
+					$where = new Where( "`$column`", true, $this->escape_value( $column, $value ) );
 				} else {
-					$where->qAnd( new Where( $column, true, $this->escape_value( $column, $value ) ) );
+					$where->qAnd( new Where( "`$column`", true, $this->escape_value( $column, $value ) ) );
 				}
 			}
 
