@@ -244,7 +244,7 @@ class Simple_Query {
 
 		foreach ( $data as $col => $val ) {
 
-			if ( $val == null ) {
+			if ( $val === null ) {
 				$null_columns[] = $col;
 			}
 		}

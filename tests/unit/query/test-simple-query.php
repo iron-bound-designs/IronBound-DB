@@ -280,7 +280,8 @@ class Test_Simple_Query extends \WP_UnitTestCase {
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->expects( $this->once() )->method( 'insert' )->with( 'wp_table', array(
 			'colA' => '5',
-			'colB' => 'bob'
+			'colB' => 'bob',
+			'ID'   => '',
 		) );
 
 		$simple_query = new Simple_Query( $wpdb, $table );
