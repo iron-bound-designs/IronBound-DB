@@ -107,16 +107,6 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 		$fq->results();
 	}
 
-	public function test_where_like() {
-
-		// This is actually match 2 backslashes
-		$sql = 'SELECT t1.* FROM wp_posts t1 WHERE t1.post_title LIKE \'Bob\\\%\'';
-
-		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
-		$fq->where( 'post_title', 'LIKE', 'Bob%' );
-		$fq->results();
-	}
-
 	public function test_where_multiple_columns_as_array() {
 
 		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.ID = '5' AND (t1.post_type = 'page')";

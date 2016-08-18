@@ -262,11 +262,6 @@ class FluentQuery {
 					return $self->escape_value( $column, $value );
 				}, $value );
 			} else {
-
-				if ( $equality === 'LIKE' || $equality === 'NOT LIKE' ) {
-					$value = $this->wpdb->esc_like( $value );
-				}
-
 				$value = $this->escape_value( $column, $value );
 			}
 
