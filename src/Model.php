@@ -175,7 +175,6 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$this->sync_original();
 		$this->fill( (array) $data );
-		$this->_exists = (bool) $this->get_pk();
 	}
 
 	/**
@@ -803,7 +802,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$instance = new static( new \stdClass() );
 		$instance->set_raw_attributes( $attributes, true );
-		$instance->_exists = (bool) $instance->get_pk();
+		$instance->_exists = true;
 
 		if ( static::$_cache && ! static::is_data_cached( $instance->get_pk() ) ) {
 			Cache::update( $instance );
