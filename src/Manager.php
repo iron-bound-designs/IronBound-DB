@@ -179,8 +179,10 @@ final class Manager {
 		}
 
 		if ( $installed === 0 ) {
-			$wpdb->query( $table->get_creation_sql( $wpdb ) );
-			static::fire_plugin_event( $table, 'installed' );
+			if ( ! static::is_installed( $table, $wpdb ) ) {
+				$wpdb->query( $table->get_creation_sql( $wpdb ) );
+				static::fire_plugin_event( $table, 'installed' );
+			}
 		} else {
 
 			$update = $installed + 1;
@@ -204,6 +206,22 @@ final class Manager {
 		update_option( $table->get_table_name( $wpdb ) . '_version', $table->get_version() );
 
 		return true;
+	}
+
+	/**
+	 * Check if a table is actually installed.
+	 *
+	 * @since 2.0
+	 *
+	 * @param \IronBound\DB\Table\Table $table
+	 * @param \wpdb                     $wpdb
+	 *
+	 * @return bool
+	 */
+	protected static function is_installed( Table $table, \wpdb $wpdb ) {
+		$wpdb->query( "SHOW TABLES LIKE '{$table->get_table_name($wpdb)}'" );
+
+		return (bool) $wpdb->num_rows;
 	}
 
 	/**
