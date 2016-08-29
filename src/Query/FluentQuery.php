@@ -116,6 +116,9 @@ class FluentQuery {
 	 */
 	protected $relations = array();
 
+	/** @var bool */
+	private $has_expressions = false;
+
 	/**
 	 * FluentQuery constructor.
 	 *
@@ -203,6 +206,25 @@ class FluentQuery {
 	public function select_all( $local_only = true ) {
 
 		$this->select->all( $local_only ? $this->alias : null );
+
+		return $this;
+	}
+
+	/**
+	 * Select an expression, such as 'COUNT'.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $function
+	 * @param string $column
+	 * @param string $as
+	 *
+	 * @return $this
+	 */
+	public function expression( $function, $column, $as ) {
+		$this->select->expression( $function, $this->prepare_column( $column ), $as );
+
+		$this->has_expressions = true;
 
 		return $this;
 	}
@@ -804,9 +826,13 @@ class FluentQuery {
 
 		$results = $this->wpdb->get_results( $sql, ARRAY_A );
 
-		if ( ! $saver ) {
+		if ( ! $saver || $this->has_expressions ) {
 
-			$collection = new ArrayCollection( $results );
+			if ( $this->has_expressions ) {
+				$collection = new ArrayCollection( reset( $results ) );
+			} else {
+				$collection = new ArrayCollection( $results );
+			}
 
 			$this->results = $collection;
 
