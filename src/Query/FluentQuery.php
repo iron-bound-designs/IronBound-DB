@@ -850,7 +850,7 @@ class FluentQuery {
 			}
 		}
 
-		if ( ! empty( $this->relations ) ) {
+		if ( ! empty( $this->relations ) && ! empty( $models ) ) {
 			$this->handle_eager_loading( $models );
 		}
 
