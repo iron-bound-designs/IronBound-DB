@@ -826,6 +826,17 @@ class FluentQuery {
 
 		$results = $this->wpdb->get_results( $sql, ARRAY_A );
 
+		if ( $this->calc_found_rows ) {
+
+			$count_results = $this->wpdb->get_results( "SELECT FOUND_ROWS() AS COUNT" );
+
+			if ( empty( $count_results ) || empty( $count_results[0] ) ) {
+				$this->total = 0;
+			} else {
+				$this->total = $count_results[0]->COUNT;
+			}
+		}
+
 		if ( ! $saver || $this->has_expressions ) {
 
 			if ( $this->has_expressions ) {
@@ -857,17 +868,6 @@ class FluentQuery {
 		$collection = new Collection( $models, false, $saver );
 
 		$this->results = $collection;
-
-		if ( $this->calc_found_rows ) {
-
-			$count_results = $this->wpdb->get_results( "SELECT FOUND_ROWS() AS COUNT" );
-
-			if ( empty( $count_results ) || empty( $count_results[0] ) ) {
-				$this->total = 0;
-			} else {
-				$this->total = $count_results[0]->COUNT;
-			}
-		}
 
 		if ( $this->prime_meta_cache && ( $this->meta_table || ( $this->model && method_exists( $this->model, 'get_meta_table' ) ) ) ) {
 			$this->update_meta_cache();

@@ -34,9 +34,18 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 	 * @return \wpdb
 	 */
 	protected function get_wpdb( $expected ) {
-		$wpdb = $this->getMockBuilder( '\wpdb' )->setMethods( array( 'get_results' ) )
-		             ->disableOriginalConstructor()->getMock();
-		$wpdb->method( 'get_results' )->with( $expected )->willReturn( array() );
+
+		$consecutive = array();
+
+		foreach ( func_get_args() as $arg ) {
+			$consecutive[] = array( $arg, $this->anything() );
+		}
+
+		$wpdb   = $this->getMockBuilder( '\wpdb' )->setMethods( array( 'get_results' ) )
+		               ->disableOriginalConstructor()->getMock();
+		$method = $wpdb->method( 'get_results' );
+		$method = call_user_func_array( array( $method, 'withConsecutive' ), $consecutive );
+		$method->willReturn( array() );
 
 		$wpdb->posts = 'wp_posts';
 
@@ -233,7 +242,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 
 		$sql = "SELECT SQL_CALC_FOUND_ROWS t1.* FROM wp_posts t1 LIMIT 10, 5";
 
-		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
+		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql, 'SELECT FOUND_ROWS() AS COUNT' ) );
 		$fq->paginate( 3, 5 );
 		$fq->results();
 	}
