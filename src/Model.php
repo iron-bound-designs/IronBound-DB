@@ -778,7 +778,9 @@ abstract class Model implements Cacheable, \Serializable {
 			}
 
 			foreach ( static::$_eager_load as $eager_load ) {
-				$object->get_relation( $eager_load )->eager_load( array( $object ), $eager_load );
+				if ( ! $object->is_relation_loaded( $eager_load ) ) {
+					$object->get_relation( $eager_load )->eager_load( array( $object ) );
+				}
 			}
 
 			return $object;
@@ -1538,7 +1540,8 @@ abstract class Model implements Cacheable, \Serializable {
 	public function __isset( $name ) {
 		try {
 			return $this->get_attribute( $name ) !== null;
-		} catch ( \OutOfBoundsException $e ) {
+		}
+		catch ( \OutOfBoundsException $e ) {
 			return false;
 		}
 	}
