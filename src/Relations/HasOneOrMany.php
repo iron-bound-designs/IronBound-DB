@@ -87,6 +87,11 @@ abstract class HasOneOrMany extends Relation {
 
 		$pks = array_keys( $models );
 		$pks = array_diff( $pks, array_keys( $cached ) );
+		$pks = array_filter( $pks );
+
+		if ( count( $pks ) === 0 ) {
+			return new Collection( array(), false, $this->saver );
+		}
 
 		$query->where( $this->foreign_key, true, $pks );
 
@@ -104,9 +109,9 @@ abstract class HasOneOrMany extends Relation {
 
 	/**
 	 * Recursively flatten an array.
-	 * 
+	 *
 	 * @since 2.0
-	 * 
+	 *
 	 * @param array $array
 	 *
 	 * @return array
@@ -164,7 +169,13 @@ abstract class HasOneOrMany extends Relation {
 		$foreign = $this->foreign_key;
 
 		foreach ( $models as $model ) {
-			$map[ $model->get_attribute( $foreign )->get_pk() ][ $model->get_pk() ] = $model;
+			$pk = $model->get_raw_attribute( $foreign );
+
+			if ( $pk instanceof Model ) {
+				$pk = $pk->get_pk();
+			}
+
+			$map[ $pk ][ $model->get_pk() ] = $model;
 		}
 
 		return $map;

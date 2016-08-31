@@ -70,7 +70,13 @@ class HasMany extends HasOneOrMany {
 			/** @var Model $model */
 			$model = $event->get_subject();
 
-			if ( ( $foreign = $model->get_attribute( $foreign_key ) ) && $foreign->get_pk() === $parent->get_pk() ) {
+			$foreign_key = $model->get_raw_attribute( $foreign_key );
+
+			if ( $foreign_key instanceof Model ) {
+				$foreign_key = $foreign_key->get_pk();
+			}
+
+			if ( $foreign_key === $parent->get_pk() ) {
 				$ids   = wp_cache_get( $parent->get_pk(), $cache_group );
 				$ids[] = $model->get_pk();
 				wp_cache_set( $parent->get_pk(), $ids, $cache_group );
