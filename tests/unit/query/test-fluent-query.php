@@ -275,12 +275,7 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 			array( 'ID' => 2, 'post_title' => 'Another Title' ),
 		) );
 
-		$table = $this->getMockBuilder( '\IronBound\DB\Table\Table' )
-		              ->setMethods( array( 'get_table_name' ) )
-		              ->getMockForAbstractClass();
-		$table->method( 'get_table_name' )->with( $wpdb )->willReturn( 'my_table' );
-
-		$fq      = new FluentQuery( $table, $wpdb );
+		$fq      = new FluentQuery( new Posts(), $wpdb );
 		$results = $fq->results();
 
 		$this->assertInstanceOf( '\Doctrine\Common\Collections\ArrayCollection', $results );
@@ -324,5 +319,28 @@ class Test_FluentQuery extends \WP_UnitTestCase {
 			1 => (object) array( 'ID' => 1, 'post_title' => 'Title' ),
 			2 => (object) array( 'ID' => 2, 'post_title' => 'Another Title' )
 		), $results->toArray() );
+	}
+
+	public function test_select_single_column() {
+
+		$wpdb = $this->getMockBuilder( '\wpdb' )->setMethods( array( 'get_results' ) )
+		             ->disableOriginalConstructor()->getMock();
+		$wpdb->method( 'get_results' )->with( $this->anything() )->willReturn( array(
+			array( 'ID' => 1, 'post_title' => 'Title' ),
+			array( 'ID' => 2, 'post_title' => 'Another Title' ),
+		) );
+
+		$fq = new FluentQuery( new Posts(), $wpdb );
+		$fq->select_single( 'post_title' );
+
+		$results = $fq->results();
+
+		$this->assertInstanceOf( '\Doctrine\Common\Collections\ArrayCollection', $results );
+		$this->assertEquals( array(
+			1 => 'Title',
+			2 => 'Another Title'
+		), $results->toArray() );
+
+
 	}
 }

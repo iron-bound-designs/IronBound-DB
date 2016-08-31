@@ -119,6 +119,9 @@ class FluentQuery {
 	/** @var bool */
 	private $has_expressions = false;
 
+	/** @var bool */
+	private $select_single = false;
+
 	/**
 	 * FluentQuery constructor.
 	 *
@@ -190,6 +193,28 @@ class FluentQuery {
 		foreach ( $columns as $column ) {
 			$this->select->also( $this->prepare_column( $column ) );
 		}
+
+		$this->select->also( $this->prepare_column( $this->table->get_primary_key() ) );
+
+		return $this;
+	}
+
+	/**
+	 * Select a single column.
+	 *
+	 * Will return a map of primary key -> column value.
+	 *
+	 * @since 1.36.0
+	 *
+	 * @param string $column
+	 *
+	 * @return $this
+	 */
+	public function select_single( $column ) {
+		$this->select->also( $this->prepare_column( $column ) );
+		$this->select->also( $this->prepare_column( $this->table->get_primary_key() ) );
+
+		$this->select_single = true;
 
 		return $this;
 	}
@@ -837,9 +862,28 @@ class FluentQuery {
 			}
 		}
 
-		if ( ! $saver || $this->has_expressions ) {
+		if ( ! $saver || $this->has_expressions || ! $this->select->is_all() ) {
 
-			if ( $this->has_expressions ) {
+			if ( ! $this->has_expressions && ! $this->select->is_all() ) {
+
+				$columns    = $this->select->get_columns();
+				$collection = array();
+
+				foreach ( $results as $result ) {
+
+					if ( $this->select_single ) {
+						$column = key( $columns );
+						$column = $this->get_short_column_from_qualified( $column );
+						$value  = $result[ $column ];
+					} else {
+						$value = $result;
+					}
+
+					$collection[ $result[ $this->table->get_primary_key() ] ] = $value;
+				}
+
+				$collection = new ArrayCollection( $collection );
+			} elseif ( $this->has_expressions ) {
 				$collection = new ArrayCollection( reset( $results ) );
 			} else {
 				$collection = new ArrayCollection( $results );
@@ -1237,5 +1281,18 @@ class FluentQuery {
 		}
 
 		return esc_sql( $columns[ $column ]->prepare_for_storage( $value ) );
+	}
+
+	/**
+	 * Get the short column name from a qualified column name.
+	 *
+	 * @since 1.36.0
+	 *
+	 * @param string $qualified
+	 *
+	 * @return string
+	 */
+	protected function get_short_column_from_qualified( $qualified ) {
+		return str_replace( array( "{$this->alias}.", '`' ), '', $qualified );
 	}
 }
