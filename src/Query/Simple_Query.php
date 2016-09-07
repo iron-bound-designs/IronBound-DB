@@ -257,8 +257,10 @@ class Simple_Query {
 			$data[ $name ] = $this->prepare_for_storage( $name, $value );
 		}
 
+		$formats = array_fill( 0, count( $data ), '%s' );
+
 		$prev = $this->wpdb->show_errors( false );
-		$this->wpdb->insert( $this->table->get_table_name( $this->wpdb ), $data );
+		$this->wpdb->insert( $this->table->get_table_name( $this->wpdb ), $data, $formats );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {
@@ -299,9 +301,11 @@ class Simple_Query {
 		foreach ( $data as $name => $value ) {
 			$data[ $name ] = $this->prepare_for_storage( $name, $value );
 		}
+		
+		$formats = array_fill( 0, count( $data ), '%s' );
 
 		$prev   = $this->wpdb->show_errors( false );
-		$result = $this->wpdb->update( $this->table->get_table_name( $this->wpdb ), $data, $where );
+		$result = $this->wpdb->update( $this->table->get_table_name( $this->wpdb ), $data, $where, $formats );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {
