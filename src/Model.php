@@ -1050,8 +1050,10 @@ abstract class Model implements Cacheable, \Serializable {
 			$default_values = $query->where( static::table()->get_primary_key(), '=', $this->get_pk() )
 			                        ->select( $default_columns_to_fill )->first();
 
-			foreach ( $default_values as $column => $value ) {
-				$this->set_raw_attribute( $column, $value );
+			if ( $default_values ) {
+				foreach ( $default_values as $column => $value ) {
+					$this->set_raw_attribute( $column, $value );
+				}
 			}
 		}
 
