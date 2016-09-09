@@ -301,11 +301,12 @@ class Simple_Query {
 		foreach ( $data as $name => $value ) {
 			$data[ $name ] = $this->prepare_for_storage( $name, $value );
 		}
-		
-		$formats = array_fill( 0, count( $data ), '%s' );
+
+		$formats      = array_fill( 0, count( $data ), '%s' );
+		$where_format = array_fill( 0, count( $where ), '%s' );
 
 		$prev   = $this->wpdb->show_errors( false );
-		$result = $this->wpdb->update( $this->table->get_table_name( $this->wpdb ), $data, $where, $formats );
+		$result = $this->wpdb->update( $this->table->get_table_name( $this->wpdb ), $data, $where, $formats, $where_format );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {
@@ -337,7 +338,7 @@ class Simple_Query {
 		$prev   = $this->wpdb->show_errors( false );
 		$result = $this->wpdb->delete( $this->table->get_table_name( $this->wpdb ), array(
 			$this->table->get_primary_key() => $row_key
-		) );
+		), '%s' );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {
@@ -360,8 +361,9 @@ class Simple_Query {
 	 */
 	public function delete_many( $wheres ) {
 
+		$format = array_fill( 0, count( $wheres ), '%s' );
 		$prev   = $this->wpdb->show_errors( false );
-		$result = $this->wpdb->delete( $this->table->get_table_name( $this->wpdb ), $wheres );
+		$result = $this->wpdb->delete( $this->table->get_table_name( $this->wpdb ), $wheres, $format );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {
