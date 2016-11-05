@@ -658,6 +658,30 @@ class FluentQuery {
 	}
 
 	/**
+	 * Get this table's main alias string.
+	 *
+	 * For example, 't1'.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return string
+	 */
+	public function get_alias() {
+		return $this->alias;
+	}
+
+	/**
+	 * Get the number of aliases in use.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return int
+	 */
+	public function get_alias_count() {
+		return $this->alias_count;
+	}
+
+	/**
 	 * Parse the nested relations.
 	 *
 	 * @since 2.0
