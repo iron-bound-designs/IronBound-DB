@@ -1271,7 +1271,7 @@ abstract class Model implements Cacheable, \Serializable {
 		$columns = static::table()->get_columns();
 
 		foreach ( $data as $column => $value ) {
-			if ( isset( $columns[ $coumn ] ) ) {
+			if ( isset( $columns[ $column ] ) ) {
 				$data[ $column ] = $columns[ $column ]->prepare_for_storage( $value );
 			}
 		}
