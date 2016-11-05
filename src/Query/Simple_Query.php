@@ -115,9 +115,9 @@ class Simple_Query {
 			throw new InvalidColumnException( "Invalid column." );
 		}
 
-		$builder->append( new Select( $column ) );
+		$builder->append( new Select( "`$column`" ) );
 		$builder->append( new From( $this->table->get_table_name( $this->wpdb ) ) );
-		$builder->append( new Where( $where, true, $this->escape_value( $where, $value ) ) );
+		$builder->append( new Where( "`$where`", true, $this->escape_value( $where, $value ) ) );
 
 		return $this->wpdb->get_var( trim( $builder->build() ) );
 	}
@@ -165,7 +165,7 @@ class Simple_Query {
 					throw new InvalidColumnException( "Invalid column." );
 				}
 
-				$select->also( $col );
+				$select->also( "`$col`" );
 			}
 		} elseif ( $columns == Select::ALL ) {
 			$select = new Select( $columns );
@@ -174,12 +174,12 @@ class Simple_Query {
 				throw new InvalidColumnException( "Invalid column" );
 			}
 
-			$select = new Select( $columns );
+			$select = new Select( "`$columns`" );
 		}
 
 		$builder->append( $select );
 		$builder->append( new From( $this->table->get_table_name( $this->wpdb ) ) );
-		$builder->append( new Where( $column, true, $this->escape_value( $column, $value ) ) );
+		$builder->append( new Where( "`$column`", true, $this->escape_value( $column, $value ) ) );
 
 		return $this->wpdb->{$method}( trim( $builder->build() ) );
 	}
@@ -207,9 +207,9 @@ class Simple_Query {
 
 			foreach ( $wheres as $column => $value ) {
 				if ( ! isset( $where ) ) {
-					$where = new Where( $column, true, $this->escape_value( $column, $value ) );
+					$where = new Where( "`$column`", true, $this->escape_value( $column, $value ) );
 				} else {
-					$where->qAnd( new Where( $column, true, $this->escape_value( $column, $value ) ) );
+					$where->qAnd( new Where( "`$column`", true, $this->escape_value( $column, $value ) ) );
 				}
 			}
 
@@ -244,7 +244,7 @@ class Simple_Query {
 
 		foreach ( $data as $col => $val ) {
 
-			if ( $val == null ) {
+			if ( $val === null ) {
 				$null_columns[] = $col;
 			}
 		}
@@ -257,8 +257,10 @@ class Simple_Query {
 			$data[ $name ] = $this->prepare_for_storage( $name, $value );
 		}
 
+		$formats = array_fill( 0, count( $data ), '%s' );
+
 		$prev = $this->wpdb->show_errors( false );
-		$this->wpdb->insert( $this->table->get_table_name( $this->wpdb ), $data );
+		$this->wpdb->insert( $this->table->get_table_name( $this->wpdb ), $data, $formats );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {
@@ -300,8 +302,11 @@ class Simple_Query {
 			$data[ $name ] = $this->prepare_for_storage( $name, $value );
 		}
 
+		$formats      = array_fill( 0, count( $data ), '%s' );
+		$where_format = array_fill( 0, count( $where ), '%s' );
+
 		$prev   = $this->wpdb->show_errors( false );
-		$result = $this->wpdb->update( $this->table->get_table_name( $this->wpdb ), $data, $where );
+		$result = $this->wpdb->update( $this->table->get_table_name( $this->wpdb ), $data, $where, $formats, $where_format );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {
@@ -333,7 +338,7 @@ class Simple_Query {
 		$prev   = $this->wpdb->show_errors( false );
 		$result = $this->wpdb->delete( $this->table->get_table_name( $this->wpdb ), array(
 			$this->table->get_primary_key() => $row_key
-		) );
+		), '%s' );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {
@@ -356,8 +361,9 @@ class Simple_Query {
 	 */
 	public function delete_many( $wheres ) {
 
+		$format = array_fill( 0, count( $wheres ), '%s' );
 		$prev   = $this->wpdb->show_errors( false );
-		$result = $this->wpdb->delete( $this->table->get_table_name( $this->wpdb ), $wheres );
+		$result = $this->wpdb->delete( $this->table->get_table_name( $this->wpdb ), $wheres, $format );
 		$this->wpdb->show_errors( $prev );
 
 		if ( $this->wpdb->last_error ) {

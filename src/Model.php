@@ -175,7 +175,6 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$this->sync_original();
 		$this->fill( (array) $data );
-		$this->_exists = (bool) $this->get_pk();
 	}
 
 	/**
@@ -779,7 +778,9 @@ abstract class Model implements Cacheable, \Serializable {
 			}
 
 			foreach ( static::$_eager_load as $eager_load ) {
-				$object->get_relation( $eager_load )->eager_load( array( $object ), $eager_load );
+				if ( ! $object->is_relation_loaded( $eager_load ) ) {
+					$object->get_relation( $eager_load )->eager_load( array( $object ) );
+				}
 			}
 
 			return $object;
@@ -803,7 +804,7 @@ abstract class Model implements Cacheable, \Serializable {
 
 		$instance = new static( new \stdClass() );
 		$instance->set_raw_attributes( $attributes, true );
-		$instance->_exists = (bool) $instance->get_pk();
+		$instance->_exists = true;
 
 		if ( static::$_cache && ! static::is_data_cached( $instance->get_pk() ) ) {
 			Cache::update( $instance );
@@ -1049,8 +1050,10 @@ abstract class Model implements Cacheable, \Serializable {
 			$default_values = $query->where( static::table()->get_primary_key(), '=', $this->get_pk() )
 			                        ->select( $default_columns_to_fill )->first();
 
-			foreach ( $default_values as $column => $value ) {
-				$this->set_raw_attribute( $column, $value );
+			if ( $default_values ) {
+				foreach ( $default_values as $column => $value ) {
+					$this->set_raw_attribute( $column, $value );
+				}
 			}
 		}
 
@@ -1539,7 +1542,12 @@ abstract class Model implements Cacheable, \Serializable {
 	 * @return bool
 	 */
 	public function __isset( $name ) {
-		return $this->get_attribute( $name ) !== null;
+		try {
+			return $this->get_attribute( $name ) !== null;
+		}
+		catch ( \OutOfBoundsException $e ) {
+			return false;
+		}
 	}
 
 	/**

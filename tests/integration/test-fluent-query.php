@@ -31,9 +31,9 @@ class Test_Fluent_Query extends \WP_UnitTestCase {
 		parent::setUp();
 
 		Manager::register( new Authors() );
-		Manager::register( new Books(), '', get_class( new Book() ) );
+		Manager::register( new Books(), '', '\IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::register( new BaseMetaTable( new Books() ) );
-		
+
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
 		Manager::maybe_install_table( Manager::get( 'books-meta' ) );
@@ -151,5 +151,19 @@ class Test_Fluent_Query extends \WP_UnitTestCase {
 		} );
 
 		$this->assertEqualSets( array( $a1->get_pk(), $a2->get_pk(), $a3->get_pk(), $a4->get_pk() ), $touched );
+	}
+
+	public function test_select_expression() {
+
+		Author::create( array( 'name' => 'John Smith' ) );
+
+		Author::create( array( 'name' => 'John Adams' ) );
+
+		Author::create( array( 'name' => 'Jane Doe' ) );
+
+		$results = Author::query()->where( 'name', 'LIKE', '%John%' )->expression( 'COUNT', 'id', 'count' )->results();
+
+		$this->assertTrue( $results->containsKey( 'count' ) );
+		$this->assertEquals( 2, $results->get( 'count' ) );
 	}
 }

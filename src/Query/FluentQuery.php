@@ -116,6 +116,12 @@ class FluentQuery {
 	 */
 	protected $relations = array();
 
+	/** @var bool */
+	private $has_expressions = false;
+
+	/** @var bool */
+	private $select_single = false;
+
 	/**
 	 * FluentQuery constructor.
 	 *
@@ -188,6 +194,28 @@ class FluentQuery {
 			$this->select->also( $this->prepare_column( $column ) );
 		}
 
+		$this->select->also( $this->prepare_column( $this->table->get_primary_key() ) );
+
+		return $this;
+	}
+
+	/**
+	 * Select a single column.
+	 *
+	 * Will return a map of primary key -> column value.
+	 *
+	 * @since 1.36.0
+	 *
+	 * @param string $column
+	 *
+	 * @return $this
+	 */
+	public function select_single( $column ) {
+		$this->select->also( $this->prepare_column( $column ) );
+		$this->select->also( $this->prepare_column( $this->table->get_primary_key() ) );
+
+		$this->select_single = true;
+
 		return $this;
 	}
 
@@ -203,6 +231,25 @@ class FluentQuery {
 	public function select_all( $local_only = true ) {
 
 		$this->select->all( $local_only ? $this->alias : null );
+
+		return $this;
+	}
+
+	/**
+	 * Select an expression, such as 'COUNT'.
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $function
+	 * @param string $column
+	 * @param string $as
+	 *
+	 * @return $this
+	 */
+	public function expression( $function, $column, $as ) {
+		$this->select->expression( $function, $this->prepare_column( $column ), $as );
+
+		$this->has_expressions = true;
 
 		return $this;
 	}
@@ -262,11 +309,6 @@ class FluentQuery {
 					return $self->escape_value( $column, $value );
 				}, $value );
 			} else {
-
-				if ( $equality === 'LIKE' || $equality === 'NOT LIKE' ) {
-					$value = $this->wpdb->esc_like( $value );
-				}
-
 				$value = $this->escape_value( $column, $value );
 			}
 
@@ -833,9 +875,43 @@ class FluentQuery {
 
 		$results = $this->wpdb->get_results( $sql, ARRAY_A );
 
-		if ( ! $saver ) {
+		if ( $this->calc_found_rows ) {
 
-			$collection = new ArrayCollection( $results );
+			$count_results = $this->wpdb->get_results( "SELECT FOUND_ROWS() AS COUNT" );
+
+			if ( empty( $count_results ) || empty( $count_results[0] ) ) {
+				$this->total = 0;
+			} else {
+				$this->total = $count_results[0]->COUNT;
+			}
+		}
+
+		if ( ! $saver || $this->has_expressions || ! $this->select->is_all() ) {
+
+			if ( ! $this->has_expressions && ! $this->select->is_all() ) {
+
+				$columns    = $this->select->get_columns();
+				$collection = array();
+
+				foreach ( $results as $result ) {
+
+					if ( $this->select_single ) {
+						$column = key( $columns );
+						$column = $this->get_short_column_from_qualified( $column );
+						$value  = $result[ $column ];
+					} else {
+						$value = $result;
+					}
+
+					$collection[ $result[ $this->table->get_primary_key() ] ] = $value;
+				}
+
+				$collection = new ArrayCollection( $collection );
+			} elseif ( $this->has_expressions ) {
+				$collection = new ArrayCollection( reset( $results ) );
+			} else {
+				$collection = new ArrayCollection( $results );
+			}
 
 			$this->results = $collection;
 
@@ -853,24 +929,13 @@ class FluentQuery {
 			}
 		}
 
-		if ( ! empty( $this->relations ) ) {
+		if ( ! empty( $this->relations ) && ! empty( $models ) ) {
 			$this->handle_eager_loading( $models );
 		}
 
 		$collection = new Collection( $models, false, $saver );
 
 		$this->results = $collection;
-
-		if ( $this->calc_found_rows ) {
-
-			$count_results = $this->wpdb->get_results( "SELECT FOUND_ROWS() AS COUNT" );
-
-			if ( empty( $count_results ) || empty( $count_results[0] ) ) {
-				$this->total = 0;
-			} else {
-				$this->total = $count_results[0]->COUNT;
-			}
-		}
 
 		if ( $this->prime_meta_cache && ( $this->meta_table || ( $this->model && method_exists( $this->model, 'get_meta_table' ) ) ) ) {
 			$this->update_meta_cache();
@@ -1208,7 +1273,7 @@ class FluentQuery {
 			throw new InvalidColumnException( "Invalid database column '$column'." );
 		}
 
-		return "{$this->alias}.{$column}";
+		return "{$this->alias}.`{$column}`";
 	}
 
 	/**
@@ -1240,5 +1305,18 @@ class FluentQuery {
 		}
 
 		return esc_sql( $columns[ $column ]->prepare_for_storage( $value ) );
+	}
+
+	/**
+	 * Get the short column name from a qualified column name.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $qualified
+	 *
+	 * @return string
+	 */
+	protected function get_short_column_from_qualified( $qualified ) {
+		return str_replace( array( "{$this->alias}.", '`' ), '', $qualified );
 	}
 }

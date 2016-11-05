@@ -179,8 +179,10 @@ final class Manager {
 		}
 
 		if ( $installed === 0 ) {
-			$wpdb->query( $table->get_creation_sql( $wpdb ) );
-			static::fire_plugin_event( $table, 'installed' );
+			if ( ! static::is_table_installed( $table, $wpdb ) ) {
+				$wpdb->query( $table->get_creation_sql( $wpdb ) );
+				static::fire_plugin_event( $table, 'installed' );
+			}
 		} else {
 
 			$update = $installed + 1;
