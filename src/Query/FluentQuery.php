@@ -620,6 +620,19 @@ class FluentQuery {
 	}
 
 	/**
+	 * Calculate the total rows found.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return $this
+	 */
+	public function calc_found_rows() {
+		$this->calc_found_rows = true;
+
+		return $this;
+	}
+
+	/**
 	 * Execute a callback over every row, chunking by a certain number.
 	 *
 	 * @since 2.0
