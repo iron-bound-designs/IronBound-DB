@@ -78,6 +78,17 @@ interface Table {
 	public function get_creation_sql( \wpdb $wpdb );
 
 	/**
+	 * Get deletion SQL.
+	 *
+	 * @since 2.0
+	 *
+	 * @param \wpdb $wpdb
+	 *
+	 * @return string
+	 */
+	public function get_deletion_sql( \wpdb $wpdb );
+
+	/**
 	 * Retrieve the version number of the current table schema as written.
 	 *
 	 * The version should be incremented by 1 for each change.
