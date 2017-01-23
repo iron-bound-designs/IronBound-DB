@@ -236,6 +236,31 @@ final class Manager {
 	}
 
 	/**
+	 * Maybe empty a table.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Table $table
+	 * @param \wpdb $wpdb
+	 *
+	 * @return bool Return true if table is installed and emptied. False otherwise.
+	 */
+	public static function maybe_empty_table( Table $table, \wpdb $wpdb = null ) {
+
+		$wpdb = $wpdb ?: $GLOBALS['wpdb'];
+
+		if ( static::is_table_installed( $table, $wpdb ) ) {
+
+			$wpdb->query( $table->get_empty_sql( $wpdb ) );
+			static::fire_plugin_event( $table, 'emptied' );
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Check if a table is installed.
 	 *
 	 * @since 1.0
