@@ -270,6 +270,17 @@ class Collection implements DoctrineCollection, Selectable {
 	}
 
 	/**
+	 * @param array $items
+	 */
+	public function add_many( array $items ) {
+
+		foreach ( $items as $element ) {
+
+			$this->add( $element );
+		}
+	}
+
+	/**
 	 * @inheritDoc
 	 */
 	public function clear() {
