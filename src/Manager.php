@@ -224,10 +224,12 @@ final class Manager {
 
 		if ( static::is_table_installed( $table, $wpdb ) ) {
 
-			$wpdb->query( $table->get_deletion_sql( $wpdb ) );
+			$tn = $table->get_table_name( $wpdb );
+
+			$wpdb->query( "DROP TABLE IF EXISTS `{$tn}`" );
 			static::fire_plugin_event( $table, 'deleted' );
 
-			delete_option( $table->get_table_name( $wpdb ) . '_version' );
+			delete_option( $tn . '_version' );
 
 			return true;
 		}
@@ -251,7 +253,9 @@ final class Manager {
 
 		if ( static::is_table_installed( $table, $wpdb ) ) {
 
-			$wpdb->query( $table->get_empty_sql( $wpdb ) );
+			$tn = $table->get_table_name( $wpdb );
+
+			$wpdb->query( "TRUNCATE TABLE `{$tn}`" );
 			static::fire_plugin_event( $table, 'emptied' );
 
 			return true;

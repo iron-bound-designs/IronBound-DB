@@ -37,26 +37,6 @@ abstract class BaseTable implements Table {
 	}
 
 	/**
-	 * @inheritDoc
-	 */
-	public function get_deletion_sql( \wpdb $wpdb ) {
-
-		$tn = $this->get_table_name( $wpdb );
-
-		return "DROP TABLE IF EXISTS `{$tn}`";
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function get_empty_sql( \wpdb $wpdb ) {
-
-		$tn = $this->get_table_name( $wpdb );
-
-		return "TRUNCATE TABLE `{$tn}`";
-	}
-
-	/**
 	 * Get the column definitions.
 	 *
 	 * @since 2.0
