@@ -53,6 +53,20 @@ class Test_Collection extends \WP_UnitTestCase {
 		$this->assertEquals( 'John', $model->name );
 	}
 
+	public function test_add_many() {
+
+		$m1 = (object) array( 'pk' => 1, 'name' => 'John' );
+		$m2 = (object) array( 'pk' => 2, 'name' => 'Jane' );
+
+		$many = array( $m1, $m2 );
+
+		$this->collection->add_many( $many );
+
+		$this->assertEquals( 2, $this->collection->count() );
+		$this->assertEquals( 'John', $this->collection->get( 1 )->name );
+		$this->assertEquals( 'Jane', $this->collection->get( 2 )->name );
+	}
+
 	public function test_set() {
 
 		$this->collection->set( 5, (object) array( 'pk' => 1, 'name' => 'John' ) );
