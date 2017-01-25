@@ -88,6 +88,17 @@ class Test_Manager extends \WP_UnitTestCase {
 		Manager::maybe_install_table( $table, $wpdb );
 	}
 
+	public function test_maybe_drop_table_if_exists() {
+
+		/** @var \PHPUnit_Framework_MockObject_MockObject $wpdb */
+		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
+		$wpdb->method( 'get_results' )->with( "SHOW TABLES LIKE 'wp_table'" )->willReturn( array() );
+
+		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )->getMockForAbstractClass();
+
+		$this->assertTrue( Manager::maybe_uninstall_table( $table, $wpdb ) );
+	}
+
 	public function test_maybe_install_table_calls_upgrade_schema_methods_if_existing_table() {
 
 		/** @var \PHPUnit_Framework_MockObject_MockObject $wpdb */
