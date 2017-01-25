@@ -94,7 +94,14 @@ class Test_Manager extends \WP_UnitTestCase {
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->method( 'get_results' )->with( "SHOW TABLES LIKE 'wp_table'" )->willReturn( array() );
 
-		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )->getMockForAbstractClass();
+		$slug  = uniqid();
+		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )
+		              ->setMethods( array( 'get_slug', 'get_table_name' ) )
+		              ->getMockForAbstractClass();
+		$table->method( 'get_slug' )->willReturn( $slug );
+		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
+
+		Manager::register( $table );
 
 		$this->assertTrue( Manager::maybe_uninstall_table( $table, $wpdb ) );
 	}
