@@ -110,6 +110,7 @@ class Test_Manager extends \WP_UnitTestCase {
 
 		/** @var \PHPUnit_Framework_MockObject_MockObject $wpdb */
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
+		$wpdb->method( 'get_results' )->with( "SHOW TABLES LIKE `table_name`" )->willReturn( array( 'table_name' ) );
 		$wpdb->expects( $this->once() )->method( 'query' )->with( "TRUNCATE TABLE `table_name`" )->willReturn( true );
 
 		$slug  = uniqid();
