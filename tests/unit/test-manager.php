@@ -110,15 +110,15 @@ class Test_Manager extends \WP_UnitTestCase {
 
 		/** @var \PHPUnit_Framework_MockObject_MockObject $wpdb */
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
-		$wpdb->method( 'get_results' )->with( "SHOW TABLES LIKE `table_name`" )->willReturn( array( 'table_name' ) );
-		$wpdb->expects( $this->once() )->method( 'query' )->with( "TRUNCATE TABLE `table_name`" )->willReturn( true );
+		$wpdb->method( 'get_results' )->with( "SHOW TABLES LIKE 'wp_table'" )->willReturn( array( 'wp_table' ) );
+		$wpdb->expects( $this->once() )->method( 'query' )->with( "TRUNCATE TABLE 'table_name'" )->willReturn( true );
 
 		$slug  = uniqid();
 		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )
 		              ->setMethods( array( 'get_slug', 'get_table_name' ) )
 		              ->getMockForAbstractClass();
 		$table->method( 'get_slug' )->willReturn( $slug );
-		$table->method( 'get_table_name' )->willReturn( 'table_name' );
+		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
 
 		Manager::register( $table );
 
