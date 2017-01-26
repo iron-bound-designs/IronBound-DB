@@ -93,6 +93,7 @@ class Test_Manager extends \WP_UnitTestCase {
 		/** @var \PHPUnit_Framework_MockObject_MockObject $wpdb */
 		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
 		$wpdb->method( 'get_results' )->with( "SHOW TABLES LIKE 'wp_table'" )->willReturn( array( 'wp_table' ) );
+		$wpdb->expects( $this->once() )->method( 'query' )->with( "DROP TABLE IF EXISTS `wp_table`" )->willReturn( true );
 
 		$slug  = uniqid();
 		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )
