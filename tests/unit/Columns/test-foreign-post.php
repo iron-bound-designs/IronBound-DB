@@ -17,7 +17,7 @@ use IronBound\DB\Table\Column\ForeignPost;
  *
  * @package IronBound\DB\Tests\Unit\Columns
  */
-class Test_ForeignPost extends \WP_UnitTestCase {
+class Test_ForeignPost extends \IronBound\DB\Tests\TestCase {
 
 	public function test_convert_raw_to_value() {
 

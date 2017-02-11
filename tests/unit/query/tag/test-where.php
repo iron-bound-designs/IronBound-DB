@@ -16,7 +16,7 @@ use IronBound\DB\Query\Tag\Where;
  * Class Test_Where
  * @package IronBound\DB\Query\Tag\Tests
  */
-class Test_Where extends \WP_UnitTestCase {
+class Test_Where extends \IronBound\DB\Tests\TestCase {
 
 	public function test_equals() {
 

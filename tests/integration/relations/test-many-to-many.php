@@ -30,7 +30,7 @@ use IronBound\WPEvents\EventDispatcher;
  *
  * @package IronBound\DB\Tests\Relations
  */
-class Test_ManyToMany extends \WP_UnitTestCase {
+class Test_ManyToMany extends \IronBound\DB\Tests\TestCase {
 
 	public function setUp() {
 		parent::setUp();
@@ -498,8 +498,12 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 		$this->assertNotNull( $g1->art->get_model( $a1->ID ) );
 		$this->assertNotNull( $g2->art->get_model( $a2->ID ) );
 
-		// +2 for update_post_caches(). One for each post
-		$this->assertEquals( $num_queries + 2, $GLOBALS['wpdb']->num_queries );
+		if ( version_compare( $GLOBALS['wp_version'], '4.4', '<=' ) ) {
+			// Account update_post_caches(). One for each post
+			$this->assertEquals( $num_queries + 2, $GLOBALS['wpdb']->num_queries );
+		} else {
+			$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+		}
 	}
 
 	public function test_many_to_many_posts_cache_updated_when_model_added_to_relation() {
@@ -530,8 +534,12 @@ class Test_ManyToMany extends \WP_UnitTestCase {
 		$this->assertNotNull( $gallery->art->get_model( $a1->ID ) );
 		$this->assertNotNull( $gallery->art->get_model( $a2->ID ) );
 
-		// +1 for update_post_caches().
-		$this->assertEquals( $num_queries + 1, $GLOBALS['wpdb']->num_queries );
+		if ( version_compare( $GLOBALS['wp_version'], '4.4', '<=' ) ) {
+			// Account update_post_caches(). One for each post
+			$this->assertEquals( $num_queries + 1, $GLOBALS['wpdb']->num_queries );
+		} else {
+			$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
+		}
 	}
 
 	public function test_many_to_many_posts_cache_updated_when_model_removed_from_relation() {

@@ -17,7 +17,7 @@ use IronBound\DB\Table\Column\SimpleForeign;
  *
  * @package IronBound\DB\Tests\Unit\Columns
  */
-class Test_SimpleForeign extends \WP_UnitTestCase {
+class Test_SimpleForeign extends \IronBound\DB\Tests\TestCase {
 
 	public function test_get_foreign_table_column_name_defaults_to_primary_key() {
 

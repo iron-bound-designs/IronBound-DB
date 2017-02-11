@@ -30,6 +30,10 @@ if ( false !== getenv( 'WP_DEVELOP_DIR' ) ) {
 	$test_root = '/tmp/wordpress-tests-lib';
 }
 
+if ( getenv( 'SAVEQUERIES' ) && ! defined( 'SAVEQUERIES' ) ) {
+	define( 'SAVEQUERIES', true );
+}
+
 require_once $test_root . '/includes/functions.php';
 
 $_SERVER['REMOTE_ADDR'] = '127.0.0.1';

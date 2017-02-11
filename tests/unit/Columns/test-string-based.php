@@ -12,7 +12,7 @@ namespace IronBound\DB\Tests\Unit\Columns;
 
 use IronBound\DB\Table\Column\StringBased;
 
-class Test_StringBased extends \WP_UnitTestCase {
+class Test_StringBased extends \IronBound\DB\Tests\TestCase {
 
 	public function test_convert_raw_to_value_casts_to_float() {
 

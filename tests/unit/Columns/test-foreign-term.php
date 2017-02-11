@@ -17,7 +17,7 @@ use IronBound\DB\Table\Column\ForeignTerm;
  *
  * @package IronBound\DB\Tests\Unit\Columns
  */
-class Test_ForeignTerm extends \WP_UnitTestCase {
+class Test_ForeignTerm extends \IronBound\DB\Tests\TestCase {
 
 	public function test_convert_raw_to_value() {
 

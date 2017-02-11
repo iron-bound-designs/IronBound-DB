@@ -18,7 +18,7 @@ use IronBound\DB\Saver\Saver;
  *
  * @package IronBound\DB\Tests\Saver
  */
-class Test_UserSaver extends \WP_UnitTestCase {
+class Test_UserSaver extends \IronBound\DB\Tests\TestCase {
 
 	/**
 	 * @var Saver

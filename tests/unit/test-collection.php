@@ -18,7 +18,7 @@ use IronBound\DB\Collection;
  *
  * @package IronBound\DB\Tests
  */
-class Test_Collection extends \WP_UnitTestCase {
+class Test_Collection extends \IronBound\DB\Tests\TestCase {
 
 	/**
 	 * @var Collection

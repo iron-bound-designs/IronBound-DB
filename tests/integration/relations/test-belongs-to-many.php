@@ -19,7 +19,7 @@ use IronBound\DB\Tests\Stub\Tables\Authors;
 use IronBound\DB\Tests\Stub\Tables\Books;
 use IronBound\WPEvents\EventDispatcher;
 
-class Test_Belongs_To_Many extends \WP_UnitTestCase {
+class Test_Belongs_To_Many extends \IronBound\DB\Tests\TestCase {
 
 	public function setUp() {
 		parent::setUp();

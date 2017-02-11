@@ -16,7 +16,7 @@ use IronBound\DB\Query\Tag\Select;
  * Class Test_Select
  * @package IronBound\DB\Query\Tag\Tests
  */
-class Test_Select extends \WP_UnitTestCase {
+class Test_Select extends \IronBound\DB\Tests\TestCase {
 
 	public function test_all() {
 

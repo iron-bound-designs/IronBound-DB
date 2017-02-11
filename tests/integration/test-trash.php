@@ -20,7 +20,7 @@ use IronBound\WPEvents\GenericEvent;
  * Class Test_Trash
  * @package IronBound\DB\Tests
  */
-class Test_Trash extends \WP_UnitTestCase {
+class Test_Trash extends \IronBound\DB\Tests\TestCase {
 
 	function setUp() {
 		parent::setUp();

@@ -17,7 +17,7 @@ use IronBound\DB\Query\Tag\Where_Date;
  *
  * @package IronBound\DB\Query\Tag\Tests
  */
-class Test_Where_Date extends \WP_UnitTestCase {
+class Test_Where_Date extends \IronBound\DB\Tests\TestCase {
 
 	public function test() {
 

@@ -90,6 +90,23 @@ final class Manager {
 	}
 
 	/**
+	 * Get all tables.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return Table[]
+	 */
+	public static function all() {
+		$tables = array();
+
+		foreach ( static::$tables as $table ) {
+			$tables[] = $table['table'];
+		}
+
+		return $tables;
+	}
+
+	/**
 	 * Make a query object for the selected db table.
 	 *
 	 * @since 1.0
@@ -167,6 +184,7 @@ final class Manager {
 	 * @param \wpdb $wpdb
 	 *
 	 * @return bool True if installed or updated, false if skipped.
+	 * @throws \IronBound\DB\Exception
 	 */
 	public static function maybe_install_table( Table $table, \wpdb $wpdb = null ) {
 
@@ -180,7 +198,14 @@ final class Manager {
 
 		if ( $installed === 0 ) {
 			if ( ! static::is_table_installed( $table, $wpdb ) ) {
+				$prev = $wpdb->show_errors( false );
 				$wpdb->query( $table->get_creation_sql( $wpdb ) );
+				$wpdb->show_errors( $prev );
+
+				if ( $wpdb->last_error ) {
+					throw new Exception( $wpdb->last_error );
+				}
+
 				static::fire_plugin_event( $table, 'installed' );
 			}
 		} else {

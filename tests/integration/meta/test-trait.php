@@ -19,7 +19,7 @@ use IronBound\DB\Tests\Stub\Tables\PHP54s;
  * Class Test_Meta_Trait
  * @package IronBound\DB\Tests\Meta
  */
-class Test_Meta_Trait extends \WP_UnitTestCase {
+class Test_Meta_Trait extends \IronBound\DB\Tests\TestCase {
 
 	function setUp() {
 		parent::setUp();

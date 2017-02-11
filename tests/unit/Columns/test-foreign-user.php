@@ -17,7 +17,7 @@ use IronBound\DB\Table\Column\ForeignUser;
  *
  * @package IronBound\DB\Tests\Unit\Columns
  */
-class Test_ForeignUser extends \WP_UnitTestCase {
+class Test_ForeignUser extends \IronBound\DB\Tests\TestCase {
 
 	public function test_convert_raw_to_value_id() {
 

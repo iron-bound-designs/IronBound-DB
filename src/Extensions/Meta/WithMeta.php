@@ -9,7 +9,6 @@
  */
 
 namespace IronBound\DB\Extensions\Meta;
-use IronBound\DB\Extensions\Meta\MetaTable;
 
 /**
  * Interface WithMeta
@@ -25,7 +24,7 @@ interface WithMeta {
 	 * @since 2.0
 	 *
 	 * @param string $key    Metadata key.
-	 * @param mixed  $value  Metadata value. Must be serializable if non-scalar. Must be slashed.
+	 * @param mixed  $value  Metadata value. Must be serializable if non-scalar. Must be un-slashed.
 	 * @param bool   $unique Whether the specified metadata key should be unique for the object.
 	 *
 	 * @return int|false
@@ -41,7 +40,7 @@ interface WithMeta {
 	 * @since 2.0
 	 *
 	 * @param string $key        Metadata key.
-	 * @param mixed  $value      Metadata value. Must be serializable if non-scalar. Must be slashed.
+	 * @param mixed  $value      Metadata value. Must be serializable if non-scalar. Must be un-slashed.
 	 * @param string $prev_value Optional, if specified, only update existing metadata with the specified value.
 	 *
 	 * @return int|bool Meta ID if the key didn't exist, true on successful update, false on failure.
@@ -70,7 +69,7 @@ interface WithMeta {
 	 * @since 2.0
 	 *
 	 * @param string $key        Metadata key.
-	 * @param mixed  $value      Optional. Metadata value. Must be serializable if non-scalar. Must be slashed.
+	 * @param mixed  $value      Optional. Metadata value. Must be serializable if non-scalar. Must be un-slashed.
 	 *                           If specified, only metadata with the given value will be deleted.
 	 * @param bool   $delete_all Optional. If specified, metadata entries for all models,
 	 *                           not just this one, will be deleted.

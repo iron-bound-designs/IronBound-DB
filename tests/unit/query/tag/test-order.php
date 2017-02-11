@@ -16,7 +16,7 @@ use IronBound\DB\Query\Tag\Order;
  * Class Test_Order
  * @package IronBound\DB\Query\Tag\Tests
  */
-class Test_Order extends \WP_UnitTestCase {
+class Test_Order extends \IronBound\DB\Tests\TestCase {
 
 	public function test_rand() {
 

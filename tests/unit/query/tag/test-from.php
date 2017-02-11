@@ -16,7 +16,7 @@ use IronBound\DB\Query\Tag\From;
  * Class Test_From
  * @package IronBound\DB\Query\Tag\Tests
  */
-class Test_From extends \WP_UnitTestCase {
+class Test_From extends \IronBound\DB\Tests\TestCase {
 
 	public function test() {
 

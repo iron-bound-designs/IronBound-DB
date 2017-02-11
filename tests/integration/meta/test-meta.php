@@ -18,9 +18,10 @@ use IronBound\DB\Tests\Stub\Tables\Books;
 
 /**
  * Class Test_Meta
+ *
  * @package IronBound\DB\Tests
  */
-class Test_Meta extends \WP_UnitTestCase {
+class Test_Meta extends \IronBound\DB\Tests\TestCase {
 
 	function setUp() {
 		parent::setUp();
@@ -28,7 +29,7 @@ class Test_Meta extends \WP_UnitTestCase {
 		Manager::register( new Authors() );
 		Manager::register( new Books(), '', get_class( new Book() ) );
 		Manager::register( new BaseMetaTable( new Books() ) );
-		
+
 		Manager::maybe_install_table( Manager::get( 'authors' ) );
 		Manager::maybe_install_table( Manager::get( 'books' ) );
 		Manager::maybe_install_table( Manager::get( 'books-meta' ) );
@@ -103,7 +104,44 @@ class Test_Meta extends \WP_UnitTestCase {
 		$this->assertEquals( 'stuff', $book->get_meta( 'basic', true ) );
 
 		$this->assertEquals( $num_queries, $GLOBALS['wpdb']->num_queries );
-
 	}
 
+	public function test_slashing_add() {
+
+		$meta = "O'neil";
+
+		$book = Book::create( array(
+			'title' => 'My Title'
+		) );
+		$book->add_meta( 'basic', $meta );
+
+		$this->assertEquals( $meta, $book->get_meta( 'basic', true ) );
+	}
+
+	public function test_slashing_update() {
+
+		$meta = "O'neil";
+
+		$book = Book::create( array(
+			'title' => 'My Title'
+		) );
+		$book->update_meta( 'basic', $meta );
+
+		$this->assertEquals( $meta, $book->get_meta( 'basic', true ) );
+	}
+
+	public function test_slashing_delete() {
+
+		$meta = "O'neil";
+
+		$book = Book::create( array(
+			'title' => 'My Title'
+		) );
+		$book->add_meta( 'basic', $meta );
+		$book->add_meta( 'basic', 'other' );
+		$this->assertEquals( $meta, $book->get_meta( 'basic', true ) );
+		$this->assertTrue( $book->delete_meta( 'basic', $meta ) );
+
+		$this->assertEquals( array( 'other' ), $book->get_meta( 'basic' ) );
+	}
 }

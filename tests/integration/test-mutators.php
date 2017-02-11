@@ -19,7 +19,7 @@ use IronBound\DB\Tests\Stub\Tables\TableWithForeignPost;
  * Class Test_Mutators
  * @package IronBound\DB\Tests
  */
-class Test_Mutators extends \WP_UnitTestCase {
+class Test_Mutators extends \IronBound\DB\Tests\TestCase {
 
 	public function setUp() {
 		parent::setUp();

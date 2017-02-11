@@ -18,7 +18,7 @@ use IronBound\DB\Query\Tag\Where;
  * Class Test_Join
  * @package IronBound\DB\Query\Tag\Tests
  */
-class Test_Join extends \WP_UnitTestCase {
+class Test_Join extends \IronBound\DB\Tests\TestCase {
 
 	public function test() {
 

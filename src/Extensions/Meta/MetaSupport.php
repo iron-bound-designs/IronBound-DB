@@ -22,7 +22,7 @@ trait MetaSupport {
 	public function add_meta( $key, $value, $unique = false ) {
 
 		add_filter( 'sanitize_key', array( $this, '_meta_type_primary_id_override' ), 10, 2 );
-		$result = add_metadata( $this->get_meta_type(), $this->get_pk(), $key, $value, $unique );
+		$result = add_metadata( $this->get_meta_type(), $this->get_pk(), $key, wp_slash( $value ), $unique );
 		remove_filter( 'sanitize_key', array( $this, '_meta_type_primary_id_override' ) );
 
 		return $result;
@@ -34,7 +34,7 @@ trait MetaSupport {
 	public function update_meta( $key, $value, $prev_value = '' ) {
 
 		add_filter( 'sanitize_key', array( $this, '_meta_type_primary_id_override' ), 10, 2 );
-		$result = update_metadata( $this->get_meta_type(), $this->get_pk(), $key, $value, $prev_value );
+		$result = update_metadata( $this->get_meta_type(), $this->get_pk(), $key, wp_slash( $value ), $prev_value );
 		remove_filter( 'sanitize_key', array( $this, '_meta_type_primary_id_override' ) );
 
 		return $result;
@@ -58,7 +58,7 @@ trait MetaSupport {
 	public function delete_meta( $key, $value = '', $delete_all = false ) {
 
 		add_filter( 'sanitize_key', array( $this, '_meta_type_primary_id_override' ), 10, 2 );
-		$result = delete_metadata( $this->get_meta_type(), $this->get_pk(), $key, $value, $delete_all );
+		$result = delete_metadata( $this->get_meta_type(), $this->get_pk(), $key, wp_slash( $value ), $delete_all );
 		remove_filter( 'sanitize_key', array( $this, '_meta_type_primary_id_override' ) );
 
 		return $result;

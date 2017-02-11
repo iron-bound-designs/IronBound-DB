@@ -16,7 +16,7 @@ use IronBound\DB\Query\Tag\Generic;
  * Class Test_Generic
  * @package IronBound\DB\Query\Tag\Tests
  */
-class Test_Generic extends \WP_UnitTestCase {
+class Test_Generic extends \IronBound\DB\Tests\TestCase {
 
 	public function test() {
 

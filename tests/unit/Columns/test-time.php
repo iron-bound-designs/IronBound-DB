@@ -13,7 +13,7 @@ namespace IronBound\DB\Tests\Unit\Columns;
 use IronBound\DB\Exception\InvalidDataForColumnException;
 use IronBound\DB\Table\Column\Time;
 
-class Test_Time extends \WP_UnitTestCase {
+class Test_Time extends \IronBound\DB\Tests\TestCase {
 
 	/**
 	 * @expectedException \IronBound\DB\Exception\InvalidDataForColumnException

@@ -25,7 +25,7 @@ use IronBound\WPEvents\EventDispatcher;
  * Class TestHasOne
  * @package IronBound\DB\Tests\Relations
  */
-class TestHasOne extends \WP_UnitTestCase {
+class TestHasOne extends \IronBound\DB\Tests\TestCase {
 
 	function setUp() {
 		parent::setUp();

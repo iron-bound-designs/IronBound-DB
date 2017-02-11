@@ -19,7 +19,7 @@ use IronBound\DB\Tests\Stub\Tables\TableWithAllForeign;
  *
  * @package IronBound\DB\Tests
  */
-class Test_Relations_Has_Foreign extends \WP_UnitTestCase {
+class Test_Relations_Has_Foreign extends \IronBound\DB\Tests\TestCase {
 
 	public function setUp() {
 		parent::setUp();

@@ -23,7 +23,7 @@ use IronBound\WPEvents\EventDispatcher;
  * Class Test_HasMany
  * @package IronBound\DB\Tests
  */
-class Test_HasMany extends \WP_UnitTestCase {
+class Test_HasMany extends \IronBound\DB\Tests\TestCase {
 
 	public function setUp() {
 		parent::setUp();

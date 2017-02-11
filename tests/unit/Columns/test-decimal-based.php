@@ -12,7 +12,7 @@ namespace IronBound\DB\Tests\Unit\Columns;
 
 use IronBound\DB\Table\Column\DecimalBased;
 
-class Test_DecimalBased extends \WP_UnitTestCase {
+class Test_DecimalBased extends \IronBound\DB\Tests\TestCase {
 
 	public function test_convert_raw_to_value_casts_to_float() {
 

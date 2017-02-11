@@ -22,7 +22,7 @@ use IronBound\DB\WP\Users;
  *
  * @package IronBound\DB\Tests\Query
  */
-class Test_FluentQuery extends \WP_UnitTestCase {
+class Test_FluentQuery extends \IronBound\DB\Tests\TestCase {
 
 	/**
 	 * Get a wpdb mock.

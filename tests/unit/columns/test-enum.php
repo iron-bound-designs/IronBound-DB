@@ -18,7 +18,7 @@ use IronBound\DB\Table\Column\Enum;
  *
  * @package IronBound\DB\Tests\Unit\Columns
  */
-class Test_Enum extends \WP_UnitTestCase {
+class Test_Enum extends \IronBound\DB\Tests\TestCase {
 
 	/**
 	 * @expectedException \InvalidArgumentException

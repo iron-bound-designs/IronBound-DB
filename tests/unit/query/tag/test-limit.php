@@ -16,7 +16,7 @@ use IronBound\DB\Query\Tag\Limit;
  * Class Test_Limit
  * @package IronBound\DB\Query\Tag\Tests
  */
-class Test_Limit extends \WP_UnitTestCase {
+class Test_Limit extends \IronBound\DB\Tests\TestCase {
 
 	public function test_without_offset() {
 

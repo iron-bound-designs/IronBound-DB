@@ -28,9 +28,10 @@ use IronBound\WPEvents\EventDispatcher;
 
 /**
  * Class Test_Delete_Constraints
+ *
  * @package IronBound\DB\Tests\Foreign_Key
  */
-class Test_Delete_Constraints extends \WP_UnitTestCase {
+class Test_Delete_Constraints extends \IronBound\DB\Tests\TestCase {
 
 	function setUp() {
 		parent::setUp();

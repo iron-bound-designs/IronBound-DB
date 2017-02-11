@@ -19,7 +19,7 @@ use IronBound\DB\Tests\Stub\Tables\Uncached as UncachedTable;
  * Class Test_Uncached
  * @package IronBound\DB\Tests
  */
-class Test_Uncached extends \WP_UnitTestCase {
+class Test_Uncached extends \IronBound\DB\Tests\TestCase {
 
 	public function setUp() {
 		parent::setUp();

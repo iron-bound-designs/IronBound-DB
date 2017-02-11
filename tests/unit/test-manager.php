@@ -17,7 +17,7 @@ use IronBound\DB\Manager;
  *
  * @package IronBound\DB\Tests
  */
-class Test_Manager extends \WP_UnitTestCase {
+class Test_Manager extends \IronBound\DB\Tests\TestCase {
 
 	public function test_register() {
 

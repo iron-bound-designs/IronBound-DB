@@ -26,7 +26,7 @@ use IronBound\DB\Tests\Stub\Tables\TableWithForeignPost;
  *
  * @package IronBound\DB\Tests
  */
-class Test_Crud extends \WP_UnitTestCase {
+class Test_Crud extends \IronBound\DB\Tests\TestCase {
 
 	public function setUp() {
 		parent::setUp();

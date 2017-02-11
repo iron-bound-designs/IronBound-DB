@@ -17,7 +17,7 @@ use IronBound\DB\Table\Column\StringBased;
  * Class Test_Complex_Query
  * @package IronBound\DB\Query\Tests
  */
-class Test_Complex_Query extends \WP_UnitTestCase {
+class Test_Complex_Query extends \IronBound\DB\Tests\TestCase {
 
 	public function test_parse_select() {
 

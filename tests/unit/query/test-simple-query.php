@@ -18,7 +18,7 @@ use IronBound\DB\Table\Column\StringBased;
  * Class Test_Simple_Query
  * @package IronBound\DB\Query\Tests
  */
-class Test_Simple_Query extends \WP_UnitTestCase {
+class Test_Simple_Query extends \IronBound\DB\Tests\TestCase {
 
 	public function test_get() {
 

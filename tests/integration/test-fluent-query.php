@@ -25,7 +25,7 @@ use IronBound\WPEvents\EventDispatcher;
  * Class Test_Fluent_Query
  * @package IronBound\DB\Tests
  */
-class Test_Fluent_Query extends \WP_UnitTestCase {
+class Test_Fluent_Query extends \IronBound\DB\Tests\TestCase {
 
 	public function setUp() {
 		parent::setUp();

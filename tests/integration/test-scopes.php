@@ -24,7 +24,7 @@ use IronBound\DB\Tests\Stub\Tables\Books;
  *
  * @package IronBound\DB\Tests
  */
-class Test_Scopes extends \WP_UnitTestCase {
+class Test_Scopes extends \IronBound\DB\Tests\TestCase {
 
 	public function setUp() {
 		parent::setUp();

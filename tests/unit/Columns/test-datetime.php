@@ -17,7 +17,7 @@ use IronBound\DB\Table\Column\DateTime;
  *
  * @package IronBound\DB\Tests\Unit\Columns
  */
-class Test_DateTime extends \WP_UnitTestCase {
+class Test_DateTime extends \IronBound\DB\Tests\TestCase {
 
 	public function test_convert_raw_to_value_returns_null_for_empty_values() {
 

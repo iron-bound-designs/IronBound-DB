@@ -26,7 +26,7 @@ use IronBound\DB\Tests\Stub\Tables\Reviews;
  * Class Test_Nested
  * @package IronBound\DB\Tests\Relations
  */
-class Test_Nested extends \WP_UnitTestCase {
+class Test_Nested extends \IronBound\DB\Tests\TestCase {
 
 	function setUp() {
 		parent::setUp();

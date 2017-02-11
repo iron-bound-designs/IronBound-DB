@@ -17,7 +17,7 @@ use IronBound\DB\Table\Column\BaseColumn;
  *
  * @package IronBound\DB\Tests\Unit\Columns
  */
-class Test_BaseColumn extends \WP_UnitTestCase {
+class Test_BaseColumn extends \IronBound\DB\Tests\TestCase {
 
 	public function test_get_definition_without_column_name() {
 
