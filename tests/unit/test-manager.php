@@ -88,6 +88,44 @@ class Test_Manager extends \IronBound\DB\Tests\TestCase {
 		Manager::maybe_install_table( $table, $wpdb );
 	}
 
+	public function test_maybe_drop_table_if_exists() {
+
+		/** @var \PHPUnit_Framework_MockObject_MockObject $wpdb */
+		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
+		$wpdb->method( 'get_results' )->with( "SHOW TABLES LIKE 'wp_table'" )->willReturn( array( 'wp_table' ) );
+		$wpdb->expects( $this->once() )->method( 'query' )->with( "DROP TABLE IF EXISTS `wp_table`" )->willReturn( true );
+
+		$slug  = uniqid();
+		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )
+		              ->setMethods( array( 'get_slug', 'get_table_name' ) )
+		              ->getMockForAbstractClass();
+		$table->method( 'get_slug' )->willReturn( $slug );
+		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
+
+		Manager::register( $table );
+
+		$this->assertTrue( Manager::maybe_uninstall_table( $table, $wpdb ) );
+	}
+
+	public function test_maybe_empty_table_if_exists() {
+
+		/** @var \PHPUnit_Framework_MockObject_MockObject $wpdb */
+		$wpdb = $this->getMockBuilder( 'wpdb' )->disableOriginalConstructor()->getMock();
+		$wpdb->method( 'get_results' )->with( "SHOW TABLES LIKE 'wp_table'" )->willReturn( array( 'wp_table' ) );
+		$wpdb->expects( $this->once() )->method( 'query' )->with( "TRUNCATE TABLE `wp_table`" )->willReturn( true );
+
+		$slug  = uniqid();
+		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )
+		              ->setMethods( array( 'get_slug', 'get_table_name' ) )
+		              ->getMockForAbstractClass();
+		$table->method( 'get_slug' )->willReturn( $slug );
+		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
+
+		Manager::register( $table );
+
+		$this->assertTrue( Manager::maybe_empty_table( $table, $wpdb ) );
+	}
+
 	public function test_maybe_install_table_calls_upgrade_schema_methods_if_existing_table() {
 
 		/** @var \PHPUnit_Framework_MockObject_MockObject $wpdb */
