@@ -3,7 +3,7 @@
  * Test Case.
  *
  * @since   2.0.0
- * @license GPLv2
+ * @license MIT
  */
 
 namespace IronBound\DB\Tests;
