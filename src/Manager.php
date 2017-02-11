@@ -234,6 +234,62 @@ final class Manager {
 	}
 
 	/**
+	 * Maybe delete a table.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Table $table
+	 * @param \wpdb $wpdb
+	 *
+	 * @return bool Return true if table is installed and deleted. False otherwise.
+	 */
+	public static function maybe_uninstall_table( Table $table, \wpdb $wpdb = null ) {
+
+		$wpdb = $wpdb ?: $GLOBALS['wpdb'];
+
+		if ( static::is_table_installed( $table, $wpdb ) ) {
+
+			$tn = $table->get_table_name( $wpdb );
+
+			$wpdb->query( "DROP TABLE IF EXISTS `{$tn}`" );
+			static::fire_plugin_event( $table, 'deleted' );
+
+			delete_option( $tn . '_version' );
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Maybe empty a table.
+	 *
+	 * @since 2.0
+	 *
+	 * @param Table $table
+	 * @param \wpdb $wpdb
+	 *
+	 * @return bool Return true if table is installed and emptied. False otherwise.
+	 */
+	public static function maybe_empty_table( Table $table, \wpdb $wpdb = null ) {
+
+		$wpdb = $wpdb ?: $GLOBALS['wpdb'];
+
+		if ( static::is_table_installed( $table, $wpdb ) ) {
+
+			$tn = $table->get_table_name( $wpdb );
+
+			$wpdb->query( "TRUNCATE TABLE `{$tn}`" );
+			static::fire_plugin_event( $table, 'emptied' );
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Check if a table is installed.
 	 *
 	 * @since 1.0
