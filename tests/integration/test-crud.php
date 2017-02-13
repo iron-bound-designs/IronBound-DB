@@ -351,4 +351,68 @@ class Test_Crud extends \IronBound\DB\Tests\TestCase {
 		$this->assertEquals( time(), $author->updated_at->getTimestamp(), '', 1 );
 	}
 
+	public function test_create_many() {
+
+		$authors = Author::create_many( array(
+			array( 'name' => 'Joe', 'bio' => 'Hi' ),
+			array( 'bio' => null, 'name' => 'John' ),
+			array( 'name' => 'James', 'picture' => null ),
+		) );
+
+		$this->assertCount( 3, $authors );
+		$this->assertContainsOnlyInstancesOf( '\IronBound\DB\Tests\Stub\Models\Author', $authors );
+
+		list( $a1, $a2, $a3 ) = $authors;
+
+		$this->assertNotNull( $a1->id );
+		$this->assertNotNull( $a2->id );
+		$this->assertNotNull( $a3->id );
+
+		$this->assertEquals( 'Joe', $a1->name );
+		$this->assertEquals( 'John', $a2->name );
+		$this->assertEquals( 'James', $a3->name );
+
+		$this->assertEquals( 'Hi', $a1->bio );
+		$this->assertNull( $a2->get_raw_attribute( 'bio' ) );
+		$this->assertEquals( '', $a3->bio );
+
+		$this->assertEquals( 0, $a1->get_raw_attribute( 'picture' ) );
+		$this->assertEquals( 0, $a2->get_raw_attribute( 'picture' ) );
+		$this->assertNull( $a3->get_raw_attribute( 'picture' ) );
+	}
+
+	public function test_create_many_multiple_queries() {
+
+		add_filter( 'ironbound_db_perform_insert_many_as_single_query', '__return_false' );
+
+		$authors = Author::create_many( array(
+			array( 'name' => 'Joe', 'bio' => 'Hi' ),
+			array( 'bio' => null, 'name' => 'John' ),
+			array( 'name' => 'James', 'picture' => null, ),
+		) );
+
+		$this->assertCount( 3, $authors );
+		$this->assertContainsOnlyInstancesOf( '\IronBound\DB\Tests\Stub\Models\Author', $authors );
+
+		list( $a1, $a2, $a3 ) = $authors;
+
+		$this->assertNotNull( $a1->id );
+		$this->assertNotNull( $a2->id );
+		$this->assertNotNull( $a3->id );
+
+		$this->assertEquals( 'Joe', $a1->name );
+		$this->assertEquals( 'John', $a2->name );
+		$this->assertEquals( 'James', $a3->name );
+
+		$this->assertEquals( 'Hi', $a1->bio );
+		$this->assertNull( $a2->get_raw_attribute( 'bio' ) );
+		$this->assertEquals( '', $a3->bio );
+
+		$this->assertEquals( 0, $a1->get_raw_attribute( 'picture' ) );
+		$this->assertEquals( 0, $a2->get_raw_attribute( 'picture' ) );
+		$this->assertNull( $a3->get_raw_attribute( 'picture' ) );
+
+		remove_filter( 'ironbound_db_perform_insert_many_as_single_query', '__return_false' );
+	}
+
 }

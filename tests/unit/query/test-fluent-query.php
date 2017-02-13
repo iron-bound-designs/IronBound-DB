@@ -24,34 +24,6 @@ use IronBound\DB\WP\Users;
  */
 class Test_FluentQuery extends \IronBound\DB\Tests\TestCase {
 
-	/**
-	 * Get a wpdb mock.
-	 *
-	 * @since 2.0
-	 *
-	 * @param string $expected
-	 *
-	 * @return \wpdb
-	 */
-	protected function get_wpdb( $expected ) {
-
-		$consecutive = array();
-
-		foreach ( func_get_args() as $arg ) {
-			$consecutive[] = array( $arg, $this->anything() );
-		}
-
-		$wpdb   = $this->getMockBuilder( '\wpdb' )->setMethods( array( 'get_results' ) )
-		               ->disableOriginalConstructor()->getMock();
-		$method = $wpdb->method( 'get_results' );
-		$method = call_user_func_array( array( $method, 'withConsecutive' ), $consecutive );
-		$method->willReturn( array() );
-
-		$wpdb->posts = 'wp_posts';
-
-		return $wpdb;
-	}
-
 	public function test_select_variadic() {
 
 		$sql = 'SELECT t1.`ID`, t1.`post_author` FROM wp_posts t1';

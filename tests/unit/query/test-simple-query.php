@@ -13,9 +13,12 @@ namespace IronBound\DB\Query\Tests;
 use IronBound\DB\Query\Simple_Query;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\StringBased;
+use IronBound\DB\Tests\Spy_wpdb;
+use IronBound\DB\WP\Posts;
 
 /**
  * Class Test_Simple_Query
+ *
  * @package IronBound\DB\Query\Tests
  */
 class Test_Simple_Query extends \IronBound\DB\Tests\TestCase {
@@ -395,6 +398,59 @@ class Test_Simple_Query extends \IronBound\DB\Tests\TestCase {
 		$simple_query->delete_many( array(
 			'colA' => '5'
 		) );
+	}
+
+	/**
+	 * @dataProvider _dp_insert_many
+	 */
+	public function test_insert_many( $expected, $data ) {
+
+		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )->setMethods( array(
+			'get_columns',
+			'get_column_defaults',
+			'get_table_name',
+			'get_primary_key',
+		) )->getMockForAbstractClass();
+		$table->method( 'get_table_name' )->willReturn( 'wp_table' );
+		$table->method( 'get_primary_key' )->willReturn( 'ID' );
+		$table->method( 'get_columns' )->willReturn( array(
+			'ID'   => new IntegerBased( 'BIGINT', 'ID', array( 'auto_increment' ) ),
+			'colA' => new StringBased( 'VARCHAR', 'colA' ),
+			'colB' => new StringBased( 'VARCHAR', 'colB' ),
+			'colC' => new StringBased( 'VARCHAR', 'colC' ),
+		) );
+		$table->method( 'get_column_defaults' )->willReturn( array(
+			'ID'   => 0,
+			'colA' => 'A',
+			'colB' => '',
+			'colC' => '',
+		) );
+
+		$sql = "INSERT INTO `wp_table` (`colA`, `colB`, `colC`) VALUES {$expected};";
+
+		$wpdb = $this->getMockBuilder( '\wpdb' )
+		             ->disableOriginalConstructor()
+		             ->setProxyTarget( $GLOBALS['wpdb'] )
+		             ->enableProxyingToOriginalMethods()
+		             ->getMock();
+		$wpdb->method( 'process_fields' )->willReturnArgument( 1 );
+		$wpdb->expects( $this->once() )->method( 'query' )->with( $sql );
+
+		$simple_query = new Simple_Query( $wpdb, $table );
+		$simple_query->insert_many( $data );
+	}
+
+	public function _dp_insert_many() {
+		return array(
+			array( "('A','Hi','There')", array( array( 'colC' => 'There', 'colB' => 'Hi' ) ) ),
+			array( "('Hey','','C')", array( array( 'colC' => 'C', 'colA' => 'Hey' ) ) ),
+			array( "(NULL,'Oh','')", array( array( 'colA' => null, 'colB' => 'Oh' ) ) ),
+			array( "('A',NULL,'C')", array( array( 'colB' => null, 'colC' => 'C' ) ) ),
+			array(
+				"('A',NULL,'C'),('Hey','','C')",
+				array( array( 'colB' => null, 'colC' => 'C' ), array( 'colC' => 'C', 'colA' => 'Hey' ) )
+			),
+		);
 	}
 
 }

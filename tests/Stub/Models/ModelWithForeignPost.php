@@ -22,7 +22,6 @@ use IronBound\DB\Relations\HasForeignPost;
  * @property \WP_Post  $post
  * @property float     $price
  * @property \DateTime $published
- * @property \WP_Post  $post
  */
 class ModelWithForeignPost extends Model {
 

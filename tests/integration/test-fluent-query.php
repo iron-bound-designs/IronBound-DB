@@ -23,6 +23,7 @@ use IronBound\WPEvents\EventDispatcher;
 
 /**
  * Class Test_Fluent_Query
+ *
  * @package IronBound\DB\Tests
  */
 class Test_Fluent_Query extends \IronBound\DB\Tests\TestCase {
@@ -30,7 +31,7 @@ class Test_Fluent_Query extends \IronBound\DB\Tests\TestCase {
 	public function setUp() {
 		parent::setUp();
 
-		Manager::register( new Authors() );
+		Manager::register( new Authors(), '', '\IronBound\DB\Tests\Stub\Models\Author' );
 		Manager::register( new Books(), '', '\IronBound\DB\Tests\Stub\Models\Book' );
 		Manager::register( new BaseMetaTable( new Books() ) );
 

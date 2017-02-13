@@ -1173,6 +1173,29 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
+	 * Create multiple models at once.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array $models
+	 *
+	 * @return static[]
+	 *
+	 * @throws \IronBound\DB\Exception
+	 */
+	public static function create_many( array $models ) {
+
+		$objects = array();
+		$rows    = static::make_query_object()->insert_many( $models );
+
+		foreach ( $rows as $row ) {
+			$objects[] = static::from_query( $row );
+		}
+
+		return $objects;
+	}
+
+	/**
 	 * Create a fresh UTC timestamp.
 	 *
 	 * @since 2.0
@@ -1544,8 +1567,7 @@ abstract class Model implements Cacheable, \Serializable {
 	public function __isset( $name ) {
 		try {
 			return $this->get_attribute( $name ) !== null;
-		}
-		catch ( \OutOfBoundsException $e ) {
+		} catch ( \OutOfBoundsException $e ) {
 			return false;
 		}
 	}

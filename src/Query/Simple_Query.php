@@ -271,6 +271,118 @@ class Simple_Query {
 	}
 
 	/**
+	 * Insert multiple rows at once.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array $rows Array of array of fields to values.
+	 *
+	 * @return array
+	 *
+	 * @throws \IronBound\DB\Exception
+	 */
+	public function insert_many( array $rows ) {
+
+		$pk = $this->table->get_primary_key();
+		$tn = $this->table->get_table_name( $this->wpdb );
+
+		$columns         = $this->table->get_columns();
+		$auto_increments = strpos( $columns[ $pk ], 'auto_increment' ) !== false;
+
+		/**
+		 * Filter whether an insert_many API call should perform a single INSERT request.
+		 *
+		 * If this is disabled, mysql transactions must be supported.
+		 *
+		 * @since 2.0.0
+		 *
+		 * @param bool
+		 */
+		if ( ! apply_filters( 'ironbound_db_perform_insert_many_as_single_query', true ) ) {
+
+			$this->wpdb->query( 'START TRANSACTION;' );
+
+			try {
+				foreach ( $rows as $i => $row ) {
+					$id = $this->insert( $row );
+
+					if ( $id ) {
+						$rows[ $i ][ $pk ] = $id;
+					}
+				}
+			} catch ( Exception $e ) {
+				$this->wpdb->query( 'ROLLBACK;' );
+
+				throw $e;
+			}
+
+			$this->wpdb->query( 'COMMIT;' );
+
+			return $rows;
+		}
+
+		$defaults = $this->table->get_column_defaults();
+
+		if ( $auto_increments ) {
+			unset( $defaults[ $pk ] );
+		}
+
+		ksort( $defaults );
+		$fields = '`' . implode( '`, `', array_keys( $defaults ) ) . '`';
+
+		$formats = '';
+		$values  = array();
+
+		foreach ( $rows as $i => $row ) {
+
+			$data   = array();
+			$format = array_fill( 0, count( $defaults ), '%s' );
+
+			$k = 0;
+			foreach ( $defaults as $column => $default ) {
+				$value = array_key_exists( $column, $row ) ? $row[ $column ] : $default;
+
+				if ( $value === null ) {
+					$format[ $k ] = 'NULL';
+				} else {
+					$data[ $column ] = $value;
+				}
+
+				$k ++;
+			}
+
+			$values = array_merge( $values, array_values( $data ) );
+			$formats .= '(' . implode( ',', $format ) . '),';
+		}
+
+		$formats = substr( $formats, 0, - 1 );
+		$sql     = "INSERT INTO `{$tn}` ({$fields}) VALUES {$formats};";
+
+		$prev = $this->wpdb->show_errors( false );
+		$this->wpdb->query( $this->wpdb->prepare( $sql, $values ) );
+		$this->wpdb->show_errors( $prev );
+
+		if ( $this->wpdb->last_error ) {
+			throw $this->generate_exception_from_db_error();
+		}
+
+		$first_id = $this->wpdb->insert_id;
+
+		if ( ! $first_id ) {
+			return $rows;
+		}
+
+		$id = $first_id;
+
+		foreach ( $rows as $i => $row ) {
+			$rows[ $i ][ $pk ] = $id;
+			$id ++;
+		}
+
+		return $rows;
+	}
+
+	/**
 	 * Update a row
 	 *
 	 * @since 1.0

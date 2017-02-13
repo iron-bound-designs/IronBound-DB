@@ -18,6 +18,7 @@ use IronBound\WPEvents\GenericEvent;
 
 /**
  * Class Test_Events
+ *
  * @package IronBound\DB\Tests
  */
 class Test_Events extends \IronBound\DB\Tests\TestCase {
@@ -25,7 +26,7 @@ class Test_Events extends \IronBound\DB\Tests\TestCase {
 	public function setUp() {
 		parent::setUp();
 
-		Manager::register( new TableWithForeignPost(), '', get_class( new ModelWithForeignPost() ) );
+		Manager::register( new TableWithForeignPost(), '', 'IronBound\DB\Tests\Stub\Models\ModelWithForeignPost' );
 		Manager::maybe_install_table( Manager::get( 'with-foreign-post' ) );
 	}
 
