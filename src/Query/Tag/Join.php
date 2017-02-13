@@ -30,7 +30,7 @@ class Join extends Generic {
 		if ( $type !== 'INNER' ) {
 			$join = "$type JOIN";
 		} else {
-			$join = "JOIN";
+			$join = 'JOIN';
 		}
 
 		parent::__construct( $join, $sql );

@@ -37,4 +37,11 @@ class Where_Raw extends Where {
 	protected function get_comparison() {
 		return $this->value;
 	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function is_empty() {
+		return parent::is_empty() && ! $this->get_comparison();
+	}
 }

@@ -82,7 +82,7 @@ final class Builder {
 
 			if ($part instanceof Builder) {
 				$query .= "($part)";
-			} else {
+			} elseif ( $sql = (string) $part ) {
 				$query .= "$part ";
 			}
 		}

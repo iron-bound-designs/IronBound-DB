@@ -48,11 +48,16 @@ class Where extends Generic {
 	private $operator;
 
 	/**
+	 * @var bool
+	 */
+	private $for_clause = false;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param string $column
-	 * @param bool   $equality True for =, False for !=
-	 * @param mixed  $value    Values should be pre-escaped.
+	 * @param string      $column
+	 * @param string|bool $equality True for =, False for !=
+	 * @param mixed       $value    Values should be pre-escaped.
 	 */
 	public function __construct( $column, $equality, $value ) {
 		parent::__construct( 'where' );
@@ -77,6 +82,41 @@ class Where extends Generic {
 
 		$this->operator = $equality;
 	}
+
+	/**
+	 * Generate a Where tag that will be used only as a clause.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return Where
+	 */
+	public static function for_clause() {
+		$where             = new self( '', '', '' );
+		$where->for_clause = true;
+
+
+		return $where;
+	}
+
+	/**
+	 * Is the where tag empty.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return bool
+	 */
+	public function is_empty() {
+		return ! $this->column && ! $this->clauses;
+	}
+
+	/**
+	 * Is the Where tag supposed to represent an entire clause.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return bool
+	 */
+	public function is_for_clause() { return $this->for_clause; }
 
 	/**
 	 * Perform an OR.
@@ -132,7 +172,6 @@ class Where extends Generic {
 	 * @param Where $clause
 	 */
 	protected function add_clause( $type, Where $clause ) {
-
 		$this->clauses[] = array(
 			'type'   => $type,
 			'clause' => $clause
@@ -148,6 +187,10 @@ class Where extends Generic {
 	 */
 	protected function get_comparison() {
 
+		if ( ! $this->column ) {
+			return '';
+		}
+
 		$query = "{$this->column} ";
 
 		if ( is_array( $this->value ) ) {
@@ -161,9 +204,9 @@ class Where extends Generic {
 		} elseif ( $this->value === null ) {
 
 			if ( $this->operator === true || $this->operator === '=' ) {
-				$query .= "IS NULL";
+				$query .= 'IS NULL';
 			} else {
-				$query .= "IS NOT NULL";
+				$query .= 'IS NOT NULL';
 			}
 
 		} else {
@@ -189,16 +232,47 @@ class Where extends Generic {
 	 */
 	protected function get_value() {
 
-		$query = $this->get_comparison();
+		$query = $this->for_clause ? '(' : $this->get_comparison();
 
 		if ( ! empty( $this->clauses ) ) {
-			foreach ( $this->clauses as $clause ) {
-				$query .= " {$clause['type']} (";
-				$query .= $clause['clause']->get_value();
-				$query .= ')';
+			foreach ( $this->clauses as $i => $clause ) {
+
+				// We don't want to add the connector if this is the first clause and there is no comparison.
+				if ( strlen( $query ) > 1 ) {
+					$query .= ' ' . $clause['type'] . ' ';
+				}
+
+				/** @var Where $where */
+				$where = $clause['clause'];
+
+				if ( ! $where->is_for_clause() ) {
+					$query .= '(';
+				}
+
+				$query .= $where->get_value();
+
+				if ( ! $where->is_for_clause() ) {
+					$query .= ')';
+				}
 			}
 		}
 
+		if ( $this->for_clause ) {
+			$query .= ')';
+		}
+
 		return $query;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function __toString() {
+
+		if ( $this->is_empty() ) {
+			return '';
+		}
+
+		return parent::__toString();
 	}
 }

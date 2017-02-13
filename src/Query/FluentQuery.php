@@ -134,6 +134,7 @@ class FluentQuery {
 
 		$this->select = new Select( null );
 		$this->from   = new From( $this->table->get_table_name( $this->wpdb ), $this->alias );
+		$this->where  = new Where( '', '', '' );
 	}
 
 	/**
@@ -280,6 +281,9 @@ class FluentQuery {
 	 * @param string             $boolean
 	 *
 	 * @return $this
+	 *
+	 * @throws \IronBound\DB\Exception\InvalidColumnException
+	 * @throws \InvalidArgumentException
 	 */
 	public function where( $column, $equality = '', $value = '', Closure $callback = null, $boolean = null ) {
 
@@ -289,32 +293,14 @@ class FluentQuery {
 
 		if ( is_array( $column ) ) {
 
+			$where = Where::for_clause();
+
 			foreach ( $column as $col => $val ) {
-				$this->and_where( $col, true, $val );
+				$where->qAnd( $this->generate_where_tag( $col, true, $val ) );
 			}
 
-			return $this;
-		} elseif ( $column instanceof Where ) {
-			$where = $column;
 		} else {
-
-			if ( is_array( $value ) ) {
-
-				if ( count( $value ) === 0 ) {
-					throw new \InvalidArgumentException( 'Must provide at least one value for IN query.' );
-				}
-
-				$self  = $this;
-				$value = array_map( function ( $value ) use ( $column, $self ) {
-					return $self->escape_value( $column, $value );
-				}, $value );
-			} else {
-				$value = $this->escape_value( $column, $value );
-			}
-
-			$column = $this->prepare_column( $column );
-
-			$where = new Where( $column, $equality, $value );
+			$where = $this->generate_where_tag( $column, $equality, $value );
 		}
 
 		if ( $callback ) {
@@ -324,16 +310,76 @@ class FluentQuery {
 			$this->where = $_where;
 		}
 
-		if ( ! $boolean ) {
-			$this->where = $where;
-		} elseif ( is_null( $this->where ) ) {
+		if ( $this->where->is_empty() && ! $where->is_for_clause() ) {
 			$this->where = $where;
 		} else {
+			$boolean = $boolean ?: 'and';
 			$boolean = 'q' . ucfirst( $boolean );
 			$this->where->{$boolean}( $where );
 		}
 
 		return $this;
+	}
+
+	/**
+	 * Generate a Where tag.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string       $column
+	 * @param string|bool  $equality
+	 * @param string|array $value
+	 *
+	 * @return Where
+	 *
+	 * @throws \IronBound\DB\Exception\InvalidColumnException
+	 * @throws \InvalidArgumentException
+	 */
+	protected function generate_where_tag( $column, $equality = '', $value = '' ) {
+
+		if ( $column instanceof Where ) {
+			return $column;
+		}
+
+		if ( is_array( $value ) ) {
+
+			if ( count( $value ) === 0 ) {
+				throw new \InvalidArgumentException( 'Must provide at least one value for IN query.' );
+			}
+
+			$self  = $this;
+			$value = array_map( function ( $value ) use ( $column, $self ) {
+				return $self->escape_value( $column, $value );
+			}, $value );
+		} else {
+			$value = $this->escape_value( $column, $value );
+		}
+
+		$column = $this->prepare_column( $column );
+
+		return new Where( $column, $equality, $value );
+	}
+
+	/**
+	 * Add a nested where clause.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param Closure $callback
+	 * @param string  $boolean
+	 */
+	public function add_nested_where( Closure $callback, $boolean = 'and' ) {
+
+		$_where      = $this->where;
+		$this->where = Where::for_clause();
+
+		$callback( $this );
+
+		$clause      = $this->where;
+		$this->where = $_where;
+		$boolean     = $boolean ?: 'and';
+		$boolean     = 'q' . ucfirst( $boolean );
+		$this->where->{$boolean}( $clause );
 	}
 
 	/**
@@ -561,7 +607,7 @@ class FluentQuery {
 		if ( $callback ) {
 			$callback( $other_query );
 
-			if ( $other_query->where ) {
+			if ( ! $other_query->where->is_empty() ) {
 				$where->qAnd( $other_query->where );
 			}
 		}

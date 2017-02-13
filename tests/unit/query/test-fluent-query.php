@@ -116,12 +116,54 @@ class Test_FluentQuery extends \IronBound\DB\Tests\TestCase {
 		$fq->results();
 	}
 
-	public function test_where_multiple_columns_as_array() {
+	public function test_where_multiple_columns_as_array_as_only_clause() {
 
-		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`ID` = '5' AND (t1.`post_type` = 'page')";
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE ((t1.`ID` = '5') AND (t1.`post_type` = 'page'))";
 
 		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
 		$fq->where( array( 'ID' => 5, 'post_type' => 'page' ) );
+		$fq->results();
+	}
+
+	public function test_where_multiple_columns_as_array_as_first_clause() {
+
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE ((t1.`ID` = '5') AND (t1.`post_type` = 'page')) AND (t1.`post_author` = '1')";
+
+		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
+		$fq->where( array( 'ID' => 5, 'post_type' => 'page' ) );
+		$fq->and_where( 'post_author', '=', 1 );
+		$fq->results();
+	}
+
+	public function test_where_multiple_columns_as_array_as_middle_clause() {
+
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`post_author` = '1' AND ((t1.`ID` = '5') AND (t1.`post_type` = 'page')) AND (t1.`pinged` = '')";
+
+		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
+		$fq->and_where( 'post_author', '=', 1 );
+		$fq->and_where( array( 'ID' => 5, 'post_type' => 'page' ) );
+		$fq->and_where( 'pinged', '=', '' );
+		$fq->results();
+	}
+
+	public function test_where_multiple_columns_as_array_as_last_clause() {
+
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`post_author` = '1' AND ((t1.`ID` = '5') AND (t1.`post_type` = 'page'))";
+
+		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
+		$fq->and_where( 'post_author', '=', 1 );
+		$fq->and_where( array( 'ID' => 5, 'post_type' => 'page' ) );
+		$fq->results();
+	}
+
+	public function test_where_multiple_columns_as_array_as_middle_clause_with_or() {
+
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`post_author` = '1' OR ((t1.`ID` = '5') AND (t1.`post_type` = 'page')) AND (t1.`pinged` = '')";
+
+		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
+		$fq->and_where( 'post_author', '=', 1 );
+		$fq->or_where( array( 'ID' => 5, 'post_type' => 'page' ) );
+		$fq->and_where( 'pinged', '=', '' );
 		$fq->results();
 	}
 
@@ -152,7 +194,7 @@ class Test_FluentQuery extends \IronBound\DB\Tests\TestCase {
 		$fq->results();
 	}
 
-	public function test_where_nested() {
+	public function test_where_nested_callback() {
 
 		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`ID` = '5' OR (t1.`post_type` = 'page')";
 
@@ -160,6 +202,29 @@ class Test_FluentQuery extends \IronBound\DB\Tests\TestCase {
 		$fq->where( 'ID', '=', 5, function ( FluentQuery $query ) {
 			$query->or_where( 'post_type', '=', 'page' );
 		} );
+		$fq->results();
+	}
+
+	public function test_where_nested_method() {
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`ID` = '5' AND (t1.`post_type` = 'page' OR (t1.`post_author` = '1'))";
+
+		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
+		$fq->where( 'ID', '=', 5 );
+		$fq->add_nested_where( function ( FluentQuery $query ) {
+			$query->and_where( 'post_type', '=', 'page' );
+			$query->or_where( 'post_author', '=', 1 );
+		}, 'and' );
+		$fq->results();
+	}
+
+	public function test_where_nested_method_boolean() {
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`ID` = '5' OR (t1.`post_type` = 'page')";
+
+		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
+		$fq->where( 'ID', '=', 5 );
+		$fq->add_nested_where( function ( FluentQuery $query ) {
+			$query->and_where( 'post_type', '=', 'page' );
+		}, 'or' );
 		$fq->results();
 	}
 
