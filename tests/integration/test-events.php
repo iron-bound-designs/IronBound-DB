@@ -61,4 +61,49 @@ class Test_Events extends \IronBound\DB\Tests\TestCase {
 
 		$this->assertTrue( $called );
 	}
+
+	public function test_creating_event_when_create_many() {
+
+		ModelWithForeignPost::set_event_dispatcher( new EventDispatcher() );
+
+		$called  = array();
+		$phpunit = $this;
+
+		ModelWithForeignPost::creating( function ( GenericEvent $event ) use ( &$called, $phpunit ) {
+			if ( ! $event->get_subject()->exists() ) {
+				$event->get_subject()->published = '2017-12-25';
+
+				$called[] = $event->get_subject();
+			}
+		} );
+
+		$models = ModelWithForeignPost::create_many( array(
+			array( 'price' => 22.95 ),
+			array( 'price' => 99.99 ),
+		) );
+
+		$this->assertEquals( $models, $called );
+		list( $m1, $m2 ) = $models;
+		$this->assertEquals( '2017-12-25', $m1->published->format( 'Y-m-d' ) );
+		$this->assertEquals( '2017-12-25', $m2->published->format( 'Y-m-d' ) );
+	}
+
+	public function test_created_event_when_create_many() {
+
+		ModelWithForeignPost::set_event_dispatcher( new EventDispatcher() );
+
+		$called  = array();
+		$phpunit = $this;
+
+		ModelWithForeignPost::created( function ( GenericEvent $event ) use ( &$called, $phpunit ) {
+			$called[] = $event->get_subject();
+		} );
+
+		$models = ModelWithForeignPost::create_many( array(
+			array( 'price' => 22.95 ),
+			array( 'price' => 99.99 ),
+		) );
+
+		$this->assertEquals( $models, $called );
+	}
 }

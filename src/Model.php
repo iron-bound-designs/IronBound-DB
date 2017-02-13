@@ -1177,22 +1177,38 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $models
+	 * @param array[]|static[] $to_insert Records to be inserted.
 	 *
 	 * @return static[]
 	 *
 	 * @throws \IronBound\DB\Exception
 	 */
-	public static function create_many( array $models ) {
+	public static function create_many( array $to_insert ) {
 
-		$objects = array();
-		$rows    = static::make_query_object()->insert_many( $models );
+		$models = array();
+		$data   = array();
 
-		foreach ( $rows as $row ) {
-			$objects[] = static::from_query( $row );
+		foreach ( $to_insert as $model ) {
+			$model = $model instanceof static ? $model : new static ( $model );
+			$model->fire_model_event( 'saving' );
+			$model->fire_model_event( 'creating' );
+
+			$models[] = $model;
+			$data[]   = $model->get_raw_attributes();
 		}
 
-		return $objects;
+		$rows = static::make_query_object()->insert_many( $data );
+
+		foreach ( $rows as $i => $row ) {
+			$model = $models[ $i ];
+
+			$model->set_raw_attributes( $row );
+			$model->fire_model_event( 'created' );
+			$model->fire_model_event( 'saved' );
+			$model->sync_original();
+		}
+
+		return $models;
 	}
 
 	/**
