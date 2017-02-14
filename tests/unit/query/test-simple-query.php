@@ -405,6 +405,10 @@ class Test_Simple_Query extends \IronBound\DB\Tests\TestCase {
 	 */
 	public function test_insert_many( $expected, $data ) {
 
+		if ( version_compare( PHP_VERSION, '5.3', '<=' ) ) {
+			$this->markTestSkipped( 'Proxy target not working with 5.3' );
+		}
+
 		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )->setMethods( array(
 			'get_columns',
 			'get_column_defaults',

@@ -32,6 +32,8 @@ class DeleteConstrainer implements Plugin {
 
 	/**
 	 * @inheritDoc
+	 * @throws \InvalidArgumentException
+	 * @throws \UnexpectedValueException
 	 */
 	public function registered( Table $table ) {
 
@@ -81,6 +83,7 @@ class DeleteConstrainer implements Plugin {
 				switch ( $behavior ) {
 					case DeleteConstrained::RESTRICT:
 						if ( $results ) {
+							/** @noinspection ExceptionsAnnotatingAndHandlingInspection */
 							throw new DeleteRestrictedException(
 								get_class( $results->first() ) . " with primary key '$pk' cannot be deleted due to a constraint " .
 								"on the {$table->get_slug()} table for column {$column_name}."
