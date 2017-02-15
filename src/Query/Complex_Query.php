@@ -72,7 +72,7 @@ abstract class Complex_Query {
 
 		$this->table    = $table;
 		$this->wpdb     = $wpdb ?: $GLOBALS['wpdb'];
-		$this->db_query = new Simple_Query( $wpdb, $table );
+		$this->db_query = new Simple_Query( $this->wpdb, $table );
 
 		$this->args = wp_parse_args( $args, $this->get_default_args() );
 
