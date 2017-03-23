@@ -68,7 +68,7 @@ class DeleteConstrainer implements Plugin {
 				);
 			}
 
-			$column->register_delete_callback( function ( $pk, $model ) use ( $table, $column_name, $model, $behavior ) {
+			$column->register_delete_callback( function ( $pk, $object ) use ( $table, $column_name, $model, $behavior ) {
 
 				/** @var FluentQuery $query */
 				$query = call_user_func( array( $model, 'query' ) );
