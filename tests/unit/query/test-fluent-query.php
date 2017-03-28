@@ -200,6 +200,17 @@ class Test_FluentQuery extends \IronBound\DB\Tests\TestCase {
 		$fq->results();
 	}
 
+	public function test_where_nested_valid_sql_if_no_nests_added() {
+		$sql = "SELECT t1.* FROM wp_posts t1 WHERE t1.`ID` = '5'";
+
+		$fq = new FluentQuery( new Posts(), $this->get_wpdb( $sql ) );
+		$fq->where( 'ID', '=', 5 );
+		$fq->add_nested_where( function ( FluentQuery $query ) {
+			// do nothing
+		}, 'or' );
+		$fq->results();
+	}
+
 	public function test_where_date() {
 
 		$sql = "SELECT t1.* FROM wp_posts t1 WHERE YEAR( t1.post_date_gmt ) = 2016";

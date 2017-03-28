@@ -377,6 +377,11 @@ class FluentQuery {
 
 		$clause      = $this->where;
 		$this->where = $_where;
+
+		if ( $clause->is_empty() ) {
+			return;
+		}
+
 		$boolean     = $boolean ?: 'and';
 		$boolean     = 'q' . ucfirst( $boolean );
 		$this->where->{$boolean}( $clause );
