@@ -8,6 +8,7 @@
 >
 	<testsuites>
 		<testsuite name="unit">
+            <exclude>./tests/unit/test-model-php7.php</exclude>
 			<directory prefix="test-" suffix=".php">./tests/unit/</directory>
 			<file phpVersion="7.0.0">./tests/unit/test-model-php7.php</file>
 		</testsuite>
