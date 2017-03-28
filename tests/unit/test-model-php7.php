@@ -12,21 +12,12 @@ namespace IronBound\DB\Tests;
 
 use IronBound\DB\Model;
 
-
 /**
  * Class Test_Model
  *
  * @package IronBound\DB\Tests
  */
 class Test_Model extends \IronBound\DB\Tests\TestCase {
-
-	function setUp() {
-		parent::setUp();
-
-		if ( version_compare( PHP_VERSION, '7.0.0', '<' ) ) {
-			$this->markTestSkipped( 'PHP 7+ test' );
-		}
-	}
 
 	protected function get_table() {
 		$column = $this->getMockBuilder( '\IronBound\DB\Table\Column\Column' )->setMethods( [
