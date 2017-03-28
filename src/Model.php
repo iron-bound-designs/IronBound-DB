@@ -268,29 +268,42 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @since 2.1.0
 	 *
-	 * @param string   $attribute
-	 * @param callable $callback
+	 * @param string|array $attribute,...
+	 * @param callable     $callback
 	 */
 	public function with_guarded( $attribute, $callback ) {
+
+		if ( is_array( $attribute ) ) {
+			$attributes = $attribute;
+		} else {
+			$attributes = func_get_args();
+			$callback   = array_pop( $attributes );
+		}
+
 		$unguarded = static::$_unguarded;
 
 		if ( $unguarded ) {
 			static::$_unguarded = false;
 		}
 
-		if ( ( $i = array_search( $attribute, $this->_fillable, true ) ) !== false ) {
-			unset( $this->_fillable[ $i ] );
+		$_fillable = $this->_fillable;
+		$_guarded  = $this->_guarded;
+
+		if ( $this->_fillable ) {
+			$this->_fillable = array_diff( $this->_fillable, $attributes );
+
+			// If the diff removes all fillable attributes we need to use _guarded.
+			if ( ! $this->_fillable ) {
+				$this->_guarded = $attributes;
+			}
 		} else {
-			$this->_guarded[] = $attribute;
+			$this->_guarded = array_unique( array_merge( $this->_guarded, $attributes ) );
 		}
 
 		$callback( $this );
 
-		if ( $i !== false ) {
-			$this->_fillable[ $i ] = $attribute;
-		} else {
-			unset( $this->_guarded[ array_search( $attribute, $this->_guarded, true ) ] );
-		}
+		$this->_fillable = $_fillable;
+		$this->_guarded  = $_guarded;
 
 		static::$_unguarded = $unguarded;
 	}
@@ -300,7 +313,7 @@ abstract class Model implements Cacheable, \Serializable {
 	 *
 	 * @since 2.1.0
 	 *
-	 * @param string   $attribute
+	 * @param string   $attribute,...
 	 * @param callable $callback
 	 */
 	public function with_unguarded( $attribute, $callback ) {
@@ -311,21 +324,27 @@ abstract class Model implements Cacheable, \Serializable {
 			return;
 		}
 
-		$i = false;
+		if ( is_array( $attribute ) ) {
+			$attributes = $attribute;
+		} else {
+			$attributes = func_get_args();
+			$callback   = array_pop( $attributes );
+		}
+
+		$_fillable = $this->_fillable;
+		$_guarded  = $this->_guarded;
 
 		if ( $this->_fillable ) {
-			$this->_fillable[] = $attribute;
-		} elseif ( ( $i = array_search( $attribute, $this->_guarded, true ) ) !== false ) {
-			unset( $this->_guarded[ $i ] );
+			$this->_fillable = array_merge( $this->_fillable, $attributes );
+		} else {
+			$this->_guarded = array_diff( $this->_guarded, $attributes );
 		}
 
 		$callback( $this );
 
-		if ( $this->_fillable ) {
-			unset( $this->_fillable[ array_search( $attribute, $this->_fillable, true ) ] );
-		} elseif ( $i !== false ) {
-			$this->_guarded[ $i ] = $attribute;
-		}
+		$this->_fillable = $_fillable;
+		$this->_guarded  = $_guarded;
+
 	}
 
 	/**

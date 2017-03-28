@@ -201,6 +201,51 @@ class Test_Model extends \IronBound\DB\Tests\TestCase {
 		$this->assertEquals( 'o', $model->get_attribute( 'colC' ) );
 	}
 
+	public function test_with_guarded_multiple() {
+
+		$table = $this->get_table();
+
+		/** @var Model $model */
+		$model = new class( $table, [] ) extends Model {
+
+			public static $table;
+
+			public function __construct( $table = null, $data = array() ) {
+
+				if ( $table ) {
+					static::$table = $table;
+				}
+
+				parent::__construct( [] );
+			}
+
+			public function get_pk() {
+				return $this->get_attribute( 'colA' );
+			}
+
+			public static function get_table() {
+				return static::$table;
+			}
+
+		};
+
+		$model::$table = $table;
+
+		$model->with_guarded( 'colB', 'colC', function ( Model $model ) {
+			$model->fill( array( 'colA' => 'He', 'colB' => 'll', 'colC' => 'o' ) );
+		} );
+
+		$this->assertEquals( 'He', $model->get_attribute( 'colA' ) );
+		$this->assertEquals( null, $model->get_attribute( 'colB' ) );
+		$this->assertEquals( null, $model->get_attribute( 'colC' ) );
+
+		$model->fill( array( 'colA' => 'He', 'colB' => 'll', 'colC' => 'o' ) );
+
+		$this->assertEquals( 'He', $model->get_attribute( 'colA' ) );
+		$this->assertEquals( 'll', $model->get_attribute( 'colB' ) );
+		$this->assertEquals( 'o', $model->get_attribute( 'colC' ) );
+	}
+
 	public function test_with_guarded_and_existing_guarded_properties() {
 
 		$table = $this->get_table();
@@ -383,6 +428,53 @@ class Test_Model extends \IronBound\DB\Tests\TestCase {
 		$model->fill( array( 'colA' => 'Me', 'colB' => 'll', 'colC' => 'o' ) );
 
 		$this->assertEquals( 'Me', $model->get_attribute( 'colA' ) );
+		$this->assertEquals( 'll', $model->get_attribute( 'colB' ) );
+		$this->assertEquals( 'o', $model->get_attribute( 'colC' ) );
+	}
+
+	public function test_with_unguarded_multiple() {
+
+		$table = $this->get_table();
+
+		/** @var Model $model */
+		$model = new class( $table, [] ) extends Model {
+
+			public static $table;
+
+			protected $_guarded = array( 'colA', 'colB' );
+
+			public function __construct( $table = null, $data = array() ) {
+
+				if ( $table ) {
+					static::$table = $table;
+				}
+
+				parent::__construct( [] );
+			}
+
+			public function get_pk() {
+				return $this->get_attribute( 'colA' );
+			}
+
+			public static function get_table() {
+				return static::$table;
+			}
+
+		};
+
+		$model::$table = $table;
+
+		$model->with_unguarded( 'colA', 'colB', function ( Model $model ) {
+			$model->fill( array( 'colA' => 'He', 'colB' => 'll', 'colC' => 'o' ) );
+		} );
+
+		$this->assertEquals( 'He', $model->get_attribute( 'colA' ) );
+		$this->assertEquals( 'll', $model->get_attribute( 'colB' ) );
+		$this->assertEquals( 'o', $model->get_attribute( 'colC' ) );
+
+		$model->fill( array( 'colA' => 'Me', 'colB' => 'bo', 'colC' => 'o' ) );
+
+		$this->assertEquals( 'He', $model->get_attribute( 'colA' ) );
 		$this->assertEquals( 'll', $model->get_attribute( 'colB' ) );
 		$this->assertEquals( 'o', $model->get_attribute( 'colC' ) );
 	}
