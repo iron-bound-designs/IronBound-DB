@@ -9,11 +9,11 @@
 	<testsuites>
 		<testsuite name="unit">
 			<directory prefix="test-" suffix=".php">./tests/unit/</directory>
+			<file phpVersion="7.0.0">./tests/unit/test-model-php7.php</file>
 		</testsuite>
 		<testsuite name="integration">
 			<directory prefix="test-" suffix=".php">./tests/integration/</directory>
 		</testsuite>
-		<file phpVersion="7.0.0">/unit/test-model-php7.php</file>
 	</testsuites>
 
 	<whitelist processUncoveredFilesFromWhitelist="true">
