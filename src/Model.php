@@ -264,6 +264,71 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
+	 * Make a function call with a given attribute guarded.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param string   $attribute
+	 * @param callable $callback
+	 */
+	public function with_guarded( $attribute, $callback ) {
+		$unguarded = static::$_unguarded;
+
+		if ( $unguarded ) {
+			static::$_unguarded = false;
+		}
+
+		if ( ( $i = array_search( $attribute, $this->_fillable, true ) ) !== false ) {
+			unset( $this->_fillable[ $i ] );
+		} else {
+			$this->_guarded[] = $attribute;
+		}
+
+		$callback( $this );
+
+		if ( $i !== false ) {
+			$this->_fillable[ $i ] = $attribute;
+		} else {
+			unset( $this->_guarded[ array_search( $attribute, $this->_guarded, true ) ] );
+		}
+
+		static::$_unguarded = $unguarded;
+	}
+
+	/**
+	 * Make a function call with a given attribute unguarded.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param string   $attribute
+	 * @param callable $callback
+	 */
+	public function with_unguarded( $attribute, $callback ) {
+
+		if ( static::$_unguarded ) {
+			$callback( $this );
+
+			return;
+		}
+
+		$i = false;
+
+		if ( $this->_fillable ) {
+			$this->_fillable[] = $attribute;
+		} elseif ( ( $i = array_search( $attribute, $this->_guarded, true ) ) !== false ) {
+			unset( $this->_guarded[ $i ] );
+		}
+
+		$callback( $this );
+
+		if ( $this->_fillable ) {
+			unset( $this->_fillable[ array_search( $attribute, $this->_fillable, true ) ] );
+		} elseif ( $i !== false ) {
+			$this->_guarded[ $i ] = $attribute;
+		}
+	}
+
+	/**
 	 * Determine if a given attribute is fillable.
 	 *
 	 * @since 2.0
