@@ -707,6 +707,30 @@ abstract class Model implements Cacheable, \Serializable {
 	}
 
 	/**
+	 * Refresh the attributes on this model.
+	 *
+	 * This will fetch the latest data from either the cache or DB.
+	 *
+	 * @param bool $destroy_changes If true, will destroy local changes.
+	 *
+	 * @since 2.0.0
+	 */
+	public function refresh( $destroy_changes = false ) {
+
+		if ( ! $this->exists() ) {
+			return;
+		}
+
+		$data = (array) static::get_data_from_pk( $this->get_pk() );
+
+		$this->_original = $data;
+
+		if ( $destroy_changes ) {
+			$this->set_raw_attributes( $data );
+		}
+	}
+
+	/**
 	 * Sync the model's original attributes with its current state.
 	 *
 	 * This will prevent any updates attributes as showing up as dirty.
@@ -735,7 +759,6 @@ abstract class Model implements Cacheable, \Serializable {
 
 		return $this;
 	}
-
 
 	/**
 	 * Determine if the model as a whole or given attribute(s) have been modified.

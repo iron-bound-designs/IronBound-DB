@@ -407,4 +407,45 @@ class Test_Crud extends \IronBound\DB\Tests\TestCase {
 		remove_filter( 'ironbound_db_perform_insert_many_as_single_query', '__return_false' );
 	}
 
+	public function test_refresh() {
+		$model        = ModelWithForeignPost::create( array(
+			'price' => 24.75
+		) );
+		$model->price = 50.00;
+
+		$_model        = ModelWithForeignPost::get( $model->get_pk() );
+		$_model->price = 45.00;
+		$_model->save();
+
+		$this->assertEquals( 50.00, $model->price );
+		$this->assertTrue( $model->is_dirty() );
+
+		$model->refresh();
+
+		$this->assertEquals( 50.00, $model->price );
+		$this->assertTrue( $model->is_dirty() );
+
+		$model->price = 45;
+		$this->assertEquals( 45.00, $model->price );
+		$this->assertFalse( $model->is_dirty() );
+	}
+
+	public function test_refresh_and_destroy_local_changes() {
+		$model        = ModelWithForeignPost::create( array(
+			'price' => 24.75
+		) );
+		$model->price = 50.00;
+
+		$_model        = ModelWithForeignPost::get( $model->get_pk() );
+		$_model->price = 45.00;
+		$_model->save();
+
+		$this->assertEquals( 50.00, $model->price );
+		$this->assertTrue( $model->is_dirty() );
+
+		$model->refresh( true );
+
+		$this->assertEquals( 45.00, $model->price );
+		$this->assertFalse( $model->is_dirty() );
+	}
 }
