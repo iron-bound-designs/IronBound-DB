@@ -124,7 +124,7 @@ class Test_Helper extends \IronBound\DB\Tests\TestCase {
 		);
 		$this->assertEquals(
 			(string) new StringBased( 'VARCHAR', 'long', array(), array( 255 ) ),
-			(string) $Long
+			(string) $long
 		);
 
 		$this->assertEquals( 'active*', $status->prepare_for_storage( 'active*' ) );

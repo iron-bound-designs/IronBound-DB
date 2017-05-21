@@ -28,8 +28,11 @@ class InMemoryTable extends BaseTable {
 	/** @var string */
 	private $primary_key;
 
-	/** @var array */
+	/** @var Column[] */
 	private $columns = array();
+
+	/** @var array */
+	private $columns_defined = array();
 
 	/** @var array */
 	private $defaults = array();
@@ -42,8 +45,8 @@ class InMemoryTable extends BaseTable {
 	 * @param array    $args
 	 */
 	public function __construct( $name, array $columns, array $args = array() ) {
-		$this->name    = $name;
-		$this->columns = $columns;
+		$this->name            = $name;
+		$this->columns_defined = $columns;
 
 		if ( isset( $args['slug'] ) ) {
 			$this->slug = $args['slug'];
@@ -56,8 +59,15 @@ class InMemoryTable extends BaseTable {
 		}
 
 		$this->primary_key = empty( $args['primary-key'] ) ? 'id' : $args['primary-key'];
+	}
 
-		foreach ( $this->columns as $column_name => $column ) {
+	/**
+	 * Parse defaults based on the column types.
+	 *
+	 * @param array $columns
+	 */
+	protected function parse_defaults( array $columns ) {
+		foreach ( $columns as $column_name => $column ) {
 			if ( isset( $this->defaults[ $column_name ] ) ) {
 				continue;
 			}
@@ -95,12 +105,36 @@ class InMemoryTable extends BaseTable {
 	/**
 	 * @inheritDoc
 	 */
-	public function get_columns() { return $this->columns; }
+	public function get_columns() {
+
+		if ( $this->columns ) {
+			return $this->columns;
+		}
+
+		foreach ( $this->columns_defined as $name => $column ) {
+			if ( $column instanceof \Closure ) {
+				$column = $column();
+			}
+
+			$this->columns[ $name ] = $column;
+		}
+
+		$this->parse_defaults( $this->columns );
+
+		return $this->columns;
+	}
 
 	/**
 	 * @inheritDoc
 	 */
-	public function get_column_defaults() { return $this->defaults; }
+	public function get_column_defaults() {
+
+		if ( ! $this->columns ) {
+			$this->get_columns();
+		}
+
+		return $this->defaults;
+	}
 
 	/**
 	 * @inheritDoc

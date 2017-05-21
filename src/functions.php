@@ -216,38 +216,42 @@ function register_table( array $args ) {
 
 				switch ( $sub_config[0] ) {
 					case 'foreign':
-						list( $foreign_table_name, $column_name ) = array_pad( explode( '.', $sub_config[1] ), 2, null );
-						$foreign_table = Manager::get( $foreign_table_name );
+						$column = function () use ( $name, $sub_config ) {
+							list( $foreign_table_name, $column_name ) = array_pad( explode( '.', $sub_config[1] ), 2, null );
+							$foreign_table = Manager::get( $foreign_table_name );
 
-						if ( ! $foreign_table ) {
-							throw new \InvalidArgumentException( "No table named `$foreign_table_name` found for column config `$name`." );
-						}
-
-						if ( $column_name ) {
-							$foreign_columns = $foreign_table->get_columns();
-
-							if ( ! isset( $foreign_columns[ $column_name ] ) ) {
-								throw new \InvalidArgumentException( "No column named `$column_name` found for column config `$name`." );
+							if ( ! $foreign_table ) {
+								throw new \InvalidArgumentException( "No table named `$foreign_table_name` found for column config `$name`." );
 							}
-						}
 
-						$column = new SimpleForeign( $name, $foreign_table, $column_name );
+							if ( $column_name ) {
+								$foreign_columns = $foreign_table->get_columns();
+
+								if ( ! isset( $foreign_columns[ $column_name ] ) ) {
+									throw new \InvalidArgumentException( "No column named `$column_name` found for column config `$name`." );
+								}
+							}
+
+							return new SimpleForeign( $name, $foreign_table, $column_name );
+						};
 						break;
 					case 'model':
-						$foreign_table_name = $sub_config[1];
-						$foreign_table      = Manager::get( $foreign_table_name );
+						$column = function () use ( $name, $sub_config ) {
+							$foreign_table_name = $sub_config[1];
+							$foreign_table      = Manager::get( $foreign_table_name );
 
-						if ( ! $foreign_table ) {
-							throw new \InvalidArgumentException( "No table named `$foreign_table_name` found for column config `$name`." );
-						}
+							if ( ! $foreign_table ) {
+								throw new \InvalidArgumentException( "No table named `$foreign_table_name` found for column config `$name`." );
+							}
 
-						$foreign_model = Manager::get_model( $foreign_table );
+							$foreign_model = Manager::get_model( $foreign_table );
 
-						if ( ! $foreign_model ) {
-							throw new \InvalidArgumentException( "No model found for column config `$name`." );
-						}
+							if ( ! $foreign_model ) {
+								throw new \InvalidArgumentException( "No model found for column config `$name`." );
+							}
 
-						$column = new ForeignModel( $name, $foreign_model, $foreign_table );
+							return new ForeignModel( $name, $foreign_model, $foreign_table );
+						};
 						break;
 					default:
 						throw new \InvalidArgumentException( "Invalid column config for `$name`." );
