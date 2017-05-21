@@ -24,6 +24,7 @@ use IronBound\DB\Table\Column\ForeignTerm;
 use IronBound\DB\Table\Column\ForeignUser;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\SimpleForeign;
+use IronBound\DB\Table\Column\StringBased;
 use IronBound\DB\Table\Column\Time;
 use IronBound\DB\Table\InMemoryTable;
 use IronBound\DB\Table\Table;
@@ -178,6 +179,18 @@ function register_table( array $args ) {
 				break;
 			case 'decimal':
 				$column = new DecimalBased( 'DECIMAL', $name, array(), $type_options );
+				break;
+			case 'varchar':
+				$column = new StringBased( 'VARCHAR', $name, array(), $type_options ?: array( 255 ) );
+				break;
+			case 'tinytext':
+				$column = new StringBased( 'TINYTEXT', $name );
+				break;
+			case 'text':
+				$column = new StringBased( 'TEXT', $name );
+				break;
+			case 'longtext':
+				$column = new StringBased( 'FULLTEXT', $name );
 				break;
 			case 'enum':
 

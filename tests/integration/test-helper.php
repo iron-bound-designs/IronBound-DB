@@ -16,6 +16,7 @@ use IronBound\DB\Table\Column\Enum;
 use IronBound\DB\Table\Column\ForeignModel;
 use IronBound\DB\Table\Column\IntegerBased;
 use IronBound\DB\Table\Column\SimpleForeign;
+use IronBound\DB\Table\Column\StringBased;
 use IronBound\DB\Tests\Stub\Tables\Authors;
 
 /**
@@ -43,6 +44,8 @@ class Test_Helper extends \IronBound\DB\Tests\TestCase {
 				'foreign_pk'     => 'foreign:authors',
 				'foreign_column' => 'foreign:authors.bio',
 				'foreign_model'  => 'model:authors',
+				'short'          => 'varchar(20)',
+				'long'           => 'varchar',
 			),
 			'defaults'       => array( 'post' => 1 ),
 		) );
@@ -53,7 +56,7 @@ class Test_Helper extends \IronBound\DB\Tests\TestCase {
 		$this->assertEquals( 1, $defaults['post'] );
 		$this->assertEquals( 0, $defaults['referrals'] );
 
-		$this->assertCount( 9, $columns );
+		$this->assertCount( 11, $columns );
 		$this->assertEquals( 'id', $table->get_primary_key() );
 		$this->assertEquals( 'test-table', $table->get_slug() );
 
@@ -66,6 +69,8 @@ class Test_Helper extends \IronBound\DB\Tests\TestCase {
 		$foreign_pk     = $columns['foreign_pk'];
 		$foreign_column = $columns['foreign_column'];
 		$foreign_model  = $columns['foreign_model'];
+		$short          = $columns['short'];
+		$long           = $columns['long'];
 
 		$this->assertInstanceOf( '\IronBound\DB\Table\Column\IntegerBased', $id );
 		$this->assertInstanceOf( '\IronBound\DB\Table\Column\DecimalBased', $earnings );
@@ -76,6 +81,8 @@ class Test_Helper extends \IronBound\DB\Tests\TestCase {
 		$this->assertInstanceOf( '\IronBound\DB\Table\Column\SimpleForeign', $foreign_pk );
 		$this->assertInstanceOf( '\IronBound\DB\Table\Column\SimpleForeign', $foreign_column );
 		$this->assertInstanceOf( '\IronBound\DB\Table\Column\ForeignModel', $foreign_model );
+		$this->assertInstanceOf( '\IronBound\DB\Table\Column\StringBased', $short );
+		$this->assertInstanceOf( '\IronBound\DB\Table\Column\StringBased', $long );
 
 		$this->assertEquals( (string) new IntegerBased( 'BIGINT', 'id', array(
 			'unsigned',
@@ -110,6 +117,14 @@ class Test_Helper extends \IronBound\DB\Tests\TestCase {
 		$this->assertEquals(
 			(string) new ForeignModel( 'foreign_model', Manager::get_model( 'authors' ), Manager::get( 'authors' ) ),
 			(string) $foreign_model
+		);
+		$this->assertEquals(
+			(string) new StringBased( 'VARCHAR', 'short', array(), array( 20 ) ),
+			(string) $short
+		);
+		$this->assertEquals(
+			(string) new StringBased( 'VARCHAR', 'long', array(), array( 255 ) ),
+			(string) $Long
 		);
 
 		$this->assertEquals( 'active*', $status->prepare_for_storage( 'active*' ) );
