@@ -310,7 +310,10 @@ function register_table( array $args ) {
 	}
 
 	Manager::register( $table, '', $class );
-	Manager::register( $meta );
+
+	if ( $meta ) {
+		Manager::register( $meta );
+	}
 
 	return $table;
 }
