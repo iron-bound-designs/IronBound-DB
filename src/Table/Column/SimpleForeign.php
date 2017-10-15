@@ -75,7 +75,7 @@ class SimpleForeign extends BaseColumn implements Foreign {
 	 * @inheritDoc
 	 */
 	public function get_definition() {
-		return "{$this->name} {$this->get_column()->get_definition_without_column_name( array( 'auto_increment' ) )}";
+		return "`{$this->name}` {$this->get_column()->get_definition_without_column_name( array( 'auto_increment' ) )}";
 	}
 
 	/**
