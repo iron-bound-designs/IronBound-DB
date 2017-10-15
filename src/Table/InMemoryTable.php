@@ -68,7 +68,7 @@ class InMemoryTable extends BaseTable {
 	 */
 	protected function parse_defaults( array $columns ) {
 		foreach ( $columns as $column_name => $column ) {
-			if ( isset( $this->defaults[ $column_name ] ) ) {
+			if ( array_key_exists( $column_name, $this->defaults ) ) {
 				continue;
 			}
 
