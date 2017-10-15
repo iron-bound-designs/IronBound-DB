@@ -19,6 +19,8 @@ use IronBound\DB\Exception\InvalidDataForColumnException;
  */
 class DateTime extends BaseColumn {
 
+	const EMPTY = '0000-00-00 00:00:00';
+
 	/**
 	 * @inheritDoc
 	 */
@@ -31,7 +33,7 @@ class DateTime extends BaseColumn {
 	 */
 	public function convert_raw_to_value( $raw ) {
 
-		if ( empty( $raw ) ) {
+		if ( empty( $raw ) || $raw === self::EMPTY ) {
 			return null;
 		}
 
@@ -55,7 +57,7 @@ class DateTime extends BaseColumn {
 	 */
 	public function prepare_for_storage( $value ) {
 
-		if ( empty( $value ) ) {
+		if ( empty( $value ) || $value === self::EMPTY ) {
 			return null;
 		} elseif ( is_numeric( $value ) ) {
 			$value = new \DateTime( "@$value", new \DateTimeZone( 'UTC' ) );
