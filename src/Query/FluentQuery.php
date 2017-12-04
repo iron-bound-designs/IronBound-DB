@@ -116,11 +116,14 @@ class FluentQuery {
 	 */
 	protected $relations = array();
 
-	/** @var bool */
-	private $has_expressions = false;
+	/** @var string[] */
+	private $expressions = array();
 
 	/** @var bool */
 	private $select_single = false;
+
+	/** @var bool */
+	private $focused_select = false;
 
 	/**
 	 * FluentQuery constructor.
@@ -197,6 +200,8 @@ class FluentQuery {
 
 		$this->select->also( $this->prepare_column( $this->table->get_primary_key() ) );
 
+		$this->focused_select = true;
+
 		return $this;
 	}
 
@@ -250,7 +255,7 @@ class FluentQuery {
 	public function expression( $function, $column, $as ) {
 		$this->select->expression( $function, $this->prepare_column( $column ), $as );
 
-		$this->has_expressions = true;
+		$this->expressions[] = $as;
 
 		return $this;
 	}
@@ -382,8 +387,8 @@ class FluentQuery {
 			return;
 		}
 
-		$boolean     = $boolean ?: 'and';
-		$boolean     = 'q' . ucfirst( $boolean );
+		$boolean = $boolean ?: 'and';
+		$boolean = 'q' . ucfirst( $boolean );
 		$this->where->{$boolean}( $clause );
 	}
 
@@ -552,6 +557,29 @@ class FluentQuery {
 	}
 
 	/**
+	 * Order results by a previously calculated expression.
+	 * 
+	 * @param string $expression_alias
+	 * @param string $direction
+	 *
+	 * @return $this
+	 * @throws InvalidColumnException
+	 */
+	public function order_by_expression( $expression_alias, $direction = null ) {
+		if ( ! in_array( $expression_alias, $this->expressions, true ) ) {
+			throw new InvalidColumnException( 'Cannot order by expression alias because the alias has not been used.' );
+		}
+
+		if ( is_null( $this->order ) ) {
+			$this->order = new Order( $expression_alias, $direction );
+		} else {
+			$this->order->then( $expression_alias, $direction );
+		}
+
+		return $this;
+	}
+
+	/**
 	 * Group the results by a given column.
 	 *
 	 * Can be called multiple times to add additional group by columns.
@@ -572,6 +600,35 @@ class FluentQuery {
 			$this->group = new Group( $column );
 		} else {
 			$this->group->then( $column );
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Group the results by a given column after applying an expression to it.
+	 *
+	 * Can be called multiple times to add additional group by expressions.
+	 *
+	 * @since 2.2.0
+	 *
+	 * @param string $function
+	 * @param string $column
+	 *
+	 * @return $this
+	 *
+	 * @throws \IronBound\DB\Exception\InvalidColumnException
+	 */
+	public function group_by_expression( $function, $column ) {
+
+		$column = $this->prepare_column( $column );
+
+		$group = "{$function}($column)";
+
+		if ( is_null( $this->group ) ) {
+			$this->group = new Group( $group );
+		} else {
+			$this->group->then( $group );
 		}
 
 		return $this;
@@ -712,7 +769,7 @@ class FluentQuery {
 			}
 
 			$_query->offset += $number;
-			$query = $_query;
+			$query          = $_query;
 
 		} while ( $results->count() === $number );
 
@@ -950,9 +1007,9 @@ class FluentQuery {
 			}
 		}
 
-		if ( ! $saver || $this->has_expressions || ! $this->select->is_all() ) {
+		if ( ! $saver || $this->expressions || ! $this->select->is_all() ) {
 
-			if ( ! $this->has_expressions && ! $this->select->is_all() ) {
+			if ( ! $this->expressions && ! $this->select->is_all() ) {
 
 				$columns    = $this->select->get_columns();
 				$collection = array();
@@ -971,7 +1028,7 @@ class FluentQuery {
 				}
 
 				$collection = new ArrayCollection( $collection );
-			} elseif ( $this->has_expressions ) {
+			} elseif ( count( $this->expressions ) === 1 && ! $this->focused_select ) {
 				$collection = new ArrayCollection( reset( $results ) );
 			} else {
 				$collection = new ArrayCollection( $results );
