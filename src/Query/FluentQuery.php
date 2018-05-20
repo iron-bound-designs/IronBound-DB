@@ -125,6 +125,9 @@ class FluentQuery {
 	/** @var bool */
 	private $focused_select = false;
 
+	/** @var Table[] Joined tables keyed by the used alias. */
+	private $joined_tables;
+
 	/**
 	 * FluentQuery constructor.
 	 *
@@ -393,6 +396,40 @@ class FluentQuery {
 	}
 
 	/**
+	 * Add a where condition checking an already joined table to the main where clause.
+	 * 
+	 * @param Table   $table
+	 * @param Closure $callback
+	 * @param string  $boolean
+	 */
+	public function where_joined( Table $table, Closure $callback, $boolean = 'and' ) {
+
+		$found = false;
+
+		foreach ( $this->joined_tables as $alias => $maybe_table ) {
+			if ( $maybe_table->get_slug() === $table->get_slug() ) {
+				$found = $alias;
+				break;
+			}
+		}
+
+		if ( ! $found ) {
+			throw new \InvalidArgumentException( "Table {$table->get_slug()} has not already been joined to this table." );
+		}
+
+		$other_query                = new FluentQuery( $table, $this->wpdb );
+		$other_query->alias         = $found;
+		$other_query->alias_count   = $this->alias_count + 1;
+		$other_query->where         = Where::for_clause();
+		$other_query->joined_tables = $this->joined_tables;
+
+		$callback( $other_query );
+
+		$boolean = 'q' . ucfirst( $boolean );
+		$this->where->{$boolean}( $other_query->where );
+	}
+
+	/**
 	 * Add a OR where clause.
 	 *
 	 * @since 2.0
@@ -558,7 +595,7 @@ class FluentQuery {
 
 	/**
 	 * Order results by a previously calculated expression.
-	 * 
+	 *
 	 * @param string $expression_alias
 	 * @param string $direction
 	 *
@@ -660,6 +697,9 @@ class FluentQuery {
 		$other_query->alias       = $other_alias;
 		$other_query->alias_count = $this->alias_count + 1;
 
+		$other_query->joined_tables                 = $this->joined_tables;
+		$other_query->joined_tables[ $this->alias ] = $this->table;
+
 		$from = new From( $table->get_table_name( $this->wpdb ), $other_alias );
 
 		$where = new Where_Raw(
@@ -675,6 +715,55 @@ class FluentQuery {
 		}
 
 		$this->joins[] = new Join( $from, $where, $type );
+
+		$this->joined_tables[ $other_alias ] = $table;
+
+		return $this;
+	}
+
+	/**
+	 * Perform a join, but instead of comparing to a simple value,
+	 * use a correlated sub query to find the match.
+	 *
+	 * Will automatically build the SELECT and LIMIT statements.
+	 * 
+	 * @param Table   $table        Table to join to.
+	 * @param string  $this_column  Column on the current table to check equality for.
+	 * @param string  $comparator   How to compare the two values, should likely be '='.
+	 * @param string  $other_column The column on the joined table to check.
+	 * @param Closure $callback     Callback receiving a FluentQuery to build the sub query from.
+	 * @param string  $type
+	 *
+	 * @return $this
+	 * @throws InvalidColumnException
+	 */
+	public function join_correlated_subquery( Table $table, $this_column, $comparator, $other_column, Closure $callback, $type = 'INNER' ) {
+
+		$this->assert_comparator( $comparator );
+
+		$other_alias = 't' . ( ++ $this->alias_count );
+
+		$other_query              = new FluentQuery( $table, $this->wpdb );
+		$other_query->from        = new From( $table->get_table_name( $this->wpdb ), $other_alias );
+		$other_query->alias       = $other_alias;
+		$other_query->alias_count = $this->alias_count + 1;
+
+		$other_query->joined_tables                 = $this->joined_tables;
+		$other_query->joined_tables[ $this->alias ] = $this->table;
+
+		$other_query->select->also( $other_query->prepare_column( $other_column ) );
+		$other_query->take( 1 );
+		$callback( $other_query );
+
+		$from = new From( $table->get_table_name( $this->wpdb ), $other_alias );
+
+		$where = new Where_Raw(
+			"{$this->prepare_column( $this_column )} $comparator ({$other_query->build_sql()})"
+		);
+
+		$this->joins[] = new Join( $from, $where, $type );
+
+		$this->joined_tables[ $other_alias ] = $table;
 
 		return $this;
 	}
@@ -794,7 +883,7 @@ class FluentQuery {
 
 			if ( func_num_args() === 2 && $relations[1] instanceof Closure ) {
 				$relations = array(
-					$relations[0] => $relations[1]
+					$relations[0] => $relations[1],
 				);
 			}
 		}
@@ -928,6 +1017,8 @@ class FluentQuery {
 	 */
 	protected function build_sql() {
 
+		$this->make_limit_tag();
+
 		$builder = new Builder();
 
 		if ( ! $this->select->is_all() && ! $this->select->get_columns() ) {
@@ -991,7 +1082,6 @@ class FluentQuery {
 			$saver = new ModelSaver( $this->model );
 		}
 
-		$this->make_limit_tag();
 		$this->sql = $sql = trim( $this->build_sql() );
 
 		$results = $this->wpdb->get_results( $sql, ARRAY_A );
@@ -1368,7 +1458,7 @@ class FluentQuery {
 			'LEAST',
 			'NOT BETWEEN',
 			'NOT IN',
-			'NOT LIKE'
+			'NOT LIKE',
 		), true ) ) {
 			return;
 		}
