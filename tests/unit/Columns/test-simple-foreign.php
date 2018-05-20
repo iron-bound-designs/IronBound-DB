@@ -50,7 +50,7 @@ class Test_SimpleForeign extends \IronBound\DB\Tests\TestCase {
 		) );
 
 		$foreign = new SimpleForeign( 'foreign', $table );
-		$this->assertEquals( 'foreign BIGINT(20) NOT NULL', $foreign->get_definition() );
+		$this->assertEquals( '`foreign` BIGINT(20) NOT NULL', $foreign->get_definition() );
 	}
 
 	public function test_get_mysql_type() {
