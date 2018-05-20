@@ -10,7 +10,7 @@ env:
 
 matrix:
   allow_failures:
-  - env: WP_VERSION=trunk WP_MULTISITE=0
+    - env: WP_VERSION=trunk WP_MULTISITE=0
   include:
     - php: 5.3
       dist: precise
@@ -55,20 +55,20 @@ before_script:
     esac
   fi
   # download WP
-  - cd $WP_DEVELOP_DIR/..
-  - rm -rf wordpress
-  - mkdir wordpress
-  - svn co https://develop.svn.wordpress.org/$WP_VERSION $WP_DEVELOP_DIR
-  # set up tests config
-  - cd $WP_DEVELOP_DIR
-  - echo $WP_DEVELOP_DIR
-  - cp wp-tests-config-sample.php wp-tests-config.php
-  - sed -i "s/youremptytestdbnamehere/wordpress_test/" wp-tests-config.php
-  - sed -i "s/yourusernamehere/root/" wp-tests-config.php
-  - sed -i "s/yourpasswordhere//" wp-tests-config.php
-  # set up database
-  - mysql -e 'CREATE DATABASE wordpress_test;' -uroot
-  - cd $TRAVIS_BUILD_DIR
+- cd $WP_DEVELOP_DIR/..
+- rm -rf wordpress
+- mkdir wordpress
+- svn co https://develop.svn.wordpress.org/$WP_VERSION $WP_DEVELOP_DIR
+# set up tests config
+- cd $WP_DEVELOP_DIR
+- echo $WP_DEVELOP_DIR
+- cp wp-tests-config-sample.php wp-tests-config.php
+- sed -i "s/youremptytestdbnamehere/wordpress_test/" wp-tests-config.php
+- sed -i "s/yourusernamehere/root/" wp-tests-config.php
+- sed -i "s/yourpasswordhere//" wp-tests-config.php
+# set up database
+- mysql -e 'CREATE DATABASE wordpress_test;' -uroot
+- cd $TRAVIS_BUILD_DIR
 
 script:
 - |
