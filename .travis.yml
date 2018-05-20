@@ -54,19 +54,21 @@ before_script:
 - mysql -e 'CREATE DATABASE wordpress_test;' -uroot
 - cd $TRAVIS_BUILD_DIR
 - |
-  # Export Composer's global bin dir to PATH
-  composer config --list --global
-  export PATH=`composer config --list --global | grep '\[home\]' | { read a; echo "${a#* }/vendor/bin:$PATH"; }`
-- |
   # Install the specified version of PHPUnit depending on the PHP version:
   case "$TRAVIS_PHP_VERSION" in
       7.2|7.1|7.0|nightly)
         echo "Using PHPUnit 6.x"
-        composer global require "phpunit/phpunit:^6"
+        wget https://phar.phpunit.de/phpunit-6.phar
+        chmod +x phpunit-6.phar
+        sudo mv phpunit-6.phar /usr/local/bin/phpunit
+        phpunit --version
         ;;
       5.6|5.5|5.4|5.3)
-        echo "Using PHPUnit 4.x"
-        composer global require "phpunit/phpunit:^4"
+        echo "Using PHPUnit 5.x"
+        wget https://phar.phpunit.de/phpunit-5.phar
+        chmod +x phpunit-5.phar
+        sudo mv phpunit-5.phar /usr/local/bin/phpunit
+        phpunit --version
         ;;
     esac
   # download WP
