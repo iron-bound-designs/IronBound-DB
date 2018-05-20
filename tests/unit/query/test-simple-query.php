@@ -436,6 +436,7 @@ class Test_Simple_Query extends \IronBound\DB\Tests\TestCase {
 		             ->disableOriginalConstructor()
 		             ->setProxyTarget( $GLOBALS['wpdb'] )
 		             ->enableProxyingToOriginalMethods()
+		             ->setMethods( array( 'process_fields', 'query' ) )
 		             ->getMock();
 		$wpdb->method( 'process_fields' )->willReturnArgument( 1 );
 		$wpdb->expects( $this->once() )->method( 'query' )->with( $sql );
