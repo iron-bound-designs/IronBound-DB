@@ -60,14 +60,16 @@ before_script:
         echo "Using PHPUnit 6.x"
         wget https://phar.phpunit.de/phpunit-6.phar
         chmod +x phpunit-6.phar
-        sudo mv phpunit-6.phar /usr/local/bin/phpunit
+        sudo mv phpunit-6.phar /usr/bin/phpunit
+        which phpunit
         phpunit --version
         ;;
       5.6|5.5|5.4|5.3)
         echo "Using PHPUnit 5.x"
         wget https://phar.phpunit.de/phpunit-5.phar
         chmod +x phpunit-5.phar
-        sudo mv phpunit-5.phar /usr/local/bin/phpunit
+        sudo mv phpunit-5.phar /usr/bin/phpunit
+        which phpunit
         phpunit --version
         ;;
     esac
