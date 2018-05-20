@@ -307,7 +307,7 @@ final class Manager {
 
 		$results = $wpdb->get_results( "SHOW TABLES LIKE '$name'" );
 
-		return count( $results ) > 0;
+		return is_array( $results ) && count( $results ) > 0;
 	}
 
 	/**
