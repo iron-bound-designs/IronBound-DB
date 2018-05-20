@@ -408,6 +408,10 @@ class Test_Simple_Query extends \IronBound\DB\Tests\TestCase {
 		if ( version_compare( PHP_VERSION, '5.4', '<' ) ) {
 			$this->markTestSkipped( 'Proxy target not working with 5.3' );
 		}
+		
+		if ( version_compare( PHP_VERSION, '7.0', '>=' ) ) {
+			$this->markTestSkipped( 'Proxy target not working with 5.3' );
+		}
 
 		$table = $this->getMockBuilder( 'IronBound\DB\Table\Table' )->setMethods( array(
 			'get_columns',
