@@ -135,7 +135,7 @@ class Test_Helper extends \IronBound\DB\Tests\TestCase {
 		$this->assertEquals( 'inactive', $status->prepare_for_storage( 'garbage' ) );
 
 		$status->fallback_to_default_on_error( false );
-		$this->setExpectedException( '\IronBound\DB\Exception\InvalidDataForColumnException' );
+		$this->setExpectedException( '\IronBound\DB\Exception\InvalidDataForColumnException',  method_exists( 'PHPUnit_Framework_TestCase', 'setExpectedException' ) ? null : '' );
 		$status->prepare_for_storage( 'garbage' );
 
 		$this->assertNotNull( Manager::get( 'test-table-meta' ) );
