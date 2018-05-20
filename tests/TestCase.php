@@ -56,7 +56,7 @@ abstract class TestCase extends \WP_UnitTestCase {
 
 		$wpdb   = $this->getMockBuilder( '\wpdb' )->setMethods( array( 'get_results' ) )
 		               ->disableOriginalConstructor()->getMock();
-		$method = $wpdb->expects( $this->once() )->method( 'get_results' );
+		$method = $wpdb->expects( $this->atLeastOnce() )->method( 'get_results' );
 		$method = call_user_func_array( array( $method, 'withConsecutive' ), $consecutive );
 		$method->willReturn( array() );
 
