@@ -48,7 +48,7 @@ class IntegerBased extends BaseColumn {
 	 * @inheritDoc
 	 */
 	public function convert_raw_to_value( $raw ) {
-		return (int) $raw;
+		return $raw === null ? $raw : (int) $raw;
 	}
 
 	/**
