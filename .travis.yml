@@ -2,24 +2,26 @@ language: php
 
 sudo: false
 
+php:
+- 5.3
+- 5.4
+- 5.5
+- 5.6
+- 7.0
+- 7.1
+- 7.2
+
 env:
 - WP_VERSION=trunk WP_MULTISITE=0
 - WP_VERSION=tags/4.4 WP_MULTISITE=0
 - WP_VERSION=tags/4.9 WP_MULTISITE=0
-- WP_TRAVISCI=travis:phpunit
 
 matrix:
-  allow_failures:
-    - env: WP_VERSION=trunk WP_MULTISITE=0
   include:
     - php: 5.3
       dist: precise
-    - php: 5.4
-    - php: 5.5
-    - php: 5.6
-    - php: 7.0
-    - php: 7.1    
-    - php: 7.2
+  allow_failures:
+    - env: WP_VERSION=trunk WP_MULTISITE=0
 
 before_install:
   - composer self-update
@@ -37,24 +39,9 @@ before_script:
     echo "xdebug.ini does not exist"
   fi
 - |
-  # Export Composer's global bin dir to PATH, but not on PHP 5.2:
+  # Export Composer's global bin dir to PATH
   composer config --list --global
   export PATH=`composer config --list --global | grep '\[home\]' | { read a; echo "${a#* }/vendor/bin:$PATH"; }`
-- |
-  # Install the specified version of PHPUnit depending on the PHP version:
-  if [[ "$WP_TRAVISCI" == "travis:phpunit" ]]; then
-    case "$TRAVIS_PHP_VERSION" in
-      7.2|7.1|7.0|nightly)
-        echo "Using PHPUnit 6.x"
-        composer global require "phpunit/phpunit:^6"
-        ;;
-      5.6|5.5|5.4|5.3)
-        echo "Using PHPUnit 4.x"
-        composer global require "phpunit/phpunit:^4"
-        ;;
-    esac
-  fi
-  # download WP
 - cd $WP_DEVELOP_DIR/..
 - rm -rf wordpress
 - mkdir wordpress
@@ -69,6 +56,19 @@ before_script:
 # set up database
 - mysql -e 'CREATE DATABASE wordpress_test;' -uroot
 - cd $TRAVIS_BUILD_DIR
+- |
+  # Install the specified version of PHPUnit depending on the PHP version:
+  case "$TRAVIS_PHP_VERSION" in
+      7.2|7.1|7.0|nightly)
+        echo "Using PHPUnit 6.x"
+        composer global require "phpunit/phpunit:^6"
+        ;;
+      5.6|5.5|5.4|5.3)
+        echo "Using PHPUnit 4.x"
+        composer global require "phpunit/phpunit:^4"
+        ;;
+    esac
+  # download WP
 
 script:
 - |
