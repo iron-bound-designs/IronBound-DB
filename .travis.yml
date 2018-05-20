@@ -2,26 +2,27 @@ language: php
 
 sudo: false
 
-php:
-- 5.3
-- 5.4
-- 5.5
-- 5.6
-- 7.0
-- 7.1
-- 7.2
-
-env:
-- WP_VERSION=trunk WP_MULTISITE=0
-- WP_VERSION=tags/4.4 WP_MULTISITE=0
-- WP_VERSION=tags/4.9 WP_MULTISITE=0
-
 matrix:
   include:
     - php: 5.3
       dist: precise
+      env: WP_VERSION=tags/4.4
+    - php: 5.4
+      env: WP_VERSION=tags/4.9      
+    - php: 5.5
+      env: WP_VERSION=tags/4.9
+    - php: 5.6
+      env: WP_VERSION=tags/4.9
+    - php: 7.0
+      env: WP_VERSION=tags/4.9
+    - php: 7.1
+      env: WP_VERSION=tags/4.9
+    - php: 7.2
+      env: WP_VERSION=tags/4.9
+    - php: 7.2
+      env: WP_VERSION=trunk
   allow_failures:
-    - env: WP_VERSION=trunk WP_MULTISITE=0
+    - env: WP_VERSION=trunk
 
 before_install:
   - composer self-update
@@ -38,10 +39,6 @@ before_script:
   else
     echo "xdebug.ini does not exist"
   fi
-- |
-  # Export Composer's global bin dir to PATH
-  composer config --list --global
-  export PATH=`composer config --list --global | grep '\[home\]' | { read a; echo "${a#* }/vendor/bin:$PATH"; }`
 - cd $WP_DEVELOP_DIR/..
 - rm -rf wordpress
 - mkdir wordpress
@@ -56,6 +53,10 @@ before_script:
 # set up database
 - mysql -e 'CREATE DATABASE wordpress_test;' -uroot
 - cd $TRAVIS_BUILD_DIR
+- |
+  # Export Composer's global bin dir to PATH
+  composer config --list --global
+  export PATH=`composer config --list --global | grep '\[home\]' | { read a; echo "${a#* }/vendor/bin:$PATH"; }`
 - |
   # Install the specified version of PHPUnit depending on the PHP version:
   case "$TRAVIS_PHP_VERSION" in
