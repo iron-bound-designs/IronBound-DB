@@ -28,6 +28,7 @@ use IronBound\DB\Table\Column\StringBased;
 use IronBound\DB\Table\Column\Time;
 use IronBound\DB\Table\InMemoryTable;
 use IronBound\DB\Table\Table;
+use IronBound\DB\Table\TimestampedMemoryTable;
 
 /**
  * Get a list of all traits a class uses.
@@ -140,7 +141,7 @@ function register_table( array $args ) {
 				$column = new IntegerBased( 'BIGINT', $name, array(
 					'unsigned',
 					'NOT NULL',
-					'auto_increment'
+					'auto_increment',
 				), array( 20 ) );
 				break;
 			case 'boolean':
@@ -277,8 +278,20 @@ function register_table( array $args ) {
 		}
 	}
 
-	$table = new InMemoryTable( $args['name'], $columns, $table_args );
-	$meta  = null;
+	if ( ! empty( $args['trash'] ) ) {
+		$columns['deleted_at'] = new DateTime( 'deleted_at' );
+	}
+
+	if ( empty( $args['timed'] ) ) {
+		$table = new InMemoryTable( $args['name'], $columns, $table_args );
+	} else {
+		$columns['created_at'] = new DateTime( 'created_at' );
+		$columns['updated_at'] = new DateTime( 'updated_at' );
+
+		$table = new TimestampedMemoryTable( $args['name'], $columns, $table_args );
+	}
+
+	$meta = null;
 
 	if ( ! empty( $args['meta'] ) ) {
 		if ( $args['meta'] === true ) {

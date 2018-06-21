@@ -9,6 +9,7 @@
  */
 
 namespace IronBound\DB\Extensions\Meta;
+use IronBound\DB\Table\TimestampedTable;
 
 /**
  * Trait MetaSupport
@@ -25,6 +26,10 @@ trait MetaSupport {
 		$result = add_metadata( $this->get_meta_type(), $this->get_pk(), $key, wp_slash( $value ), $unique );
 		remove_filter( 'sanitize_key', array( $this, '_meta_type_primary_id_override' ) );
 
+		if ( $result !== false ) {
+			$this->set_last_updated_at();
+		}
+
 		return $result;
 	}
 
@@ -36,6 +41,10 @@ trait MetaSupport {
 		add_filter( 'sanitize_key', array( $this, '_meta_type_primary_id_override' ), 10, 2 );
 		$result = update_metadata( $this->get_meta_type(), $this->get_pk(), $key, wp_slash( $value ), $prev_value );
 		remove_filter( 'sanitize_key', array( $this, '_meta_type_primary_id_override' ) );
+
+		if ( $result !== false ) {
+			$this->set_last_updated_at();
+		}
 
 		return $result;
 	}
@@ -60,6 +69,10 @@ trait MetaSupport {
 		add_filter( 'sanitize_key', array( $this, '_meta_type_primary_id_override' ), 10, 2 );
 		$result = delete_metadata( $this->get_meta_type(), $this->get_pk(), $key, wp_slash( $value ), $delete_all );
 		remove_filter( 'sanitize_key', array( $this, '_meta_type_primary_id_override' ) );
+
+		if ( $result !== false ) {
+			$this->set_last_updated_at();
+		}
 
 		return $result;
 	}
@@ -126,5 +139,24 @@ trait MetaSupport {
 		$name = preg_replace( "/meta$/", "", $name );
 
 		return $name;
+	}
+
+	/**
+	 * Set the model's last updated date whenever meta changes.
+	 */
+	private function set_last_updated_at() {
+
+		if ( ! static::get_table() instanceof TimestampedTable ) {
+			return;
+		}
+
+		$dirty = $this->is_dirty();
+
+		$this->set_attribute( static::get_table()->get_updated_at_column(), $this->fresh_timestamp() );
+
+		// If the model is dirty, we don't want to commit our save since the user should already be calling save.
+		if ( ! $dirty ) {
+			$this->save();
+		}
 	}
 }

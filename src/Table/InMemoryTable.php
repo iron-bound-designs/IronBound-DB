@@ -10,14 +10,16 @@
 
 namespace IronBound\DB\Table;
 
+use IronBound\DB\Extensions\Trash\TrashTable;
 use IronBound\DB\Table\Column\Column;
+use IronBound\DB\Table\Column\ForeignModel;
 
 /**
  * Class InMemoryTable
  *
  * @package IronBound\DB\Table
  */
-class InMemoryTable extends BaseTable {
+class InMemoryTable extends BaseTable implements TrashTable {
 
 	/** @var string */
 	private $name;
@@ -36,6 +38,9 @@ class InMemoryTable extends BaseTable {
 
 	/** @var array */
 	private $defaults = array();
+
+	/** @var array */
+	protected $args;
 
 	/**
 	 * InMemoryTable constructor.
@@ -58,6 +63,7 @@ class InMemoryTable extends BaseTable {
 			$this->defaults = $args['defaults'];
 		}
 
+		$this->args        = $args;
 		$this->primary_key = empty( $args['primary-key'] ) ? 'id' : $args['primary-key'];
 	}
 
@@ -85,6 +91,9 @@ class InMemoryTable extends BaseTable {
 				case 'DECIMAL':
 					$this->defaults[ $column_name ] = 0.0;
 					break;
+				case 'DATE':
+				case 'DATETIME':
+					$this->defaults[ $column_name ] = null;
 				default:
 					$this->defaults[ $column_name ] = '';
 					break;
@@ -145,4 +154,13 @@ class InMemoryTable extends BaseTable {
 	 * @inheritDoc
 	 */
 	public function get_version() { return 1; }
+
+	/**
+	 * @inheritDoc
+	 */
+	public function get_deleted_at_column() {
+		$columns = $this->get_columns();
+
+		return isset( $columns['deleted_at'] ) ? 'deleted_at' : null;
+	}
 }
