@@ -420,7 +420,7 @@ class ManyToMany extends Relation {
 
 		global $wpdb;
 
-		$where = new Where( 1, true, 1 );
+		$where = new Where( 1, false, 1 );
 
 		foreach ( $removed as $model ) {
 
