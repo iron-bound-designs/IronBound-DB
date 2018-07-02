@@ -102,7 +102,7 @@ class ForeignUser extends BaseColumn implements Foreign, DeleteConstrainable {
 	 * @inheritDoc
 	 */
 	public function convert_raw_to_value( $raw ) {
-		return get_user_by( $this->key, $raw );
+		return get_user_by( $this->key, $raw ) ?: null;
 	}
 
 	/**
