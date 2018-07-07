@@ -47,7 +47,7 @@ abstract class HasOneOrMany extends Relation {
 
 		$related = $this->related_model;
 
-		$query = $related::query()->where( $this->foreign_key, true, $this->parent->get_pk() );
+		$query = $related::query_with_no_global_scopes()->where( $this->foreign_key, true, $this->parent->get_pk() );
 
 		$this->apply_scopes_for_fetch( $query );
 
@@ -83,7 +83,7 @@ abstract class HasOneOrMany extends Relation {
 		}
 
 		/** @var FluentQuery $query */
-		$query = call_user_func( array( $this->related_model, 'query' ) );
+		$query = call_user_func( array( $this->related_model, 'query_with_no_global_scopes' ) );
 
 		$pks = array_keys( $models );
 		$pks = array_diff( $pks, array_keys( $cached ) );

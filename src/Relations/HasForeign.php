@@ -64,7 +64,7 @@ class HasForeign extends Relation {
 	 */
 	protected function make_query_object( $model_class = false ) {
 
-		$query = call_user_func( array( $this->related_model, 'query' ) );
+		$query = call_user_func( array( $this->related_model, 'query_with_no_global_scopes' ) );
 
 		if ( ! $model_class ) {
 			$query->set_model_class( null );
