@@ -106,7 +106,7 @@ class HasForeign extends Relation {
 	protected function fetch_results_for_eager_load( $primary_keys ) {
 
 		if ( ! $primary_keys ) {
-			return new Collection( [], false, $this->saver );
+			return new Collection( array(), false, $this->saver );
 		}
 
 		$query = $this->make_query_object( true );
