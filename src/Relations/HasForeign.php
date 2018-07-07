@@ -10,6 +10,7 @@
 
 namespace IronBound\DB\Relations;
 
+use IronBound\DB\Collection;
 use IronBound\DB\Model;
 use IronBound\DB\Query\FluentQuery;
 use IronBound\DB\Saver\ModelSaver;
@@ -96,6 +97,10 @@ class HasForeign extends Relation {
 	 * @return \Doctrine\Common\Collections\Collection|\IronBound\DB\Collection
 	 */
 	protected function fetch_results_for_eager_load( $primary_keys ) {
+
+		if ( ! $primary_keys ) {
+			return new Collection( [], false, $this->saver );
+		}
 
 		$query = $this->make_query_object( true );
 		$query->where( $this->related_primary_key_column, true, $primary_keys );
