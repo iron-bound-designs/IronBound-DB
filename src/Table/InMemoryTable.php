@@ -94,6 +94,7 @@ class InMemoryTable extends BaseTable implements TrashTable {
 				case 'DATE':
 				case 'DATETIME':
 					$this->defaults[ $column_name ] = null;
+					break;
 				default:
 					$this->defaults[ $column_name ] = '';
 					break;
