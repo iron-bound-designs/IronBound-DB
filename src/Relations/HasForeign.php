@@ -131,17 +131,18 @@ class HasForeign extends Relation {
 				continue;
 			}
 
-			$pks[]      = $pk;
-			$map[ $pk ] = $model;
+			$pks[]        = $pk;
+			$map[ $pk ][] = $model;
 		}
 
 		$related_models = $this->fetch_results_for_eager_load( $pks );
 
 		foreach ( $related_models as $related_model ) {
-			if ( isset( $map[ $this->saver->get_pk( $related_model ) ] ) ) {
-				$mapped = $map[ $this->saver->get_pk( $related_model ) ];
-				$mapped->set_raw_attribute( $this->attribute, $related_model );
-				$mapped->sync_original_attribute( $this->attribute );
+			if ( ! empty( $map[ $this->saver->get_pk( $related_model ) ] ) ) {
+				foreach ( $map[ $this->saver->get_pk( $related_model ) ] as $mapped ) {
+					$mapped->set_raw_attribute( $this->attribute, $related_model );
+					$mapped->sync_original_attribute( $this->attribute );
+				}
 			}
 		}
 
