@@ -45,6 +45,15 @@ class HasForeignTerm extends HasForeign {
 	}
 
 	/**
+	 * @inheritdoc
+	 */
+	protected function is_attribute_valid_model() {
+		$attr = $this->parent->get_raw_attribute( $this->attribute );
+
+		return $attr instanceof \WP_Term || ( is_object( $attr ) && property_exists( $attr, 'term_id' ) );
+	}
+
+	/**
 	 * Update the term meta cache when loading this relation.
 	 *
 	 * By default, the meta cache IS updated.
@@ -86,6 +95,10 @@ class HasForeignTerm extends HasForeign {
 	 * @inheritDoc
 	 */
 	protected function fetch_results_for_eager_load( $primary_keys ) {
+
+		if ( ! $primary_keys ) {
+			return new Collection( [], false, $this->saver );
+		}
 
 		$query = $this->make_query_object( true );
 		$query->where( $this->related_primary_key_column, true, $primary_keys );

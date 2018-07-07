@@ -78,13 +78,20 @@ class HasForeign extends Relation {
 	 */
 	protected function fetch_results() {
 
-		$class = $this->related_model;
-
-		if ( $this->parent->get_raw_attribute( $this->attribute ) instanceof $class ) {
+		if ( $this->is_attribute_valid_model() ) {
 			return $this->parent->get_raw_attribute( $this->attribute );
 		}
 
 		return $this->saver->get_model( $this->parent->get_raw_attribute( $this->attribute ) );
+	}
+
+	/**
+	 * Is the stored attribute a valid model for this relation.
+	 *
+	 * @return bool
+	 */
+	protected function is_attribute_valid_model() {
+		return $this->parent->get_raw_attribute( $this->attribute ) instanceof $this->related_model;
 	}
 
 	/**

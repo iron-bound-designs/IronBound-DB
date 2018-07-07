@@ -46,6 +46,15 @@ class HasForeignComment extends HasForeign {
 	}
 
 	/**
+	 * @inheritdoc
+	 */
+	protected function is_attribute_valid_model() {
+		$attr = $this->parent->get_raw_attribute( $this->attribute );
+
+		return $attr instanceof \WP_Comment || ( is_object( $attr ) && property_exists( $attr, 'comment_ID' ) );
+	}
+
+	/**
 	 * Update the comment meta cache when loading this relation.
 	 *
 	 * By default, the meta cache IS updated.

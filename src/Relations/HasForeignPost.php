@@ -49,6 +49,13 @@ class HasForeignPost extends HasForeign {
 	}
 
 	/**
+	 * @inheritdoc
+	 */
+	protected function is_attribute_valid_model() {
+		return $this->parent->get_raw_attribute( $this->attribute ) instanceof \WP_Post;
+	}
+
+	/**
 	 * Update the post meta cache when loading this relation.
 	 *
 	 * By default, the meta cache IS updated.
