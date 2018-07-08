@@ -76,7 +76,7 @@ class HasForeignUser extends HasForeign {
 		$user = parent::get_results();
 
 		if ( ! $user ) {
-			return $user;
+			return null;
 		}
 
 		update_user_caches( $user );

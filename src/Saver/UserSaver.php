@@ -60,7 +60,7 @@ class UserSaver extends Saver {
 			case 'id':
 			case 'login':
 			case 'slug':
-				return get_user_by( $this->key, $pk );
+				return get_user_by( $this->key, $pk ) ?: null;
 			default:
 				throw new \UnexpectedValueException( 'Unexpected key type.' );
 		}
