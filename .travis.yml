@@ -4,25 +4,23 @@ sudo: false
 
 matrix:
   include:
-    - php: 5.3
-      dist: precise
-      env: WP_VERSION=tags/4.4
-    - php: 5.4
-      env: WP_VERSION=tags/4.9      
-    - php: 5.5
-      env: WP_VERSION=tags/4.9
     - php: 5.6
-      env: WP_VERSION=tags/4.9
+      env: WP_VERSION=tags/5.3
     - php: 7.0
-      env: WP_VERSION=tags/4.9
+      env: WP_VERSION=tags/5.3
     - php: 7.1
-      env: WP_VERSION=tags/4.9
+      env: WP_VERSION=tags/5.3
     - php: 7.2
-      env: WP_VERSION=tags/4.9
+      env: WP_VERSION=tags/5.3
+    - php: 7.3
+      env: WP_VERSION=tags/5.3
     - php: 7.2
       env: WP_VERSION=trunk
   allow_failures:
     - env: WP_VERSION=trunk
+    
+services:
+  - mysql
 
 before_install:
   - composer self-update
@@ -70,7 +68,7 @@ before_script:
 
 script:
 - |
-  if [[ "$TRAVIS_PHP_VERSION" == "7.2" && "$WP_VERSION" == "4.9"  ]] ; then
+  if [[ "$TRAVIS_PHP_VERSION" == "7.2" && "$WP_VERSION" == "5.3"  ]] ; then
     ./phpunit.phar --coverage-clover=coverage.clover
   else
     ./phpunit.phar
