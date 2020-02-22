@@ -145,10 +145,13 @@ class HasForeign extends Relation {
 		$related_models = $this->fetch_results_for_eager_load( $pks );
 
 		foreach ( $related_models as $related_model ) {
-			if ( ! empty( $map[ $this->saver->get_pk( $related_model ) ] ) ) {
-				foreach ( $map[ $this->saver->get_pk( $related_model ) ] as $mapped ) {
+			$pk = $this->saver->get_pk( $related_model );
+
+			if ( ! empty( $map[ $pk ] ) ) {
+				foreach ( $map[ $pk ] as $mapped ) {
 					$mapped->set_raw_attribute( $this->attribute, $related_model );
 					$mapped->sync_original_attribute( $this->attribute );
+					$this->cache_results( $this->saver->get_model( $pk ), $mapped );
 				}
 			}
 		}

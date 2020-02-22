@@ -196,10 +196,13 @@ abstract class HasOneOrMany extends Relation {
 			if ( isset( $map[ $model->get_pk() ] ) ) {
 				$related = $map[ $model->get_pk() ];
 
-				$model->set_relation_value( $this->attribute, $this->wrap_eager_loaded_results( $related ) );
+				$result = $this->wrap_eager_loaded_results( $related );
 			} else {
-				$model->set_relation_value( $this->attribute, $this->wrap_eager_loaded_results( null ) );
+				$result = $this->wrap_eager_loaded_results( null );
 			}
+
+			$model->set_relation_value( $this->attribute, $result );
+			$this->cache_results( $result, $model );
 		}
 
 		return $results;
