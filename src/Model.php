@@ -1100,7 +1100,7 @@ abstract class Model implements Cacheable, \Serializable {
 	protected function save_loaded_relations( array $exclude = array() ) {
 		foreach ( $this->_relations as $relation => $values ) {
 
-			if ( in_array( $relation, $exclude ) ) {
+			if ( in_array( $relation, $exclude ) || $values === null ) {
 				continue;
 			}
 

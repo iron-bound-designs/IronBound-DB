@@ -348,7 +348,8 @@ class ManyToMany extends Relation {
 
 		foreach ( $models as $model ) {
 			$data = isset( $relationship_map[ $model->get_pk() ] ) ? $relationship_map[ $model->get_pk() ] : array();
-			$model->set_relation_value( $attribute, new Collection( $data, $memory, $this->saver ) );
+			$model->set_relation_value( $attribute, $value = new Collection( $data, $memory, $this->saver ) );
+			$this->cache_results( $value, $model );
 		}
 
 		return new Collection( $related, true, $this->saver );
@@ -366,6 +367,7 @@ class ManyToMany extends Relation {
 		$added = $this->persist_do_save( $values );
 
 		$this->persist_added( new ArrayCollection( $values->get_added()->toArray() + $added ) );
+		$values->clear_memory();
 
 		return $values;
 	}
